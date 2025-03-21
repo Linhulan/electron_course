@@ -13,6 +13,10 @@ export function createTray(mainWindow: BrowserWindow) {
     )
   );
 
+  tray.addListener("click", () => {
+    mainWindow.show();
+  });
+
   tray.setContextMenu(
     Menu.buildFromTemplate([
       {
