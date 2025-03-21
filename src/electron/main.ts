@@ -1,13 +1,16 @@
-import { app, BrowserWindow, Tray } from "electron";
+import { app, BrowserWindow, Menu, Tray } from "electron";
 import { ipcMainHandle, isDev } from "./utils.js";
 import { getStaticData, pollResources } from "./resourceManager.js";
 import { getAssetPath, getPreloadPath, getUIPath } from "./pathResolver.js";
 import path from "path";
 import { createTray } from "./tray.js";
+import { createMenu } from "./menu.js";
 
 app.commandLine.appendSwitch("enable-lcp");
 // app.commandLine.appendSwitch('disable-features', 'OutOfProcessPdf');
 app.enableSandbox(); // 必须启用沙箱
+
+Menu.setApplicationMenu(null);
 
 app.on("ready", () => {
   const mainWindow = new BrowserWindow({
@@ -38,7 +41,8 @@ app.on("ready", () => {
   // });
 
 
-  createTray (mainWindow);
+  createTray(mainWindow);
+  //createMenu(mainWindow);
   handleCloseEvenets(mainWindow);
 
 });
