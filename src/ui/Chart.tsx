@@ -8,7 +8,7 @@ export type ChartProps = {
 
 export function Chart(props: ChartProps) {
   const preparedData = useMemo(() => {
-    const points = props.data.map((point) => ({ value: point * 1000 }));
+    const points = props.data.map((point) => ({ value: point * 100 }));
     return [
       ...points,
       ...Array.from({ length: props.maxDataPoints - points.length }, () => ({
