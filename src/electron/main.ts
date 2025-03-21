@@ -5,9 +5,9 @@ import { getPreloadPath, getUIPath } from "./pathResolver.js";
 import { createTray } from "./tray.js";
 import { createMenu } from "./menu.js";
 
-app.commandLine.appendSwitch("enable-lcp");
+// app.commandLine.appendSwitch("enable-lcp");
 // app.commandLine.appendSwitch('disable-features', 'OutOfProcessPdf');
-app.enableSandbox(); // 必须启用沙箱
+// app.enableSandbox(); // 必须启用沙箱
 
 // Menu.setApplicationMenu(null);
 
