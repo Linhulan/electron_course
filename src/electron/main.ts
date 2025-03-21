@@ -1,5 +1,5 @@
 import { app, BrowserWindow } from "electron";
-import { ipcMainHandle, isDev } from "./utils.js";
+import { ipcMainHandle, ipcMainOn, isDev } from "./utils.js";
 import { getStaticData, pollResources } from "./resourceManager.js";
 import { getPreloadPath, getUIPath } from "./pathResolver.js";
 import { createTray } from "./tray.js";
@@ -16,6 +16,7 @@ app.on("ready", () => {
     webPreferences: {
       preload: getPreloadPath(),
     },
+    frame: false,
     // show: false,
   });
 
@@ -35,12 +36,28 @@ app.on("ready", () => {
     return getStaticData();
   });
 
+  ipcMainOn("sendFrameAction", (payload) => {
+    switch (payload) {
+      case "MINIMIZE":
+        mainWindow.minimize();
+        break;
+      case "MAXIMIZE":
+        if (mainWindow.isMaximized()) {
+          mainWindow.unmaximize();
+        } else {
+          mainWindow.maximize();
+        }
+        break;
+      case "CLOSE":
+        mainWindow.close();
+        break;
+    }
+  });
+
   createTray(mainWindow);
   createMenu(mainWindow);
   handleCloseEvenets(mainWindow);
-
 });
-
 
 function handleCloseEvenets(mainWindow: BrowserWindow) {
   let willClose = false;
@@ -52,7 +69,7 @@ function handleCloseEvenets(mainWindow: BrowserWindow) {
 
     e.preventDefault();
     mainWindow.hide();
-    if ( app.dock ) {
+    if (app.dock) {
       app.dock.hide();
     }
   });
@@ -61,7 +78,7 @@ function handleCloseEvenets(mainWindow: BrowserWindow) {
     willClose = true;
   });
 
-  mainWindow.on('show', () => {
+  mainWindow.on("show", () => {
     willClose = false;
   });
 }

@@ -6,7 +6,7 @@ import { Chart } from "./Chart";
 
 function App() {
   const [count, setCount] = useState(0);
-  const [activeView, setActiveView] = useState('CPU');
+  const [activeView, setActiveView] = useState("CPU");
   const statistics = useStatistics(10);
   const cpuUsage = useMemo(
     () => statistics.map((s) => s.cpuUsage),
@@ -22,11 +22,11 @@ function App() {
   );
   const activeUsage = useMemo(() => {
     switch (activeView) {
-      case 'CPU':
+      case "CPU":
         return cpuUsage;
-      case 'RAM':
+      case "RAM":
         return ramUsages;
-      case 'STORAGE':
+      case "STORAGE":
         return storageUsages;
       default:
         return [];
@@ -39,6 +39,20 @@ function App() {
 
   return (
     <>
+      <header>
+        <button
+          id="close"
+          onClick={() => window.electron.sendFrameAction("CLOSE")}
+        ></button>
+        <button
+          id="minimize"
+          onClick={() => window.electron.sendFrameAction("MINIMIZE")}
+        ></button>
+        <button
+          id="maximize"
+          onClick={() => window.electron.sendFrameAction("MAXIMIZE")}
+        ></button>
+      </header>
       <div style={{ height: 120 }}>
         <Chart data={activeUsage} maxDataPoints={10} />
       </div>
