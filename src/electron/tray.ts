@@ -1,5 +1,4 @@
-import { app, BrowserWindow, Menu } from "electron";
-import { Tray } from "electron/main";
+import { app, BrowserWindow, Menu, Tray } from "electron";
 import path from "path";
 import { getAssetPath } from "./pathResolver.js";
 
