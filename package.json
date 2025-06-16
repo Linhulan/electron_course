@@ -23,7 +23,8 @@
     "playwright": "^1.51.1",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "recharts": "^2.15.1"
+    "recharts": "^2.15.1",
+    "serialport": "^13.0.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.21.0",
