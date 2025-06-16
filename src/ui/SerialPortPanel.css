@@ -1,0 +1,481 @@
+/* 新的左右分栏布局 */
+.serial-port-panel-layout {
+  display: flex;
+  height: calc(100vh - 60px); /* 减去header高度 */
+  gap: 1rem;
+  padding: 1rem;
+  background-color: #1e1e1e;
+  color: #ffffff;
+  box-sizing: border-box; /* 确保padding不会超出容器 */
+}
+
+/* 左侧配置区域 */
+.serial-port-config-section {
+  flex: 0 0 400px; /* 固定宽度400px */
+  min-width: 350px;
+  max-width: 500px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden; /* 防止内容溢出 */
+}
+
+/* 右侧日志区域 */
+.serial-port-log-section {
+  flex: 1; /* 占用剩余空间 */
+  min-width: 600px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden; /* 防止内容溢出 */
+  min-height: 0; /* 允许flex子元素收缩 */
+}
+
+.serial-port-connection,
+.serial-port-communication {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  min-height: 0; /* 允许flex子元素收缩 */
+}
+
+.serial-port-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 1rem;
+  background-color: #1e1e1e;
+  color: #ffffff;
+  border-radius: 8px;
+  border: 1px solid #333;
+}
+
+.serial-port-connection {
+  background-color: #252525;
+  padding: 1rem;
+  border-radius: 6px;
+  border: 1px solid #404040;
+}
+
+.serial-port-communication {
+  background-color: #252525;
+  padding: 1rem;
+  border-radius: 6px;
+  border: 1px solid #404040;
+  flex: 1;
+}
+
+.serial-port-panel h3 {
+  margin: 0 0 1rem 0;
+  color: #ffffff;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.error-message {
+  background-color: #8b1538;
+  color: #ffffff;
+  padding: 0.75rem;
+  border-radius: 4px;
+  margin-bottom: 1rem;
+  border: 1px solid #d73052;
+  white-space: pre-line;
+  line-height: 1.4;
+  font-size: 0.9rem;
+  max-height: 150px;
+  overflow-y: auto;
+}
+
+.port-selection {
+  margin-bottom: 1rem;
+}
+
+.port-selection label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+}
+
+.port-select-row {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.port-select-row select {
+  flex: 1;
+  padding: 0.5rem;
+  background-color: #333;
+  color: #ffffff;
+  border: 1px solid #555;
+  border-radius: 4px;
+  font-size: 0.9rem;
+}
+
+.port-select-row select:focus {
+  outline: none;
+  border-color: #007acc;
+}
+
+.port-select-row select:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.refresh-btn {
+  padding: 0.5rem;
+  background-color: #007acc;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  min-width: 2.5rem;
+}
+
+.refresh-btn:hover:not(:disabled) {
+  background-color: #005a9e;
+}
+
+.refresh-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.connection-config {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.config-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.config-row label {
+  font-weight: 500;
+  font-size: 0.9rem;
+}
+
+.config-row select {
+  padding: 0.4rem;
+  background-color: #333;
+  color: #ffffff;
+  border: 1px solid #555;
+  border-radius: 4px;
+  font-size: 0.9rem;
+}
+
+.config-row select:focus {
+  outline: none;
+  border-color: #007acc;
+}
+
+.config-row select:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.connection-controls {
+  border-top: 1px solid #404040;
+  padding-top: 1rem;
+}
+
+.connection-status {
+  margin: 1rem 0;
+  padding: 0.75rem;
+  background-color: #2a2a2a;
+  border-radius: 4px;
+  border: 1px solid #404040;
+}
+
+.connection-status .connected {
+  color: #4caf50;
+  font-weight: 500;
+}
+
+.connection-status .disconnected {
+  color: #f44336;
+  font-weight: 500;
+}
+
+.connection-status {
+  margin-bottom: 0.75rem;
+  font-size: 0.9rem;
+}
+
+.connection-buttons {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.connect-btn {
+  padding: 0.5rem 1rem;
+  background-color: #4caf50;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.connect-btn:hover:not(:disabled) {
+  background-color: #45a049;
+}
+
+.connect-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.disconnect-btn {
+  padding: 0.5rem 1rem;
+  background-color: #f44336;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.disconnect-btn:hover:not(:disabled) {
+  background-color: #da190b;
+}
+
+.disconnect-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.data-display-container {
+  margin-bottom: 1rem;
+  flex: 1; /* 恢复flex占用剩余空间 */
+  display: flex;
+  flex-direction: column;
+  min-height: 0; /* 允许flex子元素收缩 */
+}
+
+.data-display-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.data-display-header span {
+  font-weight: 500;
+}
+
+.display-controls {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.hex-mode-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+  cursor: pointer;
+  user-select: none;
+}
+
+.timestamp-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+  cursor: pointer;
+  user-select: none;
+}
+
+.hex-mode-toggle input[type="checkbox"],
+.timestamp-toggle input[type="checkbox"] {
+  margin: 0;
+}
+
+.clear-btn {
+  padding: 0.25rem 0.5rem;
+  background-color: #666;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.8rem;
+}
+
+.clear-btn:hover {
+  background-color: #555;
+}
+
+.data-display {
+  flex: 1; /* 占用容器剩余空间 */
+  min-height: 200px; /* 最小高度 */
+  max-height: 100%; /* 不超过父容器 */
+  overflow-y: auto; /* 内容超出时显示滚动条 */
+  overflow-x: hidden;
+  padding: 0.75rem;
+  background-color: #1a1a1a;
+  border: 1px solid #333;
+  border-radius: 4px;
+  font-family: 'Courier New', monospace;
+  font-size: 0.85rem;
+  line-height: 1.4;
+  white-space: pre-wrap; /* 保留换行符和空格 */
+  word-wrap: break-word; /* 长单词自动换行 */
+  scrollbar-width: thin; /* Firefox滚动条样式 */
+  scrollbar-color: #666 #2a2a2a; /* Firefox滚动条颜色 */
+}
+
+.data-display::-webkit-scrollbar {
+  width: 8px;
+}
+
+.data-display::-webkit-scrollbar-track {
+  background: #2a2a2a;
+}
+
+.data-display::-webkit-scrollbar-thumb {
+  background: #555;
+  border-radius: 4px;
+}
+
+.data-display::-webkit-scrollbar-thumb:hover {
+  background: #666;
+}
+
+.no-data {
+  color: #888;
+  font-style: italic;
+  text-align: center;
+  padding: 2rem 0;
+}
+
+.data-line {
+  margin-bottom: 0.25rem;
+  padding: 0.25rem 0;
+}
+
+.data-line.system {
+  color: #bbbbbb;
+}
+
+.data-line.sent {
+  color: #4caf50;
+}
+
+.data-line.received {
+  color: #2196f3;
+}
+
+.data-line.error {
+  color: #f44336;
+  font-weight: 500;
+}
+
+.data-line.warning {
+  color: #ff9800;
+  font-weight: 500;
+}
+
+.data-line.success {
+  color: #4caf50;
+  font-weight: 500;
+}
+
+.data-line.info {
+  color: #2196f3;
+  font-weight: 400;
+}
+
+.data-line.normal {
+  color: #ffffff;
+}
+
+.send-data-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.send-data-row {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.send-input {
+  flex: 1;
+  padding: 0.5rem;
+  background-color: #333;
+  color: #ffffff;
+  border: 1px solid #555;
+  border-radius: 4px;
+  font-size: 0.9rem;
+}
+
+.send-input:focus {
+  outline: none;
+  border-color: #007acc;
+}
+
+.send-input:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.send-btn {
+  padding: 0.5rem 1rem;
+  background-color: #007acc;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.send-btn:hover:not(:disabled) {
+  background-color: #005a9e;
+}
+
+.send-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.test-btn {
+  padding: 0.5rem 1rem;
+  background-color: #ff9800;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 500;
+  align-self: flex-start;
+}
+
+.test-btn:hover:not(:disabled) {
+  background-color: #f57c00;
+}
+
+.test-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Responsive design for smaller screens */
+@media (max-width: 768px) {
+  .connection-config {
+    grid-template-columns: 1fr;
+  }
+  
+  .port-select-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .send-data-row {
+    flex-direction: column;
+  }
+}

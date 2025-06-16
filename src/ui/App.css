@@ -30,11 +30,20 @@
 
 header {
   width: 100%;
-  text-align: left;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   padding: 0.5rem;
   box-sizing: border-box;
   background-color: #181818;
   -webkit-app-region: drag;
+}
+
+.header-left,
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
 }
 
 header button {
@@ -44,6 +53,23 @@ header button {
   height: 1rem;
   margin: 0.25rem;
   -webkit-app-region: no-drag;
+  cursor: pointer;
+}
+
+.serial-port-toggle {
+  width: 2rem !important;
+  height: 2rem !important;
+  background-color: #333 !important;
+  border-radius: 0.25rem !important;
+  font-size: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s;
+}
+
+.serial-port-toggle:hover {
+  background-color: #555 !important;
 }
 
 #close {
@@ -60,14 +86,25 @@ header button {
 
 .main {
   display: grid;
-  grid-template-columns: 24rem auto;
+  /* grid-template-columns: 24rem auto; */
 }
 
 .mainGrid {
-  height: 120px;
+  height: 100%;
 }
 
-.selectOption {
-  display: block;
-  padding: 0.5rem;
+.serial-port-container {
+  width: 100%;
+  height: auto;
+  min-height: 500px;
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+.app-title {
+  color: #ffffff;
+  font-size: 1rem;
+  font-weight: 600;
+  -webkit-app-region: no-drag;
+  margin-left: 0.5rem;
 }

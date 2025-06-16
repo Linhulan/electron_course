@@ -7,5 +7,9 @@
     "skipLibCheck": true,
     // add global types
     "types": ["../../types.d.ts"]
-  }
+  },
+  "exclude": [
+    "**/*.test.ts",
+    "test-setup.ts"
+  ]
 }

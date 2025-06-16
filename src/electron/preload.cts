@@ -15,12 +15,26 @@ electron.contextBridge.exposeInMainWorld("electron", {
   },
   getStaticData: () => ipcInvoke("getStaticData"),
   sendFrameAction: (payload) => ipcSend("sendFrameAction", payload),
+
+  // Serial Port functions
+  listSerialPorts: () => ipcInvoke("list-serial-ports"),
+  connectSerialPort: (portPath: string, config?: any) =>
+    ipcInvoke("connect-serial-port", portPath, config),
+  disconnectSerialPort: () => ipcInvoke("disconnect-serial-port"),
+  sendSerialData: (data: string) => ipcInvoke("send-serial-data", data),
+  getSerialConnectionStatus: () => ipcInvoke("get-serial-connection-status"),
+  // Serial Port event subscriptions
+  onSerialConnected: (callback: (data: SerialPortConnectionData) => void) => ipcOn("serial-connected", callback),
+  onSerialDisconnected: (callback: () => void) => ipcOn("serial-disconnected", callback),
+  onSerialDataReceived: (callback: (data: SerialDataReceived) => void) => ipcOn("serial-data-received", callback),
+  onSerialError: (callback: (error: SerialError) => void) => ipcOn("serial-error", callback),
 } satisfies Window["electron"]);
 
 function ipcInvoke<Key extends keyof EventPayloadMapping>(
-  key: Key
+  key: Key,
+  ...args: unknown[]
 ): Promise<EventPayloadMapping[Key]> {
-  return electron.ipcRenderer.invoke(key);
+  return electron.ipcRenderer.invoke(key, ...args);
 }
 
 function ipcOn<Key extends keyof EventPayloadMapping>(
