@@ -102,12 +102,30 @@
 
 .port-select-row select {
   flex: 1;
+  max-width: 320px; /* 限制最大宽度 */
+  min-width: 200px; /* 设置最小宽度 */
   padding: 0.5rem;
+  cursor: pointer;
   background-color: #333;
   color: #ffffff;
   border: 1px solid #555;
   border-radius: 4px;
   font-size: 0.9rem;
+  white-space: nowrap; /* 防止文本换行 */
+  overflow: hidden; /* 隐藏溢出内容 */
+  text-overflow: ellipsis; /* 显示省略号 */
+}
+
+/* 下拉选项样式 */
+.port-select-row select option {
+  padding: 0.5rem;
+  cursor: pointer;
+  background-color: #333;
+  color: #ffffff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 350px; /* 下拉菜单可以稍微宽一些 */
 }
 
 .port-select-row select:focus {
@@ -121,23 +139,40 @@
 }
 
 .refresh-btn {
-  padding: 0.5rem;
+  padding: 0.1rem;
   background-color: #007acc;
   color: white;
   border: none;
   border-radius: 4px;
   cursor: pointer;
-  font-size: 0.9rem;
+  font-size: 1.5rem; /* 增大图标字体 */
   min-width: 2.5rem;
+  /* min-height: 2.5rem; 确保按钮高度足够 */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease; /* 添加过渡效果 */
 }
 
 .refresh-btn:hover:not(:disabled) {
   background-color: #005a9e;
+  transform: scale(1.05); /* 轻微放大效果 */
 }
 
 .refresh-btn:disabled {
   opacity: 0.6;
   cursor: not-allowed;
+  transform: none; /* 禁用状态下取消变换 */
+}
+
+/* 加载状态下的旋转动画 */
+.refresh-btn:disabled .refresh-icon {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
 
 .connection-config {
@@ -249,7 +284,7 @@
 }
 
 .data-display-container {
-  margin-bottom: 1rem;
+  margin-bottom: 0; /* 移除底部边距，因为现在有Send Data在下面 */
   flex: 1; /* 恢复flex占用剩余空间 */
   display: flex;
   flex-direction: column;
@@ -398,6 +433,17 @@
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
+  margin-top: 1rem; /* 在日志区域中添加顶部边距 */
+  padding-top: 1rem; /* 添加内边距 */
+  border-top: 1px solid #444; /* 添加分隔线 */
+  flex-shrink: 0; /* 防止收缩 */
+}
+
+.send-data-container h4 {
+  margin: 0 0 0.5rem 0;
+  color: #ffffff;
+  font-size: 1rem;
+  font-weight: 600;
 }
 
 .send-data-row {
@@ -473,9 +519,29 @@
   .port-select-row {
     flex-direction: column;
     align-items: stretch;
+    gap: 0.75rem;
   }
   
-  .send-data-row {
+  .port-select-row select {
+    max-width: none; /* 在移动端移除最大宽度限制 */
+    min-width: none;
+  }
+  
+  .refresh-btn {
+    min-width: 100%; /* 在移动端让刷新按钮占满宽度 */
+    margin-top: 0.5rem;
+  }
+    .send-data-row {
     flex-direction: column;
+    gap: 0.75rem; /* 增加移动端间距 */
+  }
+  
+  .send-data-container {
+    margin-top: 0.75rem; /* 减少移动端顶部间距 */
+    padding-top: 0.75rem;
+  }
+  
+  .data-display {
+    min-height: 150px; /* 移动端减少最小高度 */
   }
 }

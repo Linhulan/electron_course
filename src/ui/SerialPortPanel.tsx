@@ -169,7 +169,6 @@ export const SerialPortPanel: React.FC<SerialPortPanelProps> = ({ className }) =
   const clearDataDisplay = () => {
     setSerialData([]);
   };
-
   const getPortDisplayName = (port: SerialPortInfo): string => {
     return port.displayName || `${port.path} ${port.friendlyName ? `(${port.friendlyName})` : ''}`;
   };
@@ -189,27 +188,25 @@ export const SerialPortPanel: React.FC<SerialPortPanelProps> = ({ className }) =
 
           <div className="port-selection">
             <label htmlFor="port-select">Select Port:</label>
-            <div className="port-select-row">
-              <select
+            <div className="port-select-row">              <select
                 id="port-select"
                 value={selectedPort}
                 onChange={(e) => setSelectedPort(e.target.value)}
                 disabled={connectionStatus.isConnected || isLoading}
+                title={selectedPort ? availablePorts.find(p => p.path === selectedPort)?.displayName || selectedPort : "Select a serial port"}
               >
-                <option value="">-- Select a port --</option>
-                {availablePorts.map((port) => (
-                  <option key={port.path} value={port.path}>
+                <option value="">-- Select a port --</option>                {availablePorts.map((port) => (
+                  <option key={port.path} value={port.path} title={getPortDisplayName(port)}>
                     {getPortDisplayName(port)}
                   </option>
                 ))}
-              </select>
-              <button
+              </select>              <button
                 onClick={refreshPorts}
                 disabled={isLoading}
                 className="refresh-btn"
                 title="Refresh port list"
               >
-                🔄
+                <span className="refresh-icon">🔄</span>
               </button>
             </div>
           </div>
@@ -303,38 +300,7 @@ export const SerialPortPanel: React.FC<SerialPortPanelProps> = ({ className }) =
                 className="disconnect-btn"
               >
                 {isLoading ? 'Disconnecting...' : 'Disconnect'}
-              </button>
-            )}
-          </div>
-
-          <div className="send-data-container">
-            <h4>Send Data</h4>
-            <div className="send-data-row">
-              <input
-                type="text"
-                value={sendMessage}
-                onChange={(e) => setSendMessage(e.target.value)}
-                placeholder="Enter message to send..."
-                disabled={!connectionStatus.isConnected}
-                onKeyPress={(e) => e.key === 'Enter' && handleSendData()}
-                className="send-input"
-              />
-              <button
-                onClick={handleSendData}
-                disabled={!connectionStatus.isConnected || !sendMessage.trim()}
-                className="send-btn"
-              >
-                Send
-              </button>
-            </div>
-            
-            <button
-              onClick={handleSendTestData}
-              disabled={!connectionStatus.isConnected}
-              className="test-btn"
-            >
-              Send Test Data
-            </button>
+              </button>            )}
           </div>
         </div>
       </div>
@@ -388,9 +354,30 @@ export const SerialPortPanel: React.FC<SerialPortPanelProps> = ({ className }) =
                     <div key={index} className={`data-line ${type}`}>
                       <pre style={{ margin: 0, fontFamily: 'inherit' }}>{message}</pre>
                     </div>
-                  );
-                })
+                  );                })
               )}
+            </div>
+          </div>
+
+          {/* Send Data 区域移动到日志区域底部 */}
+          <div className="send-data-container">
+            <div className="send-data-row">
+              <input
+                type="text"
+                value={sendMessage}
+                onChange={(e) => setSendMessage(e.target.value)}
+                placeholder="Enter message to send..."
+                disabled={!connectionStatus.isConnected}
+                onKeyPress={(e) => e.key === 'Enter' && handleSendData()}
+                className="send-input"
+              />
+              <button
+                onClick={handleSendData}
+                disabled={!connectionStatus.isConnected || !sendMessage.trim()}
+                className="send-btn"
+              >
+                Send
+              </button>
             </div>
           </div>
         </div>
