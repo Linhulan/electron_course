@@ -1,8 +1,9 @@
 .counter-dashboard {
   padding: 1.5rem;
-  background: #f8f9fa;
+  background: #1a1a1a;
   min-height: 100vh;
   overflow-y: auto;
+  color: #ffffff;
 }
 
 /* 头部区域 */
@@ -11,10 +12,11 @@
   justify-content: space-between;
   align-items: center;
   margin-bottom: 2rem;
-  background: white;
+  background: #2d2d2d;
   padding: 1.5rem;
   border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  border: 1px solid #404040;
 }
 
 .dashboard-title {
@@ -25,7 +27,7 @@
 
 .dashboard-title h2 {
   margin: 0;
-  color: #2c3e50;
+  color: #ffffff;
   font-size: 1.5rem;
   font-weight: 600;
 }
@@ -35,7 +37,7 @@
   align-items: center;
   gap: 0.5rem;
   font-size: 0.9rem;
-  color: #666;
+  color: #b3b3b3;
 }
 
 .status-indicator {
@@ -57,11 +59,17 @@
 
 .time-range-select {
   padding: 0.5rem 0.75rem;
-  border: 1px solid #ddd;
+  border: 1px solid #555;
   border-radius: 6px;
-  background: white;
+  background: #3a3a3a;
+  color: #ffffff;
   font-size: 0.9rem;
   cursor: pointer;
+}
+
+.time-range-select:focus {
+  outline: none;
+  border-color: #007bff;
 }
 
 .control-btn {
@@ -119,10 +127,11 @@
 }
 
 .stat-card {
-  background: white;
+  background: #2d2d2d;
   padding: 1.5rem;
   border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  border: 1px solid #404040;
   display: flex;
   align-items: center;
   gap: 1rem;
@@ -131,6 +140,7 @@
 
 .stat-card:hover {
   transform: translateY(-2px);
+  border-color: #555;
 }
 
 .stat-icon {
@@ -145,13 +155,13 @@
 .stat-value {
   font-size: 1.5rem;
   font-weight: 600;
-  color: #2c3e50;
+  color: #ffffff;
   margin-bottom: 0.25rem;
 }
 
 .stat-label {
   font-size: 0.85rem;
-  color: #666;
+  color: #b3b3b3;
   font-weight: 500;
 }
 
@@ -195,30 +205,33 @@
 
 /* 数据区域 */
 .data-section {
-  background: white;
+  background: #2d2d2d;
   border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border: 1px solid #404040;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
   overflow: hidden;
 }
 
 .data-section h3 {
   margin: 0;
   padding: 1.5rem;
-  background: #f8f9fa;
-  border-bottom: 1px solid #e9ecef;
-  color: #2c3e50;
+  background: #3a3a3a;
+  border-bottom: 1px solid #555;
+  color: #ffffff;
   font-size: 1.1rem;
 }
 
 .data-list {
   max-height: 500px;
   overflow-y: auto;
+  background: #2d2d2d;
 }
 
 .no-data {
   text-align: center;
   padding: 3rem 1.5rem;
-  color: #666;
+  color: #b3b3b3;
+  background: #2d2d2d;
 }
 
 .no-data-icon {
@@ -254,21 +267,22 @@
 }
 
 .table-header {
-  background: #f8f9fa;
+  background: #3a3a3a;
   font-weight: 600;
   font-size: 0.85rem;
-  color: #495057;
-  border-bottom: 1px solid #e9ecef;
+  color: #ffffff;
+  border-bottom: 1px solid #555;
 }
 
 .table-row {
-  border-bottom: 1px solid #f1f3f4;
+  border-bottom: 1px solid #404040;
   font-size: 0.9rem;
   transition: background-color 0.2s;
+  color: #ffffff;
 }
 
 .table-row:hover {
-  background: #f8f9fa;
+  background: #404040;
 }
 
 .table-row:last-child {
