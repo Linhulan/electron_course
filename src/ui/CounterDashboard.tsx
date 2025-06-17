@@ -43,11 +43,17 @@ interface CounterDashboardProps {
   className?: string;
 }
 
-// 串口协议解析工具函数
-const parseSerialProtocolData = (hexData: string): SerialProtocolData | null => {
+// 串口协议解析工具函数 - 增强粘包处理
+const parseSerialProtocolData = (hexData: string, isCompletePacket?: boolean): SerialProtocolData | null => {
   try {
     // 移除空格并转换为大写
     const cleanHex = hexData.replace(/\s+/g, '').toUpperCase();
+    
+    // 如果不是完整包且数据较短，可能是分包，不进行解析
+    if (!isCompletePacket && cleanHex.length < 88) {
+      console.log('Incomplete packet detected, waiting for more data');
+      return null;
+    }
     
     // 检查数据长度是否足够 (最少44字节 = 88个十六进制字符)
     if (cleanHex.length < 88) {
@@ -55,10 +61,72 @@ const parseSerialProtocolData = (hexData: string): SerialProtocolData | null => 
       return null;
     }
 
+    // 处理粘包情况：如果数据很长，可能包含多个协议包
+    const protocols = extractMultipleProtocols(cleanHex);
+    
+    // 返回第一个有效的协议包
+    for (const protocolHex of protocols) {
+      const result = parseSingleProtocol(protocolHex);
+      if (result) {
+        return result;
+      }
+    }
+    
+    return null;
+  } catch (error) {
+    console.error('Error parsing serial protocol data:', error);
+    return null;
+  }
+};
+
+// 从十六进制字符串中提取多个协议包
+const extractMultipleProtocols = (hexData: string): string[] => {
+  const protocols: string[] = [];
+  let position = 0;
+  
+  while (position < hexData.length) {
+    // 查找协议头 FDDF
+    const headerIndex = hexData.indexOf('FDDF', position);
+    if (headerIndex === -1) {
+      break; // 没有找到更多协议头
+    }
+    
+    // 检查是否有足够的数据来读取长度字段
+    if (headerIndex + 4 >= hexData.length) {
+      break;
+    }
+    
+    // 读取长度字段（第3个字节，即位置 headerIndex + 4 和 headerIndex + 5）
+    const lengthHex = hexData.substr(headerIndex + 4, 2);
+    const packetLength = parseInt(lengthHex, 16);
+    const totalPacketLength = (packetLength + 4) * 2; // 转换为十六进制字符数
+    
+    // 检查是否有完整的协议包
+    if (headerIndex + totalPacketLength <= hexData.length) {
+      const protocolHex = hexData.substr(headerIndex, totalPacketLength);
+      protocols.push(protocolHex);
+      position = headerIndex + totalPacketLength;
+    } else {
+      // 不完整的包，停止处理
+      break;
+    }
+  }
+  
+  // 如果没有找到完整的协议包，返回整个数据进行尝试解析
+  if (protocols.length === 0) {
+    protocols.push(hexData);
+  }
+  
+  return protocols;
+};
+
+// 解析单个协议包
+const parseSingleProtocol = (hexData: string): SerialProtocolData | null => {
+  try {
     // 将十六进制字符串转换为字节数组
     const bytes: number[] = [];
-    for (let i = 0; i < cleanHex.length; i += 2) {
-      bytes.push(parseInt(cleanHex.substr(i, 2), 16));
+    for (let i = 0; i < hexData.length; i += 2) {
+      bytes.push(parseInt(hexData.substr(i, 2), 16));
     }
 
     // 检查协议头
@@ -111,7 +179,7 @@ const parseSerialProtocolData = (hexData: string): SerialProtocolData | null => 
       crc
     };
   } catch (error) {
-    console.error('Error parsing serial protocol data:', error);
+    console.error('Error parsing single protocol:', error);
     return null;
   }
 };
@@ -180,14 +248,14 @@ export const CounterDashboard: React.FC<CounterDashboardProps> = ({ className })
       unsubscribeDisconnected();
     };
   }, []);
-
-  // 监听串口数据并解析协议
+  // 监听串口数据并解析协议 - 增强粘包处理
   useEffect(() => {
     const unsubscribeDataReceived = window.electron.onSerialDataReceived((data) => {
       // 只处理十六进制数据
       if (data.hexData && isConnected) {
         try {
-          const protocolData = parseSerialProtocolData(data.hexData);
+          // 使用新的解析函数，传递isCompletePacket标识
+          const protocolData = parseSerialProtocolData(data.hexData, data.isCompletePacket);
           if (protocolData) {
             // 检查是否为点钞数据 (CMD-G = 0x0E)
             if (protocolData.cmdGroup === 0x0E) {
@@ -195,7 +263,7 @@ export const CounterDashboard: React.FC<CounterDashboardProps> = ({ className })
               setCurrentSession(counterData);
               setCounterData(prev => [counterData, ...prev].slice(0, 50)); // 保留最近50条记录
               
-              console.log('Parsed counter data:', counterData);
+              console.log('Parsed counter data from', data.isCompletePacket ? 'complete packet' : 'raw data', ':', counterData);
             }
           }
         } catch (error) {

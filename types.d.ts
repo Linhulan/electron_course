@@ -30,6 +30,7 @@ type SerialDataReceived = {
   rawBuffer: number[];
   timestamp: string;
   messageType: 'normal' | 'warning' | 'error' | 'success' | 'info';
+  isCompletePacket?: boolean; // 标识是否为完整的协议包
 };
 
 type SerialError = {

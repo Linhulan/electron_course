@@ -104,9 +104,15 @@ export const SerialPortPanel: React.FC<SerialPortPanelProps> = ({ className }) =
       addToDataDisplay('Disconnected from serial port', 'system');
     });    const unsubscribeDataReceived = window.electron.onSerialDataReceived((data) => {
       // 根据时间戳开关决定显示格式
-      const displayText = showTimestamp 
+      let displayText = showTimestamp 
         ? (isHexMode ? `${data.timestamp}:${data.hexData}` : `${data.timestamp}:${data.data}`)
         : (isHexMode ? data.hexData : data.data);
+      
+      // 如果是完整的协议包，添加标识
+      if (data.isCompletePacket) {
+        displayText += ' [完整协议包]';
+      }
+      
       // 使用从后端传来的messageType
       addToDataDisplay(displayText, data.messageType as 'system' | 'sent' | 'received' | 'error' | 'warning' | 'success' | 'info' | 'normal', true);
     });
@@ -320,8 +326,7 @@ export const SerialPortPanel: React.FC<SerialPortPanelProps> = ({ className }) =
         <div className="serial-port-communication">
           <h3>{t('serialPort.receiveData')}</h3>
           
-          <div className="data-display-container">
-            <div className="data-display-header">
+          <div className="data-display-container">            <div className="data-display-header">
               <span>{t('serialPort.receiveData')}</span>              <div className="display-controls">
                 <label className="hex-mode-toggle">
                   <input
@@ -330,6 +335,9 @@ export const SerialPortPanel: React.FC<SerialPortPanelProps> = ({ className }) =
                     onChange={(e) => setIsHexMode(e.target.checked)}
                   />
                   {t('serialPort.hexMode')}
+                  <small className="mode-hint">
+                    {isHexMode ? '(原始模式-支持粘包处理)' : '(行模式-适用文本数据)'}
+                  </small>
                 </label>
                 <label className="timestamp-toggle">
                   <input
@@ -341,7 +349,7 @@ export const SerialPortPanel: React.FC<SerialPortPanelProps> = ({ className }) =
                 </label>
                 <button onClick={clearDataDisplay} className="clear-btn">{t('common.clear')}</button>
               </div>
-            </div>            <div className="data-display" ref={dataDisplayRef}>
+            </div><div className="data-display" ref={dataDisplayRef}>
               {serialData.length === 0 ? (
                 <div className="no-data">{t('common.noData')}...</div>
               ) : (

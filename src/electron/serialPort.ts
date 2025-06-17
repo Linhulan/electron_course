@@ -43,6 +43,11 @@ export class SerialPortManager {
   private hexBuffer: Buffer = Buffer.alloc(0); // 用于hex数据缓冲
   private dataTimeout: NodeJS.Timeout | null = null; // 用于延时发送缓冲数据
   private useRawMode = false; // 是否使用原始数据模式（hex模式）
+  
+  // 粘包处理相关
+  private protocolBuffer: Buffer = Buffer.alloc(0); // 协议数据缓冲区
+  private readonly PROTOCOL_HEADER = [0xFD, 0xDF]; // 协议头标识
+  private readonly MIN_PROTOCOL_LENGTH = 44; // 最小协议包长度
 
   constructor(mainWindow: BrowserWindow) {
     this.mainWindow = mainWindow;
@@ -238,14 +243,14 @@ export class SerialPortManager {
       this.parser.removeAllListeners();
       this.parser = null;
     }
-    
-    // 清理缓冲区（保留以防万一）
+      // 清理缓冲区（保留以防万一）
     if (this.dataTimeout) {
       clearTimeout(this.dataTimeout);
       this.dataTimeout = null;
     }
     this.dataBuffer = '';
     this.hexBuffer = Buffer.alloc(0);
+    this.protocolBuffer = Buffer.alloc(0); // 清理协议缓冲区
     
     if (this.serialPort && this.isConnected) {
       return new Promise((resolve, reject) => {
@@ -362,25 +367,32 @@ export class SerialPortManager {
     // 设置公共的错误和关闭事件监听器
     this.setupCommonListeners();
   }
-
   /**
-   * 设置原始数据监听器（hex模式）
+   * 设置原始数据监听器（hex模式）- 增强粘包处理
    */
   private setupRawDataListeners(): void {
     if (!this.serialPort) return;
 
     this.serialPort.on('data', (data: Buffer) => {
-      this.hexBuffer = Buffer.concat([this.hexBuffer, data]);
+      // 将新数据追加到协议缓冲区
+      this.protocolBuffer = Buffer.concat([this.protocolBuffer, data]);
       
-      // 清除之前的定时器
+      // 处理粘包：从缓冲区中提取完整的协议包
+      this.processProtocolPackets();
+      
+      // 设置超时清理：如果缓冲区长时间没有新数据，可能是残留的无效数据
       if (this.dataTimeout) {
         clearTimeout(this.dataTimeout);
       }
       
-      // 设置50ms延时，收集连续数据后统一发送
       this.dataTimeout = setTimeout(() => {
-        this.flushHexBuffer();
-      }, 50);
+        // 如果缓冲区中还有数据但无法组成完整包，可能是无效数据
+        if (this.protocolBuffer.length > 0) {
+          console.warn('Protocol buffer timeout, clearing incomplete data:', 
+            this.protocolBuffer.toString('hex'));
+          this.protocolBuffer = Buffer.alloc(0);
+        }
+      }, 1000); // 1秒超时
     });
   }
 
@@ -456,10 +468,10 @@ export class SerialPortManager {
       if (this.parser) {
         this.parser.removeAllListeners();
         this.parser = null;
-      }
-      // 清理缓冲区
+      }      // 清理缓冲区
       this.hexBuffer = Buffer.alloc(0);
       this.dataBuffer = '';
+      this.protocolBuffer = Buffer.alloc(0); // 清理协议缓冲区
       if (this.dataTimeout) {
         clearTimeout(this.dataTimeout);
         this.dataTimeout = null;
@@ -571,6 +583,148 @@ export class SerialPortManager {
    */
   private formatHexString(hexString: string): string {
     return hexString.replace(/(.{2})/g, '$1 ').trim();
+  }
+
+  /**
+   * 处理协议包：从缓冲区中提取完整的协议包，处理粘包和分包情况
+   */
+  private processProtocolPackets(): void {
+    while (this.protocolBuffer.length >= this.MIN_PROTOCOL_LENGTH) {
+      // 查找协议头位置
+      const headerIndex = this.findProtocolHeader();
+      
+      if (headerIndex === -1) {
+        // 没有找到协议头，清空缓冲区中的无效数据
+        console.warn('No valid protocol header found, clearing buffer');
+        this.protocolBuffer = Buffer.alloc(0);
+        break;
+      }
+      
+      if (headerIndex > 0) {
+        // 协议头不在开头，移除前面的无效数据
+        console.warn(`Removing ${headerIndex} bytes of invalid data before header`);
+        this.protocolBuffer = this.protocolBuffer.subarray(headerIndex);
+      }
+      
+      // 检查是否有足够的数据来读取长度字段
+      if (this.protocolBuffer.length < 3) {
+        break; // 等待更多数据
+      }
+      
+      // 读取数据包长度（第3个字节）
+      const packetLength = this.protocolBuffer[2];
+      const totalPacketLength = packetLength; // 包括CRC等额外字段
+      
+      // 检查是否有完整的数据包
+      if (this.protocolBuffer.length < totalPacketLength) {
+        break; // 等待更多数据
+      }
+      
+      // 提取完整的协议包
+      const completePacket = this.protocolBuffer.subarray(0, totalPacketLength);
+      
+      // 验证协议包完整性
+      if (this.validateProtocolPacket(completePacket)) {
+        // 发送完整的协议包到前端
+        this.sendProtocolPacketToFrontend(completePacket);
+      } else {
+        console.warn('Invalid protocol packet detected');
+      }
+      
+      // 从缓冲区移除已处理的数据包
+      this.protocolBuffer = this.protocolBuffer.subarray(totalPacketLength);
+    }
+  }
+
+  /**
+   * 查找协议头位置
+   */
+  private findProtocolHeader(): number {
+    for (let i = 0; i <= this.protocolBuffer.length - 2; i++) {
+      if (this.protocolBuffer[i] === this.PROTOCOL_HEADER[0] && 
+          this.protocolBuffer[i + 1] === this.PROTOCOL_HEADER[1]) {
+        return i;
+      }
+    }
+    return -1;
+  }
+
+  /**
+   * 验证协议包完整性
+   */
+  private validateProtocolPacket(packet: Buffer): boolean {
+    try {
+      // 基本长度检查
+      if (packet.length < this.MIN_PROTOCOL_LENGTH) {
+        console.warn(`Packet too short: expected at least ${this.MIN_PROTOCOL_LENGTH} bytes, got ${packet.length}`);
+        return false;
+      }
+      
+      // 协议头检查
+      if (packet[0] !== this.PROTOCOL_HEADER[0] || packet[1] !== this.PROTOCOL_HEADER[1]) {
+        console.warn(`Invalid protocol header: expected=${this.PROTOCOL_HEADER}, got=${packet.subarray(0, 2)}`);
+        return false;
+      }
+      
+      // 长度字段检查
+      const declaredLength = packet[2];
+      if (packet.length < declaredLength) {
+        console.warn(`Declared length ${declaredLength} exceeds actual packet length ${packet.length}`);
+        return false;
+      }
+      
+      // CRC校验（简单版本，可以根据实际协议扩展）
+      const crcIndex = packet.length - 1;
+      const declaredCrc = packet[crcIndex];
+      const calculatedCrc = this.calculateSimpleCrc(packet.subarray(0, crcIndex));
+      
+      if (declaredCrc !== calculatedCrc) {
+        console.warn(`CRC mismatch: declared=${declaredCrc}, calculated=${calculatedCrc}`);
+        // 注意：根据实际情况，可能需要容忍CRC错误或使用不同的CRC算法
+        // return false;
+      }
+      
+      return true;
+    } catch (error) {
+      console.error('Error validating protocol packet:', error);
+      return false;
+    }
+  }
+
+  /**
+   * 计算简单的CRC校验（可根据实际协议调整）
+   */
+  private calculateSimpleCrc(data: Buffer): number {
+    let crc = 0;
+    for (let i = 0; i < data.length; i++) {
+      crc ^= data[i];
+      for (let j = 0; j < 8; j++) {
+        if (crc & 0x80) {
+          crc = (crc << 1) ^ 0x31;
+        } else {
+          crc <<= 1;
+        }
+      }
+    }
+    return crc & 0xFF;
+  }
+
+  /**
+   * 发送协议包到前端
+   */
+  private sendProtocolPacketToFrontend(packet: Buffer): void {
+    const timestamp = new Date().toLocaleTimeString();
+    const hexData = packet.toString('hex').toUpperCase();
+    const formattedHexData = this.formatHexString(hexData);
+    const data = packet.toString(); // 尝试转换为字符串显示    console.log('Complete protocol packet received:', formattedHexData);
+    ipcWebContentsSend('serial-data-received', this.mainWindow.webContents, {
+      data: data,
+      hexData: formattedHexData,
+      rawBuffer: Array.from(packet),
+      timestamp: `[${timestamp}]`,
+      messageType: 'info', // 使用info类型标识协议数据
+      isCompletePacket: true // 标识这是一个完整的协议包
+    });
   }
 }
 
