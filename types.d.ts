@@ -74,6 +74,7 @@ type EventPayloadMapping = {
   "disconnect-serial-port": void;
   "send-serial-data": void;
   "get-serial-connection-status": SerialConnectionStatus;
+  "set-serial-receive-mode": boolean;
 };
 
 type UnsubscribeFunction = () => void;
@@ -90,13 +91,13 @@ interface Window {
 
     getStaticData: () => Promise<StaticData>;
     sendFrameAction: (payload: FrameWindowAction) => void;
-    
-    // Serial Port functions
+      // Serial Port functions
     listSerialPorts: () => Promise<SerialPortInfo[]>;
     connectSerialPort: (portPath: string, config?: SerialPortConfig) => Promise<boolean>;
     disconnectSerialPort: () => Promise<void>;
     sendSerialData: (data: string) => Promise<void>;
     getSerialConnectionStatus: () => Promise<SerialConnectionStatus>;
+    setSerialReceiveMode: (useRawMode: boolean) => Promise<boolean>;
     
     // Serial Port event subscriptions
     onSerialConnected: (callback: (data: SerialPortConnectionData) => void) => UnsubscribeFunction;

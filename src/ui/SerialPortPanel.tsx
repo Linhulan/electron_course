@@ -45,6 +45,20 @@ export const SerialPortPanel: React.FC<SerialPortPanelProps> = ({ className }) =
     }, 100);
   }, []);
 
+  // 监听HexMode变化，更新接收模式
+  useEffect(() => {
+    const updateReceiveMode = async () => {
+      try {
+        await window.electron.setSerialReceiveMode(isHexMode);
+        console.log(`Serial receive mode set to: ${isHexMode ? 'Raw (Hex)' : 'Line (Text)'}`);
+      } catch (error) {
+        console.error('Failed to set serial receive mode:', error);
+      }
+    };
+
+    updateReceiveMode();
+  }, [isHexMode]);
+
   const refreshPorts = useCallback(async () => {
     try {
       setIsLoading(true);

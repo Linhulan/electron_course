@@ -15,7 +15,6 @@ electron.contextBridge.exposeInMainWorld("electron", {
   },
   getStaticData: () => ipcInvoke("getStaticData"),
   sendFrameAction: (payload) => ipcSend("sendFrameAction", payload),
-
   // Serial Port functions
   listSerialPorts: () => ipcInvoke("list-serial-ports"),
   connectSerialPort: (portPath: string, config?: any) =>
@@ -23,6 +22,7 @@ electron.contextBridge.exposeInMainWorld("electron", {
   disconnectSerialPort: () => ipcInvoke("disconnect-serial-port"),
   sendSerialData: (data: string) => ipcInvoke("send-serial-data", data),
   getSerialConnectionStatus: () => ipcInvoke("get-serial-connection-status"),
+  setSerialReceiveMode: (useRawMode: boolean) => ipcInvoke("set-serial-receive-mode", useRawMode),
   // Serial Port event subscriptions
   onSerialConnected: (callback: (data: SerialPortConnectionData) => void) => ipcOn("serial-connected", callback),
   onSerialDisconnected: (callback: () => void) => ipcOn("serial-disconnected", callback),

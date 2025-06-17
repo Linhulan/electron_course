@@ -39,9 +39,10 @@ export class SerialPortManager {
   private parser: ReadlineParser | null = null;
   private mainWindow: BrowserWindow;
   private isConnected = false;
-  private dataBuffer: string = ''; // 保留用于非读行模式
-  private hexBuffer: Buffer = Buffer.alloc(0); // 保留用于hex显示
-  private dataTimeout: NodeJS.Timeout | null = null; // 保留以防万一
+  private dataBuffer: string = ''; // 用于缓冲原始数据
+  private hexBuffer: Buffer = Buffer.alloc(0); // 用于hex数据缓冲
+  private dataTimeout: NodeJS.Timeout | null = null; // 用于延时发送缓冲数据
+  private useRawMode = false; // 是否使用原始数据模式（hex模式）
 
   constructor(mainWindow: BrowserWindow) {
     this.mainWindow = mainWindow;
@@ -296,12 +297,60 @@ export class SerialPortManager {
   }
 
   /**
-   * 设置事件监听器
-   */  private setupEventListeners(): void {
+   * 设置事件监听器   */  private setupEventListeners(): void {
+    if (!this.serialPort) return;
+
+    // 清除之前的监听器
+    this.serialPort.removeAllListeners('data');
+    if (this.parser) {
+      this.parser.removeAllListeners('data');
+      this.parser.destroy();
+      this.parser = null;
+    }
+
+    if (this.useRawMode) {
+      // 原始数据模式 - 适合hex数据接收
+      this.setupRawDataListeners();
+    } else {
+      // 行模式 - 适合文本数据接收
+      this.setupLineDataListeners();
+    }
+
+    // 设置公共的错误和关闭事件监听器
+    this.setupCommonListeners();
+  }
+
+  /**
+   * 设置原始数据监听器（hex模式）
+   */
+  private setupRawDataListeners(): void {
+    if (!this.serialPort) return;
+
+    this.serialPort.on('data', (data: Buffer) => {
+      this.hexBuffer = Buffer.concat([this.hexBuffer, data]);
+      
+      // 清除之前的定时器
+      if (this.dataTimeout) {
+        clearTimeout(this.dataTimeout);
+      }
+      
+      // 设置50ms延时，收集连续数据后统一发送
+      this.dataTimeout = setTimeout(() => {
+        this.flushHexBuffer();
+      }, 50);
+    });
+  }
+
+  /**
+   * 设置行数据监听器（文本模式）
+   */
+  private setupLineDataListeners(): void {
     if (!this.serialPort) return;
 
     // 创建读行解析器
-    this.parser = this.serialPort.pipe(new ReadlineParser({ delimiter: '\r\n' }));    // 监听解析后的行数据
+    this.parser = this.serialPort.pipe(new ReadlineParser({ delimiter: '\r\n' }));
+    
+    // 监听解析后的行数据
     this.parser.on('data', (line: string) => {
       const timestamp = new Date().toLocaleTimeString();
       
@@ -317,12 +366,37 @@ export class SerialPortManager {
         messageType: messageType
       });
     });
+  }
 
-    // 监听原始数据以获取hex信息（用于非完整行的数据）
-    this.serialPort.on('data', (data: Buffer) => {
-      // 这里可以处理非完整行的数据，暂时只用于调试
-      console.log('Raw data received:', data.toString('hex'));
+  /**
+   * 刷新hex缓冲区，发送数据到前端
+   */
+  private flushHexBuffer(): void {
+    if (this.hexBuffer.length === 0) return;
+
+    const timestamp = new Date().toLocaleTimeString();
+    const hexData = this.hexBuffer.toString('hex').toUpperCase();
+    const data = this.hexBuffer.toString(); // 尝试转换为字符串显示
+
+    // 对于原始数据，我们不进行消息类型识别，统一为normal
+    console.log('Received raw data:', hexData);
+    ipcWebContentsSend('serial-data-received', this.mainWindow.webContents, {
+      data: data,
+      hexData: hexData,
+      rawBuffer: Array.from(this.hexBuffer),
+      timestamp: `[${timestamp}]`,
+      messageType: 'normal'
     });
+
+    // 清空缓冲区
+    this.hexBuffer = Buffer.alloc(0);
+  }
+
+  /**
+   * 设置公共事件监听器
+   */
+  private setupCommonListeners(): void {
+    if (!this.serialPort) return;
 
     // 串口错误
     this.serialPort.on('error', (error) => {
@@ -337,7 +411,15 @@ export class SerialPortManager {
       console.log('Serial port closed');
       this.isConnected = false;
       if (this.parser) {
+        this.parser.removeAllListeners();
         this.parser = null;
+      }
+      // 清理缓冲区
+      this.hexBuffer = Buffer.alloc(0);
+      this.dataBuffer = '';
+      if (this.dataTimeout) {
+        clearTimeout(this.dataTimeout);
+        this.dataTimeout = null;
       }
       ipcWebContentsSend('serial-disconnected', this.mainWindow.webContents, {});
     });
@@ -423,6 +505,21 @@ export class SerialPortManager {
     
     // 默认为普通消息
     return 'normal';
+  }
+
+  /**
+   * 设置数据接收模式
+   * @param useRawMode true为原始数据模式（适合hex），false为行模式（适合文本）
+   */
+  public setReceiveMode(useRawMode: boolean): void {
+    if (this.useRawMode === useRawMode) return; // 模式未改变，直接返回
+    
+    this.useRawMode = useRawMode;
+    
+    // 如果串口已连接，重新设置事件监听器
+    if (this.isConnected && this.serialPort) {
+      this.setupEventListeners();
+    }
   }
 }
 

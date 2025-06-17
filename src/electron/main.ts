@@ -78,6 +78,12 @@ app.on("ready", async () => {
     return serialPortManager.getConnectionStatus();
   });
 
+  ipcMainHandle("set-serial-receive-mode", (...args: unknown[]) => {
+    const [useRawMode] = args as [boolean];
+    serialPortManager.setReceiveMode(useRawMode);
+    return true;
+  });
+
   createTray(mainWindow);
   createMenu(mainWindow);
   handleCloseEvenets(mainWindow);
