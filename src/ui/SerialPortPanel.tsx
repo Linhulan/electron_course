@@ -12,9 +12,9 @@ export const SerialPortPanel: React.FC<SerialPortPanelProps> = ({ className }) =
   const [serialData, setSerialData] = useState<string[]>([]);
   const [sendMessage, setSendMessage] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [error, setError] = useState<string>('');
-  const [isHexMode, setIsHexMode] = useState<boolean>(false);
+  const [error, setError] = useState<string>('');  const [isHexMode, setIsHexMode] = useState<boolean>(false);
   const [showTimestamp, setShowTimestamp] = useState<boolean>(true);
+  const [isHexSendMode, setIsHexSendMode] = useState<boolean>(false); // 发送模式：false=文本，true=十六进制
   const [config, setConfig] = useState<SerialPortConfig>({
     baudRate: 115200,
     dataBits: 8,
@@ -150,39 +150,38 @@ export const SerialPortPanel: React.FC<SerialPortPanelProps> = ({ className }) =
       setIsLoading(false);
     }
   };
-
   const handleSendData = async () => {
-    if (!sendMessage.trim()) return;
-
-    try {
+    if (!sendMessage.trim()) return;    try {
       setError('');
-      await window.electron.sendSerialData(sendMessage);
-      const timestamp = new Date().toLocaleTimeString();
-      addToDataDisplay(`[${timestamp}]:${sendMessage}`, 'sent');
+        if (isHexSendMode) {
+        // 发送十六进制数据
+        await window.electron.sendSerialHexData(sendMessage);
+        const formattedHex = formatHexString(sendMessage);
+        addToDataDisplay(`${formattedHex} (HEX)`, 'sent');
+      } else {
+        // 发送文本数据
+        await window.electron.sendSerialData(sendMessage);
+        addToDataDisplay(`${sendMessage}`, 'sent');
+      }
+      
       setSendMessage('');
     } catch (err) {
       setError(`Failed to send data: ${err}`);
     }
   };
 
-  const handleSendTestData = async () => {
-    const testMessages = [
-      'Hello Serial Port!',
-      'Test Message 1',
-      'Test Message 2',
-      'AT+VERSION?'
-    ];
-
-    for (const message of testMessages) {
-      setSendMessage(message);
-      await new Promise(resolve => setTimeout(resolve, 500)); // Wait 500ms between messages
-      await handleSendData();
-    }
-  };
-
   const clearDataDisplay = () => {
     setSerialData([]);
   };
+
+  // 格式化十六进制字符串，每两个字符之间添加空格
+  const formatHexString = (hexString: string): string => {
+    // 移除空格和其他分隔符，只保留十六进制字符
+    const cleanHex = hexString.replace(/[^0-9A-Fa-f]/g, '');
+    // 每两个字符之间添加空格
+    return cleanHex.replace(/(.{2})/g, '$1 ').trim();
+  };
+
   const getPortDisplayName = (port: SerialPortInfo): string => {
     return port.displayName || `${port.path} ${port.friendlyName ? `(${port.friendlyName})` : ''}`;
   };
@@ -371,16 +370,28 @@ export const SerialPortPanel: React.FC<SerialPortPanelProps> = ({ className }) =
                   );                })
               )}
             </div>
-          </div>
-
-          {/* Send Data 区域移动到日志区域底部 */}
+          </div>          {/* Send Data 区域移动到日志区域底部 */}
           <div className="send-data-container">
+            <h4>Send Data</h4>
+            
+            {/* 发送模式切换 */}
+            <div className="send-mode-controls">
+              <label className="send-mode-toggle">
+                <input
+                  type="checkbox"
+                  checked={isHexSendMode}
+                  onChange={(e) => setIsHexSendMode(e.target.checked)}
+                />
+                Hex Send Mode
+              </label>
+            </div>
+            
             <div className="send-data-row">
               <input
                 type="text"
                 value={sendMessage}
                 onChange={(e) => setSendMessage(e.target.value)}
-                placeholder="Enter message to send..."
+                placeholder={isHexSendMode ? "Enter hex data (e.g. 48656C6C6F or 48 65 6C 6C 6F)..." : "Enter message to send..."}
                 disabled={!connectionStatus.isConnected}
                 onKeyPress={(e) => e.key === 'Enter' && handleSendData()}
                 className="send-input"
@@ -390,8 +401,28 @@ export const SerialPortPanel: React.FC<SerialPortPanelProps> = ({ className }) =
                 disabled={!connectionStatus.isConnected || !sendMessage.trim()}
                 className="send-btn"
               >
-                Send
+                Send {isHexSendMode ? 'Hex' : 'Text'}
               </button>
+            </div>
+            
+            {/* 测试数据按钮 */}
+            <div className="test-data-buttons">
+              <button
+                onClick={() => setSendMessage(isHexSendMode ? '48656C6C6F' : 'Hello')}
+                disabled={!connectionStatus.isConnected}
+                className="test-btn"
+              >
+                {isHexSendMode ? 'Test Hex (Hello)' : 'Test Text (Hello)'}
+              </button>
+              {isHexSendMode && (
+                <button
+                  onClick={() => setSendMessage('0A0D')}
+                  disabled={!connectionStatus.isConnected}
+                  className="test-btn"
+                >
+                  Test CRLF (0A0D)
+                </button>
+              )}
             </div>
           </div>
         </div>

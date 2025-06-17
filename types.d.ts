@@ -69,10 +69,10 @@ type EventPayloadMapping = {
   "serial-disconnected": Record<string, never>;
   "serial-data-received": SerialDataReceived;
   "serial-error": SerialError;
-  "list-serial-ports": SerialPortInfo[];
-  "connect-serial-port": boolean;
+  "list-serial-ports": SerialPortInfo[];  "connect-serial-port": boolean;
   "disconnect-serial-port": void;
   "send-serial-data": void;
+  "send-serial-hex-data": void;
   "get-serial-connection-status": SerialConnectionStatus;
   "set-serial-receive-mode": boolean;
 };
@@ -93,9 +93,9 @@ interface Window {
     sendFrameAction: (payload: FrameWindowAction) => void;
       // Serial Port functions
     listSerialPorts: () => Promise<SerialPortInfo[]>;
-    connectSerialPort: (portPath: string, config?: SerialPortConfig) => Promise<boolean>;
-    disconnectSerialPort: () => Promise<void>;
+    connectSerialPort: (portPath: string, config?: SerialPortConfig) => Promise<boolean>;    disconnectSerialPort: () => Promise<void>;
     sendSerialData: (data: string) => Promise<void>;
+    sendSerialHexData: (hexString: string) => Promise<void>;
     getSerialConnectionStatus: () => Promise<SerialConnectionStatus>;
     setSerialReceiveMode: (useRawMode: boolean) => Promise<boolean>;
     

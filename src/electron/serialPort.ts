@@ -287,6 +287,49 @@ export class SerialPortManager {
   }
 
   /**
+   * 发送十六进制字符串数据到串口
+   * @param hexString 十六进制字符串，如 "48656C6C6F" 或 "48 65 6C 6C 6F"
+   */
+  async sendHexData(hexString: string): Promise<void> {
+    if (!this.serialPort || !this.isConnected) {
+      throw new Error('Serial port is not connected');
+    }
+
+    try {
+      // 移除空格和其他分隔符，只保留十六进制字符
+      const cleanHex = hexString.replace(/[^0-9A-Fa-f]/g, '');
+      
+      // 检查是否为有效的十六进制字符串
+      if (cleanHex.length === 0) {
+        throw new Error('Invalid hex string: no valid hex characters found');
+      }
+      
+      // 确保长度为偶数（每两个字符表示一个字节）
+      if (cleanHex.length % 2 !== 0) {
+        throw new Error('Invalid hex string: length must be even');
+      }
+
+      // 转换为Buffer
+      const buffer = Buffer.from(cleanHex, 'hex');
+      
+      return new Promise((resolve, reject) => {
+        this.serialPort!.write(buffer, (error) => {
+          if (error) {
+            console.error('Error sending hex data:', error);
+            reject(error);
+          } else {
+            console.log('Hex data sent:', cleanHex, '-> Buffer:', Array.from(buffer));
+            resolve();
+          }
+        });
+      });
+    } catch (error) {
+      console.error('Error processing hex data:', error);
+      throw error;
+    }
+  }
+
+  /**
    * 获取连接状态
    */
   getConnectionStatus(): { isConnected: boolean; portPath?: string } {
@@ -356,11 +399,11 @@ export class SerialPortManager {
       
       // 识别消息类型
       const messageType = this.identifyMessageType(line);
-      
-      console.log('Received line:', line);
+        console.log('Received line:', line);
+      const rawHexData = Buffer.from(line).toString('hex').toUpperCase();
       ipcWebContentsSend('serial-data-received', this.mainWindow.webContents, {
         data: line,
-        hexData: Buffer.from(line).toString('hex').toUpperCase(),
+        hexData: this.formatHexString(rawHexData), // 格式化hex数据
         rawBuffer: Array.from(Buffer.from(line)),
         timestamp: `[${timestamp}]`,
         messageType: messageType
@@ -370,19 +413,19 @@ export class SerialPortManager {
 
   /**
    * 刷新hex缓冲区，发送数据到前端
-   */
-  private flushHexBuffer(): void {
+   */  private flushHexBuffer(): void {
     if (this.hexBuffer.length === 0) return;
 
     const timestamp = new Date().toLocaleTimeString();
     const hexData = this.hexBuffer.toString('hex').toUpperCase();
+    const formattedHexData = this.formatHexString(hexData); // 格式化hex数据
     const data = this.hexBuffer.toString(); // 尝试转换为字符串显示
 
     // 对于原始数据，我们不进行消息类型识别，统一为normal
-    console.log('Received raw data:', hexData);
+    console.log('Received raw data:', formattedHexData);
     ipcWebContentsSend('serial-data-received', this.mainWindow.webContents, {
       data: data,
-      hexData: hexData,
+      hexData: formattedHexData, // 使用格式化后的hex数据
       rawBuffer: Array.from(this.hexBuffer),
       timestamp: `[${timestamp}]`,
       messageType: 'normal'
@@ -515,15 +558,25 @@ export class SerialPortManager {
     if (this.useRawMode === useRawMode) return; // 模式未改变，直接返回
     
     this.useRawMode = useRawMode;
-    
-    // 如果串口已连接，重新设置事件监听器
+      // 如果串口已连接，重新设置事件监听器
     if (this.isConnected && this.serialPort) {
       this.setupEventListeners();
     }
   }
+
+  /**
+   * 格式化十六进制字符串，每两个字符之间添加空格
+   * @param hexString 原始十六进制字符串
+   * @returns 格式化后的字符串，如 "FDDF0802" -> "FD DF 08 02"
+   */
+  private formatHexString(hexString: string): string {
+    return hexString.replace(/(.{2})/g, '$1 ').trim();
+  }
 }
 
-// 导出便捷函数
+/**
+ * 导出便捷函数
+ */
 export async function getAvailablePorts(): Promise<SerialPortInfo[]> {
   try {
     const ports = await SerialPort.list();

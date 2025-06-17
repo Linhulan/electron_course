@@ -446,6 +446,31 @@
   font-weight: 600;
 }
 
+.send-mode-controls {
+  margin-bottom: 0.75rem;
+}
+
+.send-mode-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #ffffff;
+  font-size: 0.9rem;
+  cursor: pointer;
+  user-select: none;
+}
+
+.send-mode-toggle input[type="checkbox"] {
+  margin: 0;
+  cursor: pointer;
+}
+
+.test-data-buttons {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
 .send-data-row {
   display: flex;
   gap: 0.5rem;

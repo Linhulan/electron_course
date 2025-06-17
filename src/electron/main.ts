@@ -74,6 +74,11 @@ app.on("ready", async () => {
     return await serialPortManager.sendData(data);
   });
 
+  ipcMainHandle("send-serial-hex-data", async (...args: unknown[]) => {
+    const [hexString] = args as [string];
+    return await serialPortManager.sendHexData(hexString);
+  });
+
   ipcMainHandle("get-serial-connection-status", () => {
     return serialPortManager.getConnectionStatus();
   });
