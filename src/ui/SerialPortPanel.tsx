@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import './SerialPortPanel.css';
 
 interface SerialPortPanelProps {
@@ -6,13 +7,14 @@ interface SerialPortPanelProps {
 }
 
 export const SerialPortPanel: React.FC<SerialPortPanelProps> = ({ className }) => {
+  const { t } = useTranslation();
   const [availablePorts, setAvailablePorts] = useState<SerialPortInfo[]>([]);
   const [selectedPort, setSelectedPort] = useState<string>('');
   const [connectionStatus, setConnectionStatus] = useState<SerialConnectionStatus>({ isConnected: false });
   const [serialData, setSerialData] = useState<string[]>([]);
   const [sendMessage, setSendMessage] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [error, setError] = useState<string>('');  const [isHexMode, setIsHexMode] = useState<boolean>(false);
+  const [error, setError] = useState<string>('');const [isHexMode, setIsHexMode] = useState<boolean>(false);
   const [showTimestamp, setShowTimestamp] = useState<boolean>(true);
   const [isHexSendMode, setIsHexSendMode] = useState<boolean>(false); // 发送模式：false=文本，true=十六进制
   const [config, setConfig] = useState<SerialPortConfig>({
@@ -189,9 +191,8 @@ export const SerialPortPanel: React.FC<SerialPortPanelProps> = ({ className }) =
   return (
     <div className={`serial-port-panel-layout ${className || ''}`}>
       {/* 左侧：串口连接配置 */}
-      <div className="serial-port-config-section">
-        <div className="serial-port-connection">
-          <h3>Serial Port Connection</h3>
+      <div className="serial-port-config-section">        <div className="serial-port-connection">
+          <h3>{t('serialPort.connection')}</h3>
           
           {error && (
             <div className="error-message">
@@ -200,25 +201,24 @@ export const SerialPortPanel: React.FC<SerialPortPanelProps> = ({ className }) =
           )}
 
           <div className="port-selection">
-            <label htmlFor="port-select">Select Port:</label>
+            <label htmlFor="port-select">{t('serialPort.selectPort')}:</label>
             <div className="port-select-row">              <select
                 id="port-select"
                 value={selectedPort}
                 onChange={(e) => setSelectedPort(e.target.value)}
                 disabled={connectionStatus.isConnected || isLoading}
-                title={selectedPort ? availablePorts.find(p => p.path === selectedPort)?.displayName || selectedPort : "Select a serial port"}
+                title={selectedPort ? availablePorts.find(p => p.path === selectedPort)?.displayName || selectedPort : t('serialPort.selectPort')}
               >
-                <option value="">-- Select a port --</option>                {availablePorts.map((port) => (
+                <option value="">-- {t('serialPort.selectPort')} --</option>{availablePorts.map((port) => (
                   <option key={port.path} value={port.path} title={getPortDisplayName(port)}>
                     {getPortDisplayName(port)}
                   </option>
                 ))}
-              </select>              
-              <button
+              </select>                <button
                 onClick={refreshPorts}
                 disabled={isLoading}
                 className="refresh-btn"
-                title="Refresh port list"
+                title={t('serialPort.refreshPorts')}
               >
                 <span className="refresh-icon">🔄</span>
               </button>
@@ -227,7 +227,7 @@ export const SerialPortPanel: React.FC<SerialPortPanelProps> = ({ className }) =
 
           <div className="connection-config">
             <div className="config-row">
-              <label htmlFor="baud-rate">Baud Rate:</label>
+              <label htmlFor="baud-rate">{t('serialPort.baudRate')}:</label>
               <select
                 id="baud-rate"
                 value={config.baudRate}
@@ -243,10 +243,8 @@ export const SerialPortPanel: React.FC<SerialPortPanelProps> = ({ className }) =
                 <option value={460800}>460800</option>
                 <option value={921600}>921600</option>
               </select>
-            </div>
-
-            <div className="config-row">
-              <label htmlFor="data-bits">Data Bits:</label>
+            </div>            <div className="config-row">
+              <label htmlFor="data-bits">{t('serialPort.dataBits')}:</label>
               <select
                 id="data-bits"
                 value={config.dataBits}
@@ -261,7 +259,7 @@ export const SerialPortPanel: React.FC<SerialPortPanelProps> = ({ className }) =
             </div>
 
             <div className="config-row">
-              <label htmlFor="stop-bits">Stop Bits:</label>
+              <label htmlFor="stop-bits">{t('serialPort.stopBits')}:</label>
               <select
                 id="stop-bits"
                 value={config.stopBits}
@@ -275,7 +273,7 @@ export const SerialPortPanel: React.FC<SerialPortPanelProps> = ({ className }) =
             </div>
 
             <div className="config-row">
-              <label htmlFor="parity">Parity:</label>
+              <label htmlFor="parity">{t('serialPort.parity')}:</label>
               <select
                 id="parity"
                 value={config.parity}
@@ -292,9 +290,9 @@ export const SerialPortPanel: React.FC<SerialPortPanelProps> = ({ className }) =
           </div>
 
           <div className="connection-status">
-            <strong>Status:</strong> 
+            <strong>{t('serialPort.connectionStatus')}:</strong> 
             <span className={connectionStatus.isConnected ? 'connected' : 'disconnected'}>
-              {connectionStatus.isConnected ? ` Connected to ${connectionStatus.portPath}` : ' Disconnected'}
+              {connectionStatus.isConnected ? ` ${t('serialPort.connected')} ${connectionStatus.portPath}` : ` ${t('serialPort.disconnected')}`}
             </span>
           </div>
 
@@ -305,7 +303,7 @@ export const SerialPortPanel: React.FC<SerialPortPanelProps> = ({ className }) =
                 disabled={!selectedPort || isLoading}
                 className="connect-btn"
               >
-                {isLoading ? 'Connecting...' : 'Connect'}
+                {isLoading ? t('serialPort.connecting') : t('serialPort.connect')}
               </button>
             ) : (
               <button
@@ -313,27 +311,25 @@ export const SerialPortPanel: React.FC<SerialPortPanelProps> = ({ className }) =
                 disabled={isLoading}
                 className="disconnect-btn"
               >
-                {isLoading ? 'Disconnecting...' : 'Disconnect'}
+                {isLoading ? t('serialPort.disconnecting') : t('serialPort.disconnect')}
               </button>            )}
           </div>
         </div>
-      </div>
-
-      {/* 右侧：串口通信日志 */}
+      </div>      {/* 右侧：串口通信日志 */}
       <div className="serial-port-log-section">
         <div className="serial-port-communication">
-          <h3>Serial Communication Log</h3>
+          <h3>{t('serialPort.receiveData')}</h3>
           
           <div className="data-display-container">
             <div className="data-display-header">
-              <span>Data Log</span>              <div className="display-controls">
+              <span>{t('serialPort.receiveData')}</span>              <div className="display-controls">
                 <label className="hex-mode-toggle">
                   <input
                     type="checkbox"
                     checked={isHexMode}
                     onChange={(e) => setIsHexMode(e.target.checked)}
                   />
-                  Hex Mode
+                  {t('serialPort.hexMode')}
                 </label>
                 <label className="timestamp-toggle">
                   <input
@@ -341,13 +337,13 @@ export const SerialPortPanel: React.FC<SerialPortPanelProps> = ({ className }) =
                     checked={showTimestamp}
                     onChange={(e) => setShowTimestamp(e.target.checked)}
                   />
-                  Show Timestamp
+                  {t('serialPort.showTimestamp')}
                 </label>
-                <button onClick={clearDataDisplay} className="clear-btn">Clear</button>
+                <button onClick={clearDataDisplay} className="clear-btn">{t('common.clear')}</button>
               </div>
             </div>            <div className="data-display" ref={dataDisplayRef}>
               {serialData.length === 0 ? (
-                <div className="no-data">No data received yet...</div>
+                <div className="no-data">{t('common.noData')}...</div>
               ) : (
                 serialData.map((data, index) => {
                   const delimiterIndex = data.indexOf('|||');
@@ -373,7 +369,7 @@ export const SerialPortPanel: React.FC<SerialPortPanelProps> = ({ className }) =
             </div>
           </div>          {/* Send Data 区域移动到日志区域底部 */}
           <div className="send-data-container">
-            <h4>Send Data</h4>
+            <h4>{t('serialPort.sendData')}</h4>
             
             {/* 发送模式切换 */}
             <div className="send-mode-controls">
@@ -383,7 +379,7 @@ export const SerialPortPanel: React.FC<SerialPortPanelProps> = ({ className }) =
                   checked={isHexSendMode}
                   onChange={(e) => setIsHexSendMode(e.target.checked)}
                 />
-                Hex Send Mode
+                {t('serialPort.hexMode')}
               </label>
             </div>
             
@@ -392,7 +388,7 @@ export const SerialPortPanel: React.FC<SerialPortPanelProps> = ({ className }) =
                 type="text"
                 value={sendMessage}
                 onChange={(e) => setSendMessage(e.target.value)}
-                placeholder={isHexSendMode ? "Enter hex data (e.g. 48656C6C6F or 48 65 6C 6C 6F)..." : "Enter message to send..."}
+                placeholder={isHexSendMode ? "48656C6C6F or 48 65 6C 6C 6F..." : t('serialPort.dataToSend')}
                 disabled={!connectionStatus.isConnected}
                 onKeyPress={(e) => e.key === 'Enter' && handleSendData()}
                 className="send-input"
@@ -402,7 +398,7 @@ export const SerialPortPanel: React.FC<SerialPortPanelProps> = ({ className }) =
                 disabled={!connectionStatus.isConnected || !sendMessage.trim()}
                 className="send-btn"
               >
-                Send {isHexSendMode ? 'Hex' : 'Text'}
+                {t('serialPort.send')} {isHexSendMode ? 'Hex' : 'Text'}
               </button>
             </div>
             

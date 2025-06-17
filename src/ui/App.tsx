@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { useTranslation } from 'react-i18next';
+import { LanguageSwitcher } from './components/LanguageSwitcher';
 import "./App.css";
 import { SerialPortPanel } from "./SerialPortPanel";
 import { CounterDashboard } from "./CounterDashboard";
@@ -6,6 +8,7 @@ import { Sidebar, PageType } from "./Sidebar";
 
 function App() {
   const [currentPage, setCurrentPage] = useState<PageType>('serial-port');
+  const { t } = useTranslation();
 
   const renderCurrentPage = () => {
     switch (currentPage) {
@@ -21,11 +24,11 @@ function App() {
   const getPageTitle = () => {
     switch (currentPage) {
       case 'serial-port':
-        return 'Serial Port Monitor';
+        return t('serialPort.title');
       case 'counter-dashboard':
-        return 'Money Counter Dashboard';
+        return t('counter.title');
       default:
-        return 'Serial Port Monitor';
+        return t('app.title');
     }
   };
 
@@ -49,6 +52,7 @@ function Header({ title }: { title: string }) {
         <span className="app-title">{title}</span>
       </div>
       <div className="header-right">
+        <LanguageSwitcher compact className="header-language-switcher" />
         <button
           id="minimize"
           onClick={() => window.electron.sendFrameAction("MINIMIZE")}

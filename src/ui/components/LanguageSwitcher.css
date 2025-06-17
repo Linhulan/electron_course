@@ -1,0 +1,267 @@
+.language-switcher {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  position: relative;
+}
+
+.language-switcher.compact {
+  flex-direction: row;
+  align-items: center;
+}
+
+.language-switcher-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.8);
+  margin-bottom: 0.25rem;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  user-select: none;
+  padding: 0.5rem 0.75rem;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.language-switcher-label:hover {
+  color: rgba(255, 255, 255, 0.95);
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.language-switcher-label:active {
+  transform: scale(0.98);
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.language-switcher-label .expand-arrow {
+  margin-left: auto;
+  font-size: 0.7rem;
+  transform: rotate(0deg);
+  transition: transform 0.2s ease;
+}
+
+.language-switcher-label .expand-arrow.expanded {
+  transform: rotate(180deg);
+}
+
+
+
+.language-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  margin-top: 0.5rem;
+  min-width: 120px;
+  background: rgba(45, 55, 72, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  z-index: 1000;
+  backdrop-filter: blur(10px);
+  animation: dropdownFadeIn 0.2s ease;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+/* 下拉菜单方向控制 */
+.language-dropdown.direction-up {
+  top: auto;
+  bottom: 100%;
+  margin-top: 0;
+  margin-bottom: 0.5rem;
+}
+
+.language-dropdown.direction-down {
+  top: 100%;
+  margin-top: 0.5rem;
+}
+
+.language-dropdown.direction-right {
+  top: 0;
+  left: 100%;
+  right: auto;
+  margin-left: 0.5rem;
+  margin-top: 0;
+}
+
+.language-dropdown.direction-left {
+  top: 0;
+  right: 100%;
+  left: auto;
+  margin-right: 0.5rem;
+  margin-top: 0;
+}
+
+@keyframes dropdownFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.language-icon {
+  font-size: 1rem;
+}
+
+.language-text {
+  font-weight: 500;
+}
+
+.language-options {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.language-dropdown .language-option {
+  all: unset;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.85rem;
+  border-radius: 3px;
+  /* margin: 0.125rem 0.25rem; */
+  position: relative;
+  box-sizing: border-box;
+}
+
+.language-dropdown .language-option:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: rgba(255, 255, 255, 0.9);
+  padding-left: 0.9rem;
+}
+
+.language-dropdown .language-option.active {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.25), rgba(37, 99, 235, 0.3));
+  color: #ffffff;
+  font-weight: 600;
+  margin: 0;
+  /* box-sizing: border-box; */
+  /* position: relative; */
+}
+
+.language-dropdown .language-option.active:hover {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.35), rgba(37, 99, 235, 0.4));
+  padding-left: 0.9rem;
+}
+
+.language-dropdown .language-option.active::before {
+  content: '✓';
+  position: absolute;
+  right: 0.5rem;
+  color: #3b82f6;
+  font-weight: bold;
+  font-size: 0.9rem;
+}
+
+.language-flag {
+  font-size: 1rem;
+}
+
+.language-name {
+  flex: 1;
+  text-align: left;
+}
+
+/* Compact mode styles */
+.language-switcher.compact {
+  -webkit-app-region: no-drag; /* 允许点击 */
+}
+
+.language-switcher.compact .language-select {
+  all: unset;
+  background: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  transition: all 0.2s ease;
+  min-width: 80px;
+  text-align: center;
+  -webkit-app-region: no-drag; /* 确保select可以点击 */
+}
+
+.language-switcher.compact .language-select:hover {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.language-switcher.compact .language-select:focus {
+  outline: none;
+  border-color: rgba(255, 255, 255, 0.4);
+}
+
+.language-switcher.compact .language-select option {
+  background: #2c3e50;
+  color: #ffffff;
+  padding: 0.25rem;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .language-switcher {
+    font-size: 0.8rem;
+  }
+  
+  .language-current {
+    padding: 0.4rem 0.6rem;
+    font-size: 0.8rem;
+  }
+  
+  .language-dropdown .language-option {
+    padding: 0.4rem 0.6rem;
+    font-size: 0.8rem;
+  }
+  
+  .language-flag {
+    font-size: 0.9rem;
+  }
+}
+
+/* 在header中使用时的样式 */
+.header-language-switcher {
+  margin-right: 1rem;
+  -webkit-app-region: no-drag; /* 重要：确保在drag header中可以点击 */
+}
+
+.header-language-switcher .language-select {
+  background: rgba(0, 0, 0, 0.1) !important;
+  color: #ffffff !important;
+  padding: 0.25rem 0.5rem !important;
+  border-radius: 4px !important;
+  font-size: 0.8rem !important;
+  cursor: pointer !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  transition: all 0.2s ease !important;
+  min-width: 80px !important;
+  -webkit-app-region: no-drag !important; /* 确保可以点击 */
+}
+
+.header-language-switcher .language-select:hover {
+  background: rgba(0, 0, 0, 0.2) !important;
+}
+
+.header-language-switcher .language-select:focus {
+  outline: none !important;
+  border-color: rgba(255, 255, 255, 0.4) !important;
+}
+
+.header-language-switcher .language-select option {
+  background: #181818 !important;
+  color: #ffffff !important;
+  padding: 0.25rem !important;
+}

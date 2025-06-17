@@ -1,4 +1,6 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
+import { LanguageSwitcher } from './components/LanguageSwitcher';
 import './Sidebar.css';
 
 export type PageType = 'serial-port' | 'counter-dashboard';
@@ -9,18 +11,20 @@ interface SidebarProps {
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({ currentPage, onPageChange }) => {
+  const { t } = useTranslation();
+  
   const menuItems = [
     {
       id: 'serial-port' as PageType,
-      label: '串口监控',
+      label: t('sidebar.serialPort'),
       icon: '🔌',
-      description: 'Serial Port Monitor'
+      description: t('sidebar.serialPortDesc')
     },
     {
       id: 'counter-dashboard' as PageType,
-      label: '点钞数据',
+      label: t('sidebar.counterDashboard'),
       icon: '💰',
-      description: 'Money Counter Dashboard'
+      description: t('sidebar.counterDashboardDesc')
     }
   ];
 
@@ -29,7 +33,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentPage, onPageChange }) =
       <div className="sidebar-header">
         <div className="sidebar-title">
           <span className="sidebar-icon">📊</span>
-          <span className="sidebar-text">控制面板</span>
+          <span className="sidebar-text">{t('sidebar.controlPanel')}</span>
         </div>
       </div>
       
@@ -46,10 +50,10 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentPage, onPageChange }) =
           </button>
         ))}
       </nav>
-      
-      <div className="sidebar-footer">
+        <div className="sidebar-footer">
+        <LanguageSwitcher dropdownDirection="right" />
         <div className="sidebar-version">
-          <span>Version 1.0.0</span>
+          <span>{t('common.version')} 1.0.0</span>
         </div>
       </div>
     </div>

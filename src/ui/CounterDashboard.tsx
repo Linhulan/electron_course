@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import './CounterDashboard.css';
 
 interface CounterData {
@@ -26,6 +27,7 @@ interface CounterDashboardProps {
 }
 
 export const CounterDashboard: React.FC<CounterDashboardProps> = ({ className }) => {
+  const { t } = useTranslation();
   const [counterData, setCounterData] = useState<CounterData[]>([]);
   const [currentSession, setCurrentSession] = useState<CounterData | null>(null);
   const [stats, setStats] = useState<CounterStats>({
@@ -129,7 +131,6 @@ export const CounterDashboard: React.FC<CounterDashboardProps> = ({ className })
       currency: 'CNY'
     }).format(amount);
   };
-
   const getStatusIcon = (status: CounterData['status']) => {
     switch (status) {
       case 'counting': return '⏳';
@@ -137,6 +138,16 @@ export const CounterDashboard: React.FC<CounterDashboardProps> = ({ className })
       case 'error': return '❌';
       case 'paused': return '⏸️';
       default: return '⭕';
+    }
+  };
+
+  const getStatusText = (status: CounterData['status']) => {
+    switch (status) {
+      case 'counting': return t('counter.sessionStatus.counting');
+      case 'completed': return t('counter.sessionStatus.completed');
+      case 'error': return t('counter.sessionStatus.error');
+      case 'paused': return t('counter.sessionStatus.paused');
+      default: return status;
     }
   };
 
@@ -151,14 +162,13 @@ export const CounterDashboard: React.FC<CounterDashboardProps> = ({ className })
   };
 
   return (
-    <div className={`counter-dashboard ${className || ''}`}>
-      {/* 头部控制区 */}
+    <div className={`counter-dashboard ${className || ''}`}>      {/* 头部控制区 */}
       <div className="dashboard-header">
         <div className="dashboard-title">
-          <h2>💰 点钞机数据看板</h2>
+          <h2>💰 {t('counter.title')}</h2>
           <div className="connection-status">
             <span className={`status-indicator ${isConnected ? 'connected' : 'disconnected'}`}></span>
-            <span>{isConnected ? '已连接' : '未连接'}</span>
+            <span>{isConnected ? t('counter.connected') : t('counter.disconnected')}</span>
           </div>
         </div>
         
@@ -167,36 +177,35 @@ export const CounterDashboard: React.FC<CounterDashboardProps> = ({ className })
             onChange={(e) => setSelectedTimeRange(e.target.value as '1h' | '24h' | '7d' | '30d')}
             className="time-range-select"
           >
-            <option value="1h">最近1小时</option>
-            <option value="24h">最近24小时</option>
-            <option value="7d">最近7天</option>
-            <option value="30d">最近30天</option>
+            <option value="1h">{t('counter.lastHour')}</option>
+            <option value="24h">{t('counter.last24Hours')}</option>
+            <option value="7d">{t('counter.last7Days')}</option>
+            <option value="30d">{t('counter.last30Days')}</option>
           </select>
           
           <button 
             onClick={isConnected ? stopMockConnection : startMockConnection}
             className={`control-btn ${isConnected ? 'stop' : 'start'}`}
           >
-            {isConnected ? '停止模拟' : '开始模拟'}
+            {isConnected ? t('counter.stopSimulation') : t('counter.startSimulation')}
           </button>
           
           <button onClick={clearData} className="control-btn clear">
-            清空数据
+            {t('counter.clearData')}
           </button>
           
           <button onClick={exportData} className="control-btn export">
-            导出数据
+            {t('counter.exportData')}
           </button>
         </div>
       </div>
 
       {/* 统计卡片区 */}
-      <div className="stats-grid">
-        <div className="stat-card">
+      <div className="stats-grid">        <div className="stat-card">
           <div className="stat-icon">📊</div>
           <div className="stat-info">
             <div className="stat-value">{stats.totalSessions}</div>
-            <div className="stat-label">点钞次数</div>
+            <div className="stat-label">{t('counter.stats.totalSessions')}</div>
           </div>
         </div>
         
@@ -204,7 +213,7 @@ export const CounterDashboard: React.FC<CounterDashboardProps> = ({ className })
           <div className="stat-icon">💴</div>
           <div className="stat-info">
             <div className="stat-value">{formatCurrency(stats.totalAmount)}</div>
-            <div className="stat-label">总金额</div>
+            <div className="stat-label">{t('counter.stats.totalAmount')}</div>
           </div>
         </div>
         
@@ -212,7 +221,7 @@ export const CounterDashboard: React.FC<CounterDashboardProps> = ({ className })
           <div className="stat-icon">📄</div>
           <div className="stat-info">
             <div className="stat-value">{stats.totalNotes.toLocaleString()}</div>
-            <div className="stat-label">总张数</div>
+            <div className="stat-label">{t('counter.stats.totalNotes')}</div>
           </div>
         </div>
         
@@ -220,7 +229,7 @@ export const CounterDashboard: React.FC<CounterDashboardProps> = ({ className })
           <div className="stat-icon">⚡</div>
           <div className="stat-info">
             <div className="stat-value">{Math.round(stats.averageSpeed)}</div>
-            <div className="stat-label">平均速度 (张/分)</div>
+            <div className="stat-label">{t('counter.stats.averageSpeed')} ({t('counter.stats.speedUnit')})</div>
           </div>
         </div>
         
@@ -228,62 +237,58 @@ export const CounterDashboard: React.FC<CounterDashboardProps> = ({ className })
           <div className="stat-icon">⚠️</div>
           <div className="stat-info">
             <div className="stat-value">{stats.errorRate.toFixed(1)}%</div>
-            <div className="stat-label">错误率</div>
+            <div className="stat-label">{t('counter.stats.errorRate')}</div>
           </div>
         </div>
-      </div>
-
-      {/* 当前会话显示 */}
+      </div>      {/* 当前会话显示 */}
       {currentSession && (
         <div className="current-session">
-          <h3>当前点钞会话</h3>
+          <h3>{t('counter.currentSession')}</h3>
           <div className="session-info">
             <div className="session-item">
-              <span className="session-label">状态:</span>
+              <span className="session-label">{t('counter.session.status')}:</span>
               <span className="session-value" style={{ color: getStatusColor(currentSession.status) }}>
-                {getStatusIcon(currentSession.status)} {currentSession.status}
+                {getStatusIcon(currentSession.status)} {getStatusText(currentSession.status)}
               </span>
             </div>
             <div className="session-item">
-              <span className="session-label">面额:</span>
+              <span className="session-label">{t('counter.session.denomination')}:</span>
               <span className="session-value">¥{currentSession.denomination}</span>
             </div>
             <div className="session-item">
-              <span className="session-label">张数:</span>
+              <span className="session-label">{t('counter.session.count')}:</span>
               <span className="session-value">{currentSession.totalCount}</span>
             </div>
             <div className="session-item">
-              <span className="session-label">金额:</span>
+              <span className="session-label">{t('counter.session.amount')}:</span>
               <span className="session-value">{formatCurrency(currentSession.amount)}</span>
             </div>
             <div className="session-item">
-              <span className="session-label">速度:</span>
-              <span className="session-value">{currentSession.speed} 张/分</span>
+              <span className="session-label">{t('counter.session.speed')}:</span>
+              <span className="session-value">{currentSession.speed} {t('counter.stats.speedUnit')}</span>
             </div>
           </div>
         </div>
-      )}
-
-      {/* 数据列表 */}
+      )}      {/* 数据列表 */}
       <div className="data-section">
-        <h3>点钞记录</h3>
+        <h3>{t('counter.records')}</h3>
         <div className="data-list" ref={dataDisplayRef}>
           {counterData.length === 0 ? (
             <div className="no-data">
               <div className="no-data-icon">📝</div>
-              <div className="no-data-text">暂无点钞数据</div>
-              <div className="no-data-hint">点击"开始模拟"来生成示例数据</div>
+              <div className="no-data-text">{t('counter.noData.title')}</div>
+              <div className="no-data-hint">{t('counter.noData.subtitle')}</div>
             </div>
           ) : (
             <div className="data-table">
               <div className="table-header">
-                <div className="col-time">时间</div>
-                <div className="col-status">状态</div>
-                <div className="col-denomination">面额</div>
-                <div className="col-count">张数</div>
-                <div className="col-amount">金额</div>
-                <div className="col-speed">速度</div>
-                <div className="col-serial">设备</div>
+                <div className="col-time">{t('counter.table.time')}</div>
+                <div className="col-status">{t('counter.table.status')}</div>
+                <div className="col-denomination">{t('counter.table.denomination')}</div>
+                <div className="col-count">{t('counter.table.count')}</div>
+                <div className="col-amount">{t('counter.table.amount')}</div>
+                <div className="col-speed">{t('counter.table.speed')}</div>
+                <div className="col-serial">{t('counter.table.device')}</div>
               </div>
               {counterData.map((item) => (
                 <div key={item.id} className="table-row">

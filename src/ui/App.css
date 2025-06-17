@@ -46,6 +46,10 @@ header {
   gap: 0.25rem;
 }
 
+.header-right {
+  -webkit-app-region: no-drag; /* 确保右侧控件可以点击 */
+}
+
 header button {
   all: unset;
   border-radius: 50%;
