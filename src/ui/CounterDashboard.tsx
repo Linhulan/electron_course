@@ -14,6 +14,23 @@ interface CounterData {
   serialNumber?: string; // 机器序列号
 }
 
+// 串口协议解析相关类型
+interface SerialProtocolData {
+  check: number[];      // 0:1 CHECK: 0xFD 0xDF
+  length: number;       // 2 长度: 0x2C
+  cmdGroup: number;     // 3 CMD-G: 0x0E
+  totalCount: number;   // 4:7 总张数 (低位先行)
+  denomination: number; // 8:11 面额
+  totalAmount: number;  // 12:19 总金额 (8字节)
+  currencyCode: string; // 20:23 货币代码 (4位包含结束符号)
+  serialNumber: string; // 24:34 SN (11位)
+  reserved1: number[];  // 35:39 RESERVED
+  errorCode: number;    // 40 ErrCode
+  status: number;       // 41 状态位
+  reserved2: number;    // 42 RESERVED
+  crc: number;          // 43 CRC
+}
+
 interface CounterStats {
   totalSessions: number;
   totalAmount: number;
@@ -25,6 +42,105 @@ interface CounterStats {
 interface CounterDashboardProps {
   className?: string;
 }
+
+// 串口协议解析工具函数
+const parseSerialProtocolData = (hexData: string): SerialProtocolData | null => {
+  try {
+    // 移除空格并转换为大写
+    const cleanHex = hexData.replace(/\s+/g, '').toUpperCase();
+    
+    // 检查数据长度是否足够 (最少44字节 = 88个十六进制字符)
+    if (cleanHex.length < 88) {
+      console.warn('Serial data too short:', cleanHex.length);
+      return null;
+    }
+
+    // 将十六进制字符串转换为字节数组
+    const bytes: number[] = [];
+    for (let i = 0; i < cleanHex.length; i += 2) {
+      bytes.push(parseInt(cleanHex.substr(i, 2), 16));
+    }
+
+    // 检查协议头
+    if (bytes[0] !== 0xFD || bytes[1] !== 0xDF) {
+      console.warn('Invalid protocol header:', bytes[0], bytes[1]);
+      return null;
+    }
+
+    // 检查CMD-G是否为点钞数据
+    if (bytes[3] !== 0x0E) {
+      console.warn('Not counting data CMD-G:', bytes[3]);
+      return null;
+    }
+
+    // 解析数据
+    const totalCount = bytes[4] | (bytes[5] << 8) | (bytes[6] << 16) | (bytes[7] << 24);
+    const denomination = bytes[8] | (bytes[9] << 8) | (bytes[10] << 16) | (bytes[11] << 24);
+    
+    // 解析8字节金额 (低位先行)
+    let totalAmount = 0;
+    for (let i = 0; i < 8; i++) {
+      totalAmount += bytes[12 + i] * Math.pow(256, i);
+    }
+
+    // 解析货币代码 (4字节，包含结束符)
+    const currencyBytes = bytes.slice(20, 24);
+    const currencyCode = String.fromCharCode(...currencyBytes.filter(b => b !== 0));
+
+    // 解析序列号 (11字节)
+    const snBytes = bytes.slice(24, 35);
+    const serialNumber = String.fromCharCode(...snBytes.filter(b => b !== 0));
+
+    const errorCode = bytes[40];
+    const status = bytes[41];
+    const crc = bytes[43];
+
+    return {
+      check: [bytes[0], bytes[1]],
+      length: bytes[2],
+      cmdGroup: bytes[3],
+      totalCount,
+      denomination,
+      totalAmount,
+      currencyCode,
+      serialNumber,
+      reserved1: bytes.slice(35, 40),
+      errorCode,
+      status,
+      reserved2: bytes[42],
+      crc
+    };
+  } catch (error) {
+    console.error('Error parsing serial protocol data:', error);
+    return null;
+  }
+};
+
+// 状态码转换函数
+const getStatusDescription = (status: number): 'counting' | 'completed' | 'error' | 'paused' => {
+  switch (status) {
+    case 0x00: return 'counting'; // 开始刷新
+    case 0x01: return 'counting'; // 刷新中
+    case 0x02: return 'completed'; // 刷新完成
+    case 0x03: return 'completed'; // 刷新完成，接钞满
+    default: return 'error';
+  }
+};
+
+// 将协议数据转换为CounterData
+const convertProtocolToCounterData = (protocolData: SerialProtocolData): CounterData => {
+  return {
+    id: Date.now().toString(),
+    timestamp: new Date().toLocaleTimeString(),
+    totalCount: protocolData.totalCount,
+    denomination: protocolData.denomination,
+    amount: protocolData.totalAmount,
+    speed: 0, // 需要计算或从其他来源获取
+    status: getStatusDescription(protocolData.status),
+    errorCode: protocolData.errorCode !== 0 ? `E${protocolData.errorCode.toString(16).padStart(3, '0').toUpperCase()}` : undefined,
+    serialNumber: protocolData.serialNumber
+  };
+};
 
 export const CounterDashboard: React.FC<CounterDashboardProps> = ({ className }) => {
   const { t } = useTranslation();
@@ -59,19 +175,48 @@ export const CounterDashboard: React.FC<CounterDashboardProps> = ({ className })
 
     const unsubscribeDisconnected = window.electron.onSerialDisconnected(() => {
       setIsConnected(false);
-    });
-
-    return () => {
+    });    return () => {
       unsubscribeConnected();
       unsubscribeDisconnected();
     };
   }, []);
 
-  // 模拟实时数据更新
+  // 监听串口数据并解析协议
   useEffect(() => {
-    // 这里将来会替换为真实的串口数据监听
+    const unsubscribeDataReceived = window.electron.onSerialDataReceived((data) => {
+      // 只处理十六进制数据
+      if (data.hexData && isConnected) {
+        try {
+          const protocolData = parseSerialProtocolData(data.hexData);
+          if (protocolData) {
+            // 检查是否为点钞数据 (CMD-G = 0x0E)
+            if (protocolData.cmdGroup === 0x0E) {
+              const counterData = convertProtocolToCounterData(protocolData);
+              setCurrentSession(counterData);
+              setCounterData(prev => [counterData, ...prev].slice(0, 50)); // 保留最近50条记录
+              
+              console.log('Parsed counter data:', counterData);
+            }
+          }
+        } catch (error) {
+          console.error('Error parsing serial data:', error);
+        }
+      }
+    });
+
+    return () => {
+      unsubscribeDataReceived();
+    };
+  }, [isConnected]);
+
+  // 备用模拟数据生成 (可以通过配置开关控制)
+  useEffect(() => {
+    const enableMockData = false; // 设置为 false 禁用模拟数据
+    
+    if (!enableMockData) return;
+    
     const mockDataInterval = setInterval(() => {
-      if (isConnected && Math.random() > 0.3) { // 70% 概率生成数据
+      if (isConnected && Math.random() > 0.7) { // 30% 概率生成数据
         const newData: CounterData = {
           id: Date.now().toString(),
           timestamp: new Date().toLocaleTimeString(),
@@ -81,14 +226,13 @@ export const CounterDashboard: React.FC<CounterDashboardProps> = ({ className })
           speed: Math.floor(Math.random() * 200) + 800, // 800-1000 张/分钟
           status: Math.random() > 0.95 ? 'error' : 'completed',
           errorCode: Math.random() > 0.95 ? 'E001' : undefined,
-          serialNumber: 'CM-2024-001'
-        };
+          serialNumber: 'CM-2024-001'        };
         newData.amount = newData.totalCount * newData.denomination;
         
         setCurrentSession(newData);
         setCounterData(prev => [newData, ...prev].slice(0, 50)); // 保留最近50条记录
       }
-    }, 2000);
+    }, 3000);
 
     return () => clearInterval(mockDataInterval);
   }, [isConnected]);
