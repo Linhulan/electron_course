@@ -36,11 +36,36 @@ export const CounterDashboard: React.FC<CounterDashboardProps> = ({ className })
     totalNotes: 0,
     averageSpeed: 0,
     errorRate: 0
-  });
-  const [isConnected, setIsConnected] = useState(false);
+  });  const [isConnected, setIsConnected] = useState(false);
   const [selectedTimeRange, setSelectedTimeRange] = useState<'1h' | '24h' | '7d' | '30d'>('24h');
   
-  const dataDisplayRef = useRef<HTMLDivElement>(null);
+  const dataDisplayRef = useRef<HTMLDivElement>(null);  // 监听真实的串口连接状态
+  useEffect(() => {
+    // 检查初始连接状态
+    const checkInitialStatus = async () => {
+      try {
+        const status = await window.electron.getSerialConnectionStatus();
+        setIsConnected(status.isConnected);
+      } catch (err) {
+        console.error('Failed to check initial connection status:', err);
+      }
+    };
+
+    checkInitialStatus();
+
+    const unsubscribeConnected = window.electron.onSerialConnected(() => {
+      setIsConnected(true);
+    });
+
+    const unsubscribeDisconnected = window.electron.onSerialDisconnected(() => {
+      setIsConnected(false);
+    });
+
+    return () => {
+      unsubscribeConnected();
+      unsubscribeDisconnected();
+    };
+  }, []);
 
   // 模拟实时数据更新
   useEffect(() => {
@@ -66,7 +91,9 @@ export const CounterDashboard: React.FC<CounterDashboardProps> = ({ className })
     }, 2000);
 
     return () => clearInterval(mockDataInterval);
-  }, [isConnected]);  const getFilteredData = useCallback(() => {
+  }, [isConnected]);
+
+  const getFilteredData = useCallback(() => {
     const now = new Date();
     const timeRanges = {
       '1h': 1 * 60 * 60 * 1000,
@@ -97,17 +124,8 @@ export const CounterDashboard: React.FC<CounterDashboardProps> = ({ className })
         ? (filteredData.filter(item => item.status === 'error').length / filteredData.length) * 100 
         : 0
     };
-    setStats(newStats);
+    setStats(newStats);  
   }, [getFilteredData]);
-
-  const startMockConnection = () => {
-    setIsConnected(true);
-  };
-
-  const stopMockConnection = () => {
-    setIsConnected(false);
-    setCurrentSession(null);
-  };
 
   const clearData = () => {
     setCounterData([]);
@@ -171,8 +189,8 @@ export const CounterDashboard: React.FC<CounterDashboardProps> = ({ className })
             <span>{isConnected ? t('counter.connected') : t('counter.disconnected')}</span>
           </div>
         </div>
-        
-        <div className="dashboard-controls">          <select 
+          <div className="dashboard-controls">
+          <select 
             value={selectedTimeRange} 
             onChange={(e) => setSelectedTimeRange(e.target.value as '1h' | '24h' | '7d' | '30d')}
             className="time-range-select"
@@ -182,13 +200,6 @@ export const CounterDashboard: React.FC<CounterDashboardProps> = ({ className })
             <option value="7d">{t('counter.last7Days')}</option>
             <option value="30d">{t('counter.last30Days')}</option>
           </select>
-          
-          <button 
-            onClick={isConnected ? stopMockConnection : startMockConnection}
-            className={`control-btn ${isConnected ? 'stop' : 'start'}`}
-          >
-            {isConnected ? t('counter.stopSimulation') : t('counter.startSimulation')}
-          </button>
           
           <button onClick={clearData} className="control-btn clear">
             {t('counter.clearData')}
