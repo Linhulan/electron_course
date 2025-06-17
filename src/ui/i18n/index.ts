@@ -40,14 +40,15 @@ const zhCN = {
       title: '串口监控系统',
       subtitle: '点钞机数据监控平台'
     },
-    
-    // 侧边栏
+      // 侧边栏
     sidebar: {
       controlPanel: '控制面板',
       serialPort: '串口监控',
       counterDashboard: '点钞数据',
       serialPortDesc: '串口通信监控',
-      counterDashboardDesc: '点钞机数据看板'
+      counterDashboardDesc: '点钞机数据看板',
+      collapse: '收起侧边栏',
+      expand: '展开侧边栏'
     },
     
     // 串口监控页面
@@ -227,14 +228,15 @@ const enUS = {
       title: 'Serial Port Monitor',
       subtitle: 'Money Counter Data Monitoring Platform'
     },
-    
-    // Sidebar
+      // Sidebar
     sidebar: {
       controlPanel: 'Control Panel',
       serialPort: 'Serial Port',
       counterDashboard: 'Counter Data',
       serialPortDesc: 'Serial Port Communication Monitor',
-      counterDashboardDesc: 'Money Counter Dashboard'
+      counterDashboardDesc: 'Money Counter Dashboard',
+      collapse: 'Collapse Sidebar',
+      expand: 'Expand Sidebar'
     },
     
     // Serial Port Page

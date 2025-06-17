@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { LanguageSwitcher } from './components/LanguageSwitcher';
 import './Sidebar.css';
@@ -12,8 +12,8 @@ interface SidebarProps {
 
 export const Sidebar: React.FC<SidebarProps> = ({ currentPage, onPageChange }) => {
   const { t } = useTranslation();
-  
-  const menuItems = [
+  const [isCollapsed, setIsCollapsed] = useState(false);
+    const menuItems = [
     {
       id: 'serial-port' as PageType,
       label: t('sidebar.serialPort'),
@@ -29,15 +29,20 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentPage, onPageChange }) =
   ];
 
   return (
-    <div className="sidebar">
-      <div className="sidebar-header">
-        <div className="sidebar-title">
-          <span className="sidebar-icon">📊</span>
-          <span className="sidebar-text">{t('sidebar.controlPanel')}</span>
+    <div className={`sidebar ${isCollapsed ? 'collapsed' : ''}`}>
+      <div className="sidebar-header">        <div className="sidebar-title">
+          <button 
+            className="sidebar-icon-button"
+            onClick={() => setIsCollapsed(!isCollapsed)}
+            title={isCollapsed ? t('sidebar.expand') : t('sidebar.collapse')}
+          >
+            <span className="sidebar-icon">☰</span>
+          </button>
+          {!isCollapsed && (
+            <span className="sidebar-text">{t('sidebar.controlPanel')}</span>
+          )}
         </div>
-      </div>
-      
-      <nav className="sidebar-nav">
+      </div>      <nav className="sidebar-nav">
         {menuItems.map((item) => (
           <button
             key={item.id}
@@ -46,16 +51,21 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentPage, onPageChange }) =
             title={item.description}
           >
             <span className="sidebar-item-icon">{item.icon}</span>
-            <span className="sidebar-item-label">{item.label}</span>
+            {!isCollapsed && (
+              <span className="sidebar-item-label">{item.label}</span>
+            )}
           </button>
         ))}
       </nav>
+      
+      {!isCollapsed && (
         <div className="sidebar-footer">
-        <LanguageSwitcher dropdownDirection="right" />
-        <div className="sidebar-version">
-          <span>{t('common.version')} 1.0.0</span>
+          <LanguageSwitcher dropdownDirection="right" />
+          <div className="sidebar-version">
+            <span>{t('common.version')} 1.0.0</span>
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 };

@@ -10,6 +10,10 @@ function App() {
   const [currentPage, setCurrentPage] = useState<PageType>('serial-port');
   const { t } = useTranslation();
 
+  const handlePageChange = (newPage: PageType) => {
+    setCurrentPage(newPage);
+  };
+
   const renderCurrentPage = () => {
     switch (currentPage) {
       case 'serial-port':
@@ -36,7 +40,7 @@ function App() {
     <>
       <Header title={getPageTitle()} />
       <div className="app-layout">
-        <Sidebar currentPage={currentPage} onPageChange={setCurrentPage} />
+        <Sidebar currentPage={currentPage} onPageChange={handlePageChange} />
         <main className="main-content">
           {renderCurrentPage()}
         </main>

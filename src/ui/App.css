@@ -98,7 +98,16 @@ header button {
 .main-content {
   flex: 1;
   overflow-y: auto;
-  background: #f8f9fa;
+  background: #1a1a1a;
+}
+
+.main-content::-webkit-scrollbar {
+  display: none;
+}
+
+.main-content {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
 
 .page-content {
@@ -106,6 +115,8 @@ header button {
   height: 100%;
   min-height: 100%;
 }
+
+/* 移除原有的页面退出动画，因为我们使用覆盖层 */
 
 .main {
   display: grid;
