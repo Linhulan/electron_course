@@ -12,6 +12,14 @@ interface CounterData {
   status: 'counting' | 'completed' | 'error' | 'paused';
   errorCode?: string;
   serialNumber?: string; // 机器序列号
+  details?: DenominationDetail[]; // 面额详细信息
+}
+
+// 面额详细信息
+interface DenominationDetail {
+  denomination: number; // 面额 (例如: 1, 5, 10, 20, 50, 100)
+  count: number; // 张数
+  amount: number; // 小计金额
 }
 
 // 串口协议解析相关类型
@@ -195,13 +203,13 @@ const getStatusDescription = (status: number): 'counting' | 'completed' | 'error
   }
 };
 
-// 将协议数据转换为CounterData
+// 将协议数据转换为CounterData - 修改为处理单张纸币
 const convertProtocolToCounterData = (protocolData: SerialProtocolData): CounterData => {
   return {
     id: Date.now().toString(),
     timestamp: new Date().toLocaleTimeString(),
     totalCount: protocolData.totalCount,
-    denomination: protocolData.denomination,
+    denomination: protocolData.denomination, // 当前这张纸币的面额
     amount: protocolData.totalAmount,
     speed: 0, // 需要计算或从其他来源获取
     status: getStatusDescription(protocolData.status),
@@ -210,10 +218,37 @@ const convertProtocolToCounterData = (protocolData: SerialProtocolData): Counter
   };
 };
 
+// 更新面额统计的函数
+const updateDenominationStats = (
+  currentStats: Map<number, DenominationDetail>, 
+  denomination: number
+): Map<number, DenominationDetail> => {
+  const newStats = new Map(currentStats);
+  const existing = newStats.get(denomination);
+  
+  if (existing) {
+    // 如果已存在该面额，数量加1
+    newStats.set(denomination, {
+      denomination: denomination,
+      count: existing.count + 1,
+      amount: existing.amount + denomination
+    });
+  } else {
+    // 如果是新面额，创建新记录
+    newStats.set(denomination, {
+      denomination: denomination,
+      count: 1,
+      amount: denomination
+    });
+  }
+  
+  return newStats;
+};
+
 export const CounterDashboard: React.FC<CounterDashboardProps> = ({ className }) => {
-  const { t } = useTranslation();
-  const [counterData, setCounterData] = useState<CounterData[]>([]);
+  const { t } = useTranslation();  const [counterData, setCounterData] = useState<CounterData[]>([]);
   const [currentSession, setCurrentSession] = useState<CounterData | null>(null);
+  const [denominationStats, setDenominationStats] = useState<Map<number, DenominationDetail>>(new Map()); // 面额详细统计
   const [stats, setStats] = useState<CounterStats>({
     totalSessions: 0,
     totalAmount: 0,
@@ -256,53 +291,27 @@ export const CounterDashboard: React.FC<CounterDashboardProps> = ({ className })
         try {
           // 使用新的解析函数，传递isCompletePacket标识
           const protocolData = parseSerialProtocolData(data.hexData, data.isCompletePacket);
-          if (protocolData) {
-            // 检查是否为点钞数据 (CMD-G = 0x0E)
+          if (protocolData) {            // 检查是否为点钞数据 (CMD-G = 0x0E)
             if (protocolData.cmdGroup === 0x0E) {
               const counterData = convertProtocolToCounterData(protocolData);
+              
+              // 更新面额统计 - 每个协议包代表一张纸币
+              setDenominationStats(prev => updateDenominationStats(prev, protocolData.denomination));
+              
               setCurrentSession(counterData);
               setCounterData(prev => [counterData, ...prev].slice(0, 50)); // 保留最近50条记录
               
               console.log('Parsed counter data from', data.isCompletePacket ? 'complete packet' : 'raw data', ':', counterData);
+              console.log('Updated denomination stats for denomination:', protocolData.denomination);
             }
           }
         } catch (error) {
           console.error('Error parsing serial data:', error);
         }
       }
-    });
-
-    return () => {
+    });    return () => {
       unsubscribeDataReceived();
     };
-  }, [isConnected]);
-
-  // 备用模拟数据生成 (可以通过配置开关控制)
-  useEffect(() => {
-    const enableMockData = false; // 设置为 false 禁用模拟数据
-    
-    if (!enableMockData) return;
-    
-    const mockDataInterval = setInterval(() => {
-      if (isConnected && Math.random() > 0.7) { // 30% 概率生成数据
-        const newData: CounterData = {
-          id: Date.now().toString(),
-          timestamp: new Date().toLocaleTimeString(),
-          totalCount: Math.floor(Math.random() * 100) + 1,
-          denomination: [10, 20, 50, 100][Math.floor(Math.random() * 4)],
-          amount: 0, // 将根据 totalCount * denomination 计算
-          speed: Math.floor(Math.random() * 200) + 800, // 800-1000 张/分钟
-          status: Math.random() > 0.95 ? 'error' : 'completed',
-          errorCode: Math.random() > 0.95 ? 'E001' : undefined,
-          serialNumber: 'CM-2024-001'        };
-        newData.amount = newData.totalCount * newData.denomination;
-        
-        setCurrentSession(newData);
-        setCounterData(prev => [newData, ...prev].slice(0, 50)); // 保留最近50条记录
-      }
-    }, 3000);
-
-    return () => clearInterval(mockDataInterval);
   }, [isConnected]);
 
   const getFilteredData = useCallback(() => {
@@ -338,10 +347,10 @@ export const CounterDashboard: React.FC<CounterDashboardProps> = ({ className })
     };
     setStats(newStats);  
   }, [getFilteredData]);
-
   const clearData = () => {
     setCounterData([]);
     setCurrentSession(null);
+    setDenominationStats(new Map()); // 清空面额统计
   };
 
   const exportData = () => {
@@ -492,44 +501,117 @@ export const CounterDashboard: React.FC<CounterDashboardProps> = ({ className })
             </div>
           </div>
         </div>
-      )}      {/* 数据列表 */}
+      )}      {/* 数据记录区域 - 分离的Card布局 */}
       <div className="data-section">
-        <h3>{t('counter.records')}</h3>
-        <div className="data-list" ref={dataDisplayRef}>
-          {counterData.length === 0 ? (
-            <div className="no-data">
-              <div className="no-data-icon">📝</div>
-              <div className="no-data-text">{t('counter.noData.title')}</div>
-              <div className="no-data-hint">{t('counter.noData.subtitle')}</div>
-            </div>
-          ) : (
-            <div className="data-table">
-              <div className="table-header">
-                <div className="col-time">{t('counter.table.time')}</div>
-                <div className="col-status">{t('counter.table.status')}</div>
-                <div className="col-denomination">{t('counter.table.denomination')}</div>
-                <div className="col-count">{t('counter.table.count')}</div>
-                <div className="col-amount">{t('counter.table.amount')}</div>
-                <div className="col-speed">{t('counter.table.speed')}</div>
-                <div className="col-serial">{t('counter.table.device')}</div>
-              </div>
-              {counterData.map((item) => (
-                <div key={item.id} className="table-row">
-                  <div className="col-time">{item.timestamp}</div>
-                  <div className="col-status">
-                    <span style={{ color: getStatusColor(item.status) }}>
-                      {getStatusIcon(item.status)}
-                    </span>
-                  </div>
-                  <div className="col-denomination">¥{item.denomination}</div>
-                  <div className="col-count">{item.totalCount}</div>
-                  <div className="col-amount">{formatCurrency(item.amount)}</div>
-                  <div className="col-speed">{item.speed}</div>
-                  <div className="col-serial">{item.serialNumber}</div>
+        <div className="records-grid">
+          {/* 详细面额统计 Card */}
+          <div className="record-card detailed-records-card">
+            <div className="card-header">
+              <h3>
+                <span className="section-icon">💰</span>
+                Detailed Records
+                <span className="record-count">
+                  {denominationStats.size > 0 && `(${Array.from(denominationStats.values()).reduce((sum, d) => sum + d.count, 0)} bills)`}
+                </span>
+              </h3>            </div>
+            <div className="card-content">
+              <div className="details-list">
+              {denominationStats.size === 0 ? (
+                <div className="no-data">
+                  <div className="no-data-icon">�</div>
+                  <div className="no-data-text">No detailed records</div>
+                  <div className="no-data-hint">Start counting to see denomination breakdown</div>
                 </div>
-              ))}
+              ) : (
+                <div className="details-table">
+                  <div className="details-header">
+                    <div className="col-denom">Denomination</div>
+                    <div className="col-pcs">Count</div>
+                    <div className="col-amount">Total</div>
+                  </div>
+                  {Array.from(denominationStats.values())
+                    .sort((a, b) => b.denomination - a.denomination) // 按面额从大到小排序
+                    .map((detail) => (
+                      <div key={detail.denomination} className="details-row">
+                        <div className="col-denom">
+                          <span className="denom-value">¥{detail.denomination}</span>
+                        </div>
+                        <div className="col-pcs">
+                          <span className="count-value">{detail.count}</span>
+                          <span className="count-label">pcs</span>
+                        </div>
+                        <div className="col-amount">{formatCurrency(detail.amount)}</div>
+                      </div>
+                    ))}
+                  {/* 总计行 */}
+                  {denominationStats.size > 0 && (
+                    <div className="details-row total-row">
+                      <div className="col-denom">
+                        <strong>Total</strong>
+                      </div>
+                      <div className="col-pcs">
+                        <strong>{Array.from(denominationStats.values()).reduce((sum, d) => sum + d.count, 0)}</strong>
+                        <span className="count-label">pcs</span>
+                      </div>
+                      <div className="col-amount">
+                        <strong>{formatCurrency(Array.from(denominationStats.values()).reduce((sum, d) => sum + d.amount, 0))}</strong>
+                      </div>
+                    </div>
+                  )}
+                </div>              )}
             </div>
-          )}
+            </div>
+          </div>
+
+          {/* 计数记录 Card */}
+          <div className="record-card counting-records-card">
+            <div className="card-header">
+              <h3>
+                <span className="section-icon">📝</span>
+                {t('counter.records')}
+                <span className="record-count">
+                  {counterData.length > 0 && `(${counterData.length} records)`}
+                </span>
+              </h3>
+            </div>
+            <div className="card-content">
+              <div className="data-list" ref={dataDisplayRef}>
+              {counterData.length === 0 ? (
+                <div className="no-data">
+                  <div className="no-data-icon">�</div>
+                  <div className="no-data-text">{t('counter.noData.title')}</div>
+                  <div className="no-data-hint">{t('counter.noData.subtitle')}</div>
+                </div>
+              ) : (
+                <div className="data-table">
+                  <div className="table-header">
+                    <div className="col-time">{t('counter.table.time')}</div>
+                    <div className="col-status">{t('counter.table.status')}</div>
+                    <div className="col-denomination">{t('counter.table.denomination')}</div>
+                    <div className="col-count">{t('counter.table.count')}</div>
+                    <div className="col-amount">{t('counter.table.amount')}</div>
+                    <div className="col-speed">{t('counter.table.speed')}</div>
+                    <div className="col-serial">{t('counter.table.device')}</div>
+                  </div>
+                  {counterData.map((item) => (
+                    <div key={item.id} className="table-row">
+                      <div className="col-time">{item.timestamp}</div>
+                      <div className="col-status">
+                        <span style={{ color: getStatusColor(item.status) }}>
+                          {getStatusIcon(item.status)}
+                        </span>
+                      </div>
+                      <div className="col-denomination">¥{item.denomination}</div>
+                      <div className="col-count">{item.totalCount}</div>
+                      <div className="col-amount">{formatCurrency(item.amount)}</div>
+                      <div className="col-speed">{item.speed}</div>
+                      <div className="col-serial">{item.serialNumber}</div>
+                    </div>
+                  ))}
+                </div>              )}
+            </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
