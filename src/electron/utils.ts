@@ -39,10 +39,38 @@ export function validateEventFrame(frame: WebFrameMain | null) {
     return;
   }
 
-  console.log(frame.url);
+  console.log("Frame URL:", frame.url);
+  
+  // 开发环境：允许localhost
   if (isDev() && new URL(frame.url).host === "localhost:5123") {
     return;
   }
+  
+  // 生产环境：更灵活的文件URL验证
+  if (!isDev()) {
+    const frameUrl = new URL(frame.url);
+    
+    // 必须是file协议
+    if (frameUrl.protocol !== "file:") {
+      throw new Error("Malicious event: Invalid protocol");
+    }
+    
+    // 检查路径是否包含预期的文件名
+    if (frameUrl.pathname.endsWith("/index.html") || frameUrl.pathname.endsWith("/dist-react/index.html")) {
+      return;
+    }
+    
+    // 如果URL完全匹配预期路径也允许
+    const expectedUrl = pathToFileURL(getUIPath()).toString();
+    console.log("Expected URL:", expectedUrl);
+    if (frame.url === expectedUrl) {
+      return;
+    }
+    
+    throw new Error("Malicious event: Invalid frame URL");
+  }
+  
+  // 开发环境的严格检查
   if (frame.url !== pathToFileURL(getUIPath()).toString()) {
     throw new Error("Malicious event");
   }

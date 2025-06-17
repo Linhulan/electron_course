@@ -1,8 +1,16 @@
 {
   "appId": "com.example.app",
-  "files": ["dist-react", "dist-electron"],
-  "extraResources": ["dist-electron/preload.cjs", "src/assets/**"],
+  "files": [
+    "dist-react", 
+    "dist-electron"
+  ],
+  "asarUnpack": [
+    "dist-electron/preload.cjs"
+  ],
   "icon": "./desktopIcon.png",
+  "directories": {
+    "output": "dist"
+  },
   "mac": {
     "target": "dmg"
   },
@@ -11,6 +19,7 @@
     "category": "Utility"
   },
   "win": {
-    "target": ["portable", "msi"]
+    "target": ["portable", "msi"],
+    "artifactName": "${productName}-${version}-${os}-${arch}.${ext}"
   }
 }

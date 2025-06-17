@@ -11,10 +11,12 @@ import { SerialPortManager, getAvailablePorts } from './serialPort.js';
 
 // Menu.setApplicationMenu(null);
 
-app.on("ready", async () => {
-  const mainWindow = new BrowserWindow({
+app.on("ready", async () => {  const mainWindow = new BrowserWindow({
     webPreferences: {
       preload: getPreloadPath(),
+      contextIsolation: true,
+      nodeIntegration: false,
+      sandbox: false, // 需要禁用沙箱以访问串口
     },
     frame: false,
     // show: false,

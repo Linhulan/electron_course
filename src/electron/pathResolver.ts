@@ -3,11 +3,12 @@ import { app } from "electron";
 import { isDev } from "./utils.js";
 
 export function getPreloadPath() {
-  return path.join(
-    app.getAppPath(),
-    isDev() ? "." : "..",
-    "/dist-electron/preload.cjs"
-  );
+  if (isDev()) {
+    return path.join(app.getAppPath(), "/dist-electron/preload.cjs");
+  } else {
+    // 打包环境中，使用asar.unpacked路径
+    return path.join(app.getAppPath(), "..", "app.asar.unpacked", "dist-electron", "preload.cjs");
+  }
 }
 
 export function getUIPath() {
