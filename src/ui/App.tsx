@@ -14,17 +14,6 @@ function App() {
     setCurrentPage(newPage);
   };
 
-  const renderCurrentPage = () => {
-    switch (currentPage) {
-      case 'serial-port':
-        return <SerialPortPanel className="page-content" />;
-      case 'counter-dashboard':
-        return <CounterDashboard className="page-content" />;
-      default:
-        return <SerialPortPanel className="page-content" />;
-    }
-  };
-
   const getPageTitle = () => {
     switch (currentPage) {
       case 'serial-port':
@@ -42,7 +31,12 @@ function App() {
       <div className="app-layout">
         <Sidebar currentPage={currentPage} onPageChange={handlePageChange} />
         <main className="main-content">
-          {renderCurrentPage()}
+          <div className={`page-container ${currentPage === 'serial-port' ? 'active' : 'hidden'}`}>
+            <SerialPortPanel className="page-content" />
+          </div>
+          <div className={`page-container ${currentPage === 'counter-dashboard' ? 'active' : 'hidden'}`}>
+            <CounterDashboard className="page-content" />
+          </div>
         </main>
       </div>
     </>
