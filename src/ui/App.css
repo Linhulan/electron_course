@@ -84,6 +84,25 @@ header button {
   background-color: #0dbb51;
 }
 
+/* 应用布局 */
+.app-layout {
+  display: flex;
+  height: calc(100vh - 60px); /* 减去header高度 */
+  overflow: hidden;
+}
+
+.main-content {
+  flex: 1;
+  overflow-y: auto;
+  background: #f8f9fa;
+}
+
+.page-content {
+  width: 100%;
+  height: 100%;
+  min-height: 100%;
+}
+
 .main {
   display: grid;
   /* grid-template-columns: 24rem auto; */

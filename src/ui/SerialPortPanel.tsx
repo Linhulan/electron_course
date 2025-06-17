@@ -213,7 +213,8 @@ export const SerialPortPanel: React.FC<SerialPortPanelProps> = ({ className }) =
                     {getPortDisplayName(port)}
                   </option>
                 ))}
-              </select>              <button
+              </select>              
+              <button
                 onClick={refreshPorts}
                 disabled={isLoading}
                 className="refresh-btn"
