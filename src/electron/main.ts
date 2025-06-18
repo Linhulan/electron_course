@@ -1,32 +1,150 @@
-import { app, BrowserWindow } from "electron";
+import { app, BrowserWindow, screen } from "electron";
 import { ipcMainHandle, ipcMainOn, isDev } from "./utils.js";
 import { getStaticData, pollResources } from "./resourceManager.js";
 import { getPreloadPath, getUIPath } from "./pathResolver.js";
 import { createTray } from "./tray.js";
 import { createMenu } from "./menu.js";
 import { SerialPortManager, getAvailablePorts } from './serialPort.js';
+import { createSplashWindow } from './splashWindow.js';
+import { StartupOptimizer } from './startupOptimizer.js';
+import { startupConfig } from './startupConfig.js';
 // app.commandLine.appendSwitch("enable-lcp");
 // app.commandLine.appendSwitch('disable-features', 'OutOfProcessPdf');
 // app.enableSandbox(); // 必须启用沙箱
 
+// 启动性能优化
+app.commandLine.appendSwitch('--enable-features', 'VaapiVideoDecoder');
+app.commandLine.appendSwitch('--disable-background-timer-throttling');
+app.commandLine.appendSwitch('--disable-backgrounding-occluded-windows');
+app.commandLine.appendSwitch('--disable-renderer-backgrounding');
+
 // Menu.setApplicationMenu(null);
 
-app.on("ready", async () => {  const mainWindow = new BrowserWindow({
+app.on("ready", async () => {
+  // 记录启动时间
+  const startTime = Date.now();
+  const minSplashDuration = isDev() 
+    ? startupConfig.minSplashDuration.development 
+    : startupConfig.minSplashDuration.production;
+  
+  // 创建启动画面 - 在开发和生产环境都显示
+  let splash: BrowserWindow | null = null;
+  if (startupConfig.showSplashInDev || !isDev()) {
+    splash = createSplashWindow();
+    splash.show();
+    console.log(`启动画面将显示至少 ${minSplashDuration}ms`);
+  }
+  const mainWindow = new BrowserWindow({
     webPreferences: {
       preload: getPreloadPath(),
       contextIsolation: true,
       nodeIntegration: false,
       sandbox: false, // 需要禁用沙箱以访问串口
     },
-    frame: true,
-    // 在开发模式下可以设置为
-    // show: false,
+    frame: false,
+    show: false, // 初始隐藏，等待弹出放大动画
+    backgroundColor: '#242424', // 设置与应用主题一致的背景色
+    width: 1250,  // 预设最终尺寸
+    height: 800,
+    // 初始位置将由弹出动画设置
+  });// 等待页面准备好后再显示窗口
+  mainWindow.once("ready-to-show", async () => {
+    // 计算已经过去的时间
+    const elapsedTime = Date.now() - startTime;
+    const remainingTime = Math.max(0, minSplashDuration - elapsedTime);
+    
+    // 如果还没有达到最小显示时间，等待剩余时间
+    if (remainingTime > 0) {
+      console.log(`启动画面将再显示 ${remainingTime}ms 以确保流畅体验`);
+      await new Promise(resolve => setTimeout(resolve, remainingTime));
+    }
+      // 关闭启动画面并启动弹出放大动画
+    if (splash) {
+      try {
+        // 获取启动窗口的位置和尺寸
+        const splashBounds = splash.getBounds();
+        
+        // 计算主窗口的目标尺寸和位置
+        const targetBounds = StartupOptimizer.calculateTransitionBounds(
+          splashBounds,
+          1250, // 主窗口宽度
+          800   // 主窗口高度
+        );
+        
+        console.log(`启动弹出放大动画: ${splashBounds.width}x${splashBounds.height} -> ${targetBounds.to.width}x${targetBounds.to.height}`);
+        
+        // 先淡出启动画面
+        StartupOptimizer.simpleFade(
+          splash,
+          1,
+          0,
+          startupConfig.animations.splashFadeOut,
+          () => {
+            splash?.close();
+            splash = null;
+            
+            // 延迟一点让启动画面完全消失，然后开始弹出动画
+            setTimeout(() => {
+              showMainWindowWithPopup(targetBounds);
+            }, startupConfig.animations.delayBetween);
+          }
+        );
+      } catch (error) {
+        console.error('启动画面关闭失败:', error);
+        splash.close();
+        splash = null;
+        showMainWindowFallback();
+      }
+    } else {
+      showMainWindowFallback();
+    }
+    
+    function showMainWindowWithPopup(bounds: { from: any; to: any }) {
+      try {
+        // 使用弹出放大动画
+        StartupOptimizer.popupScale(
+          mainWindow,
+          bounds.from,
+          bounds.to,
+          startupConfig.animations.popupScale,
+          startupConfig.animations.scaleEasing,
+          () => {
+            console.log(`主窗口弹出放大完成，总耗时: ${Date.now() - startTime}ms`);
+          }
+        );
+      } catch (error) {
+        console.error('弹出放大动画失败:', error);
+        showMainWindowFallback();
+      }
+    }
+    
+    function showMainWindowFallback() {
+      try {
+        // 回退方案：简单的淡入动画
+        mainWindow.setOpacity(0);
+        mainWindow.show();
+        mainWindow.center(); // 居中显示
+        
+        setTimeout(() => {
+          StartupOptimizer.simpleFade(
+            mainWindow,
+            0,
+            1,
+            startupConfig.animations.mainFadeIn,
+            () => {
+              mainWindow.setOpacity(1);
+              console.log(`主窗口启动完成（回退方案），总耗时: ${Date.now() - startTime}ms`);
+            }
+          );
+        }, startupConfig.animations.delayBetween);
+      } catch (error) {
+        console.error('主窗口显示失败:', error);
+        mainWindow.setOpacity(1);
+        mainWindow.show();
+        mainWindow.center();
+      }
+    }
   });
-
-  // mainWindow.once("ready-to-show", () => {
-  //   mainWindow.show();
-  // });
-
   if (isDev()) {
     mainWindow.loadURL("http://localhost:5123");
   } else {
@@ -34,8 +152,7 @@ app.on("ready", async () => {  const mainWindow = new BrowserWindow({
   }
 
   pollResources(mainWindow);
-  mainWindow.setSize(1250, 800);
-  mainWindow.center();
+  // 窗口尺寸和位置现在由弹出动画设置，移除这里的设置
 
   ipcMainHandle("getStaticData", () => {
     return getStaticData();

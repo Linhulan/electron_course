@@ -4,13 +4,107 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Vite + React + TS</title>
+    <title>Electron Serial App</title>
     <meta 
       http-equiv="Content-Security-Policy"
       content="default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self';"
-    />
+    />    <style>
+      /* 启动时的样式，防止白屏闪烁 */
+      html, body {
+        margin: 0;
+        padding: 0;
+        background-color: #242424;
+        color: rgba(255, 255, 255, 0.87);
+        font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
+        overflow: hidden;
+        /* 启用硬件加速 */
+        transform: translateZ(0);
+        -webkit-backface-visibility: hidden;
+        backface-visibility: hidden;
+      }
+      
+      /* 加载指示器 */
+      .loading-container {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: #242424;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        z-index: 9999;
+        /* 性能优化 */
+        will-change: opacity;
+        transform: translateZ(0);
+      }
+      
+      .loading-spinner {
+        width: 40px;
+        height: 40px;
+        border: 3px solid rgba(255, 255, 255, 0.1);
+        border-top: 3px solid #646cff;
+        border-radius: 50%;
+        margin-bottom: 20px;
+        /* 使用 transform 而不是其他属性来提高性能 */
+        animation: spin 1s linear infinite;
+        will-change: transform;
+        transform: translateZ(0);
+      }
+      
+      .loading-text {
+        color: rgba(255, 255, 255, 0.6);
+        font-size: 14px;
+        opacity: 0;
+        transform: translateY(10px);
+        animation: fadeInUp 0.5s ease-out 0.2s forwards;
+      }
+      
+      /* 优化的旋转动画 */
+      @keyframes spin {
+        0% { 
+          transform: translateZ(0) rotate(0deg); 
+        }
+        100% { 
+          transform: translateZ(0) rotate(360deg); 
+        }
+      }
+      
+      @keyframes fadeInUp {
+        to {
+          opacity: 0.6;
+          transform: translateY(0);
+        }
+      }
+      
+      /* 当应用加载完成后隐藏加载界面 */
+      .app-loaded .loading-container {
+        opacity: 0;
+        transform: translateZ(0);
+        transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        pointer-events: none;
+      }
+      
+      /* 防止内容跳动 */
+      #root {
+        opacity: 0;
+        transition: opacity 0.2s ease-in;
+      }
+      
+      .app-loaded #root {
+        opacity: 1;
+      }
+    </style>
   </head>
   <body>
+    <!-- 加载指示器 -->
+    <div class="loading-container" id="loading">
+      <div class="loading-spinner"></div>
+      <div class="loading-text">正在启动应用...</div>
+    </div>
+    
     <div id="root"></div>
     <script type="module" src="/src/ui/main.tsx"></script>
   </body>

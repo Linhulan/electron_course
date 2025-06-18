@@ -1,3 +1,20 @@
+/* 应用根级样式 - 确保启动时的一致性 */
+#root {
+  background-color: #242424;
+  min-height: 100vh;
+  color: rgba(255, 255, 255, 0.87);
+}
+
+/* 防止启动时的内容跳动 */
+.app-layout {
+  opacity: 1;
+  transition: opacity 0.2s ease-in;
+}
+
+.app-layout.loading {
+  opacity: 0;
+}
+
 /*header {
   width: 100%;
   text-align: left;

@@ -433,8 +433,17 @@ i18n
     },
 
     react: {
-      useSuspense: false,
+      useSuspense: false, // 禁用 Suspense 以避免启动阻塞
     },
+
+    // 启动性能优化
+    initImmediate: false, // 立即初始化，不等待检测器
+    load: 'languageOnly', // 只加载语言部分，不加载地区
+    preload: ['zh-CN', 'en-US'], // 预加载常用语言
+    
+    // 缓存优化
+    cleanCode: true,
+    
   });
 
 export default i18n;

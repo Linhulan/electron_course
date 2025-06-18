@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useTranslation } from 'react-i18next';
 import { LanguageSwitcher } from './components/LanguageSwitcher';
 import "./App.css";
@@ -6,9 +6,25 @@ import { SerialPortPanel } from "./SerialPortPanel";
 import { CounterDashboard } from "./CounterDashboard";
 import { Sidebar, PageType } from "./Sidebar";
 
-function App() {
+interface AppProps {
+  onAppReady?: () => void;
+}
+
+function App({ onAppReady }: AppProps) {
   const [currentPage, setCurrentPage] = useState<PageType>('serial-port');
-  const { t } = useTranslation();
+  const { t, ready } = useTranslation();
+
+  // 当应用完全加载后通知隐藏加载屏幕
+  useEffect(() => {
+    if (ready && onAppReady) {
+      // 延迟一点时间确保渲染完成
+      const timer = setTimeout(() => {
+        onAppReady();
+      }, 100);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [ready, onAppReady]);
 
   const handlePageChange = (newPage: PageType) => {
     setCurrentPage(newPage);

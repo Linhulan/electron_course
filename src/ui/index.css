@@ -11,12 +11,40 @@
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  
+  /* 性能优化 */
+  -webkit-tap-highlight-color: transparent;
 }
 
 body {
   margin: 0;
+  background-color: #242424; /* 确保背景色一致 */
+  overflow: hidden; /* 防止启动时的滚动条闪烁 */
+  /* 启用硬件加速 */
+  transform: translateZ(0);
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+}
+
+#root {
+  min-height: 100vh;
+  background-color: #242424;
+  /* 减少重绘 */
+  contain: layout style paint;
 }
 
 button {
   all: unset;
+}
+
+/* 全局动画性能优化 */
+* {
+  -webkit-box-sizing: border-box;
+  box-sizing: border-box;
+}
+
+/* 确保所有动画使用合成层 */
+*[style*="transform"],
+*[style*="opacity"] {
+  will-change: auto;
 }
