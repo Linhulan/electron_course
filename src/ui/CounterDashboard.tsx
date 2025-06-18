@@ -32,6 +32,7 @@ interface SessionData {
   endTime?: string;
   totalCount: number;
   totalAmount: number;
+  errorCount: number; // 错误张数
   status: "counting" | "completed" | "error" | "paused";
   errorCode?: string;
   serialNumber?: string;
@@ -73,14 +74,13 @@ const handleSessionUpdate = (
       console.log(
         "Previous completed session archived before starting new session"
       );
-    }
-
-    const newSession: SessionData = {
+    }    const newSession: SessionData = {
       id: now.getTime().toString(),
       timestamp: now.toLocaleTimeString(),
       startTime: now.toLocaleString(),
       totalCount: 0, // 开始时张数为0
       totalAmount: 0, // 开始时金额为0
+      errorCount: 0, // 开始时错误张数为0
       status: status,
       errorCode:
         protocolData.errorCode !== 0
@@ -98,8 +98,7 @@ const handleSessionUpdate = (
   }
 
   // 如果没有当前Session但不是开始状态，说明有问题，创建一个临时Session
-  if (!currentSession) {
-    const tempSession: SessionData = {
+  if (!currentSession) {    const tempSession: SessionData = {
       id: now.getTime().toString(),
       timestamp: now.toLocaleTimeString(),
       startTime: now.toLocaleString(),
@@ -109,6 +108,7 @@ const handleSessionUpdate = (
       totalAmount: isSessionUpdate(protocolData.status)
         ? protocolData.totalAmount
         : 0,
+      errorCount: 0, // 临时Session错误张数初始化为0
       status: status,
       errorCode:
         protocolData.errorCode !== 0
@@ -138,11 +138,15 @@ const handleSessionUpdate = (
             .toUpperCase()}`
         : undefined,
   };
-
   // 只有在刷新中状态时才更新金额和张数 (因为只有这种协议携带有效的金额和面额数据)
   if (isSessionUpdate(protocolData.status)) {
     updatedSession.totalCount = protocolData.totalCount;
     updatedSession.totalAmount = protocolData.totalAmount;
+    
+    // 如果有错误代码，累积错误张数
+    if (protocolData.errorCode !== 0) {
+      updatedSession.errorCount = (currentSession.errorCount || 0) + 1;
+    }
   }
   // 如果Session完成，添加到历史记录但保留在当前Session显示 (结束协议不携带金额数据)
   if (isSessionEnd(protocolData.status)) {
@@ -314,7 +318,6 @@ export const CounterDashboard: React.FC<CounterDashboardProps> = ({
       return itemTime >= cutoffTime;
     });
   }, [sessionData, selectedTimeRange]);
-
   // 计算统计数据
   useEffect(() => {
     const filteredData = getFilteredData();
@@ -326,7 +329,7 @@ export const CounterDashboard: React.FC<CounterDashboardProps> = ({
       ),
       totalNotes: filteredData.reduce((sum, item) => sum + item.totalCount, 0),
       averageSpeed: 0, // Session模式下暂不计算速度
-      errorPcs: filteredData.filter((item) => item.status === "error").length,
+      errorPcs: filteredData.reduce((sum, item) => sum + (item.errorCount || 0), 0),
     };
     setStats(newStats);
   }, [getFilteredData]);
@@ -521,13 +524,20 @@ export const CounterDashboard: React.FC<CounterDashboardProps> = ({
                 <span className="session-value">
                   {currentSession.totalCount}
                 </span>
-              </div>
-              <div className="session-item">
+              </div>              <div className="session-item">
                 <span className="session-label">
                   {t("counter.session.amount")}:
                 </span>
                 <span className="session-value">
                   {formatCurrency(currentSession.totalAmount)}
+                </span>
+              </div>
+              <div className="session-item">
+                <span className="session-label">
+                  {t("counter.session.errorCount")}:
+                </span>
+                <span className="session-value error-count">
+                  {currentSession.errorCount || 0}
                 </span>
               </div>
               {currentSession.endTime && (
@@ -676,8 +686,7 @@ export const CounterDashboard: React.FC<CounterDashboardProps> = ({
                   </div>
                 ) : (
                   <div className="data-table">
-                    {" "}
-                    <div className="table-header">
+                    {" "}                    <div className="table-header">
                       <div className="col-time">{t("counter.table.time")}</div>
                       <div className="col-status">
                         {t("counter.table.status")}
@@ -688,8 +697,10 @@ export const CounterDashboard: React.FC<CounterDashboardProps> = ({
                       <div className="col-amount">
                         {t("counter.table.amount")}
                       </div>
-                    </div>{" "}
-                    {sessionData.map((item) => (
+                      <div className="col-error">
+                        {t("counter.table.errorPcs")}
+                      </div>
+                    </div>{" "}                    {sessionData.map((item) => (
                       <div key={item.id} className="table-row">
                         <div className="col-time">{item.timestamp}</div>
                         <div className="col-status">
@@ -700,6 +711,9 @@ export const CounterDashboard: React.FC<CounterDashboardProps> = ({
                         <div className="col-count">{item.totalCount}</div>
                         <div className="col-amount">
                           {formatCurrency(item.totalAmount)}
+                        </div>
+                        <div className="col-error error-count">
+                          {item.errorCount || 0}
                         </div>
                       </div>
                     ))}

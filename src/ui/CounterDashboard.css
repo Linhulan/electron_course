@@ -421,7 +421,7 @@
 .table-header,
 .table-row {
   display: grid;
-  grid-template-columns: 150px 80px 80px 1fr;
+  grid-template-columns: 150px 80px 80px 1fr 80px;
   gap: 1rem;
   padding: 0.75rem 1.5rem;
   align-items: center;
@@ -460,9 +460,24 @@
 }
 
 .col-count,
-.col-amount {
+.col-amount,
+.col-error {
   text-align: right;
   font-weight: 500;
+}
+
+/* 错误张数样式 */
+.error-count {
+  color: #ff6b6b;
+  font-weight: 600;
+}
+
+.session-value.error-count {
+  color: #ffb3b3;
+}
+
+.col-error.error-count {
+  color: #ff8a8a;
 }
 
 /* 两栏记录布局 */
