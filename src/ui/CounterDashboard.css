@@ -200,9 +200,48 @@
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
-.current-session h3 {
-  margin: 0 0 1rem 0;
+/* 会话头部 */
+.session-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.session-header h3 {
+  margin: 0;
   font-size: 1.2rem;
+}
+
+/* 清空会话按钮 */
+.clear-session-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  backdrop-filter: blur(10px);
+}
+
+.clear-session-btn:hover {
+  background: rgba(255, 255, 255, 0.3);
+  border-color: rgba(255, 255, 255, 0.5);
+  transform: translateY(-1px);
+}
+
+.clear-session-btn:active {
+  transform: translateY(0);
+}
+
+.clear-icon {
+  font-size: 1rem;
 }
 
 .session-info {
@@ -238,6 +277,14 @@
 .session-value {
   font-size: 1rem;
   font-weight: 600;
+}
+
+/* 结束时间特殊样式 */
+.session-value.end-time {
+  font-size: 0.875rem;
+  opacity: 0.9;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.8);
 }
 
 /* 数据区域 */

@@ -1,6 +1,15 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import "./CounterDashboard.css";
+import {
+  protocolManager,
+  CountingProtocolData,
+  getCountingStatus,
+  isSessionStart,
+  isSessionEnd,
+  isSessionUpdate,
+} from "./protocols";
+import { initializeProtocols } from "./protocols/init";
 
 interface CounterData {
   id: string;
@@ -36,23 +45,6 @@ interface DenominationDetail {
   amount: number; // 小计金额
 }
 
-// 串口协议解析相关类型
-interface SerialProtocolData {
-  check: number[]; // 0:1 CHECK: 0xFD 0xDF
-  length: number; // 2 长度: 0x2C
-  cmdGroup: number; // 3 CMD-G: 0x0E
-  totalCount: number; // 4:7 总张数 (低位先行)
-  denomination: number; // 8:11 面额
-  totalAmount: number; // 12:19 总金额 (8字节)
-  currencyCode: string; // 20:23 货币代码 (4位包含结束符号)
-  serialNumber: string; // 24:34 SN (11位)
-  reserved1: number[]; // 35:39 RESERVED
-  errorCode: number; // 40 ErrCode
-  status: number; // 41 状态位 0x00: 开始刷新； 0x01: 刷新中; 0x02: 刷新完成； 0x03: 刷新完成，接钞满；
-  reserved2: number; // 42 RESERVED
-  crc: number; // 43 CRC
-}
-
 interface CounterStats {
   totalSessions: number;
   totalAmount: number;
@@ -65,184 +57,24 @@ interface CounterDashboardProps {
   className?: string;
 }
 
-// 串口协议解析工具函数 - 增强粘包处理
-const parseSerialProtocolData = (
-  hexData: string,
-  isCompletePacket?: boolean
-): SerialProtocolData | null => {
-  try {
-    // 移除空格并转换为大写
-    const cleanHex = hexData.replace(/\s+/g, "").toUpperCase();
-
-    // 如果不是完整包且数据较短，可能是分包，不进行解析
-    if (!isCompletePacket && cleanHex.length < 88) {
-      console.log("Incomplete packet detected, waiting for more data");
-      return null;
-    }
-
-    // 检查数据长度是否足够 (最少44字节 = 88个十六进制字符)
-    if (cleanHex.length < 88) {
-      console.warn("Serial data too short:", cleanHex.length);
-      return null;
-    }
-
-    // 处理粘包情况：如果数据很长，可能包含多个协议包
-    const protocols = extractMultipleProtocols(cleanHex);
-
-    // 返回第一个有效的协议包
-    for (const protocolHex of protocols) {
-      const result = parseSingleProtocol(protocolHex);
-      if (result) {
-        return result;
-      }
-    }
-
-    return null;
-  } catch (error) {
-    console.error("Error parsing serial protocol data:", error);
-    return null;
-  }
-};
-
-// 从十六进制字符串中提取多个协议包
-const extractMultipleProtocols = (hexData: string): string[] => {
-  const protocols: string[] = [];
-  let position = 0;
-
-  while (position < hexData.length) {
-    // 查找协议头 FDDF
-    const headerIndex = hexData.indexOf("FDDF", position);
-    if (headerIndex === -1) {
-      break; // 没有找到更多协议头
-    }
-
-    // 检查是否有足够的数据来读取长度字段
-    if (headerIndex + 4 >= hexData.length) {
-      break;
-    }
-
-    // 读取长度字段（第3个字节，即位置 headerIndex + 4 和 headerIndex + 5）
-    const lengthHex = hexData.substr(headerIndex + 4, 2);
-    const packetLength = parseInt(lengthHex, 16);
-    const totalPacketLength = (packetLength + 4) * 2; // 转换为十六进制字符数
-
-    // 检查是否有完整的协议包
-    if (headerIndex + totalPacketLength <= hexData.length) {
-      const protocolHex = hexData.substr(headerIndex, totalPacketLength);
-      protocols.push(protocolHex);
-      position = headerIndex + totalPacketLength;
-    } else {
-      // 不完整的包，停止处理
-      break;
-    }
-  }
-
-  // 如果没有找到完整的协议包，返回整个数据进行尝试解析
-  if (protocols.length === 0) {
-    protocols.push(hexData);
-  }
-
-  return protocols;
-};
-
-// 解析单个协议包
-const parseSingleProtocol = (hexData: string): SerialProtocolData | null => {
-  try {
-    // 将十六进制字符串转换为字节数组
-    const bytes: number[] = [];
-    for (let i = 0; i < hexData.length; i += 2) {
-      bytes.push(parseInt(hexData.substr(i, 2), 16));
-    }
-
-    // 检查协议头
-    if (bytes[0] !== 0xfd || bytes[1] !== 0xdf) {
-      console.warn("Invalid protocol header:", bytes[0], bytes[1]);
-      return null;
-    }
-
-    // 检查CMD-G是否为点钞数据
-    if (bytes[3] !== 0x0e) {
-      console.warn("Not counting data CMD-G:", bytes[3]);
-      return null;
-    }
-
-    // 解析数据
-    const totalCount =
-      bytes[4] | (bytes[5] << 8) | (bytes[6] << 16) | (bytes[7] << 24);
-    const denomination =
-      bytes[8] | (bytes[9] << 8) | (bytes[10] << 16) | (bytes[11] << 24);
-
-    // 解析8字节金额 (低位先行)
-    let totalAmount = 0;
-    for (let i = 0; i < 8; i++) {
-      totalAmount += bytes[12 + i] * Math.pow(256, i);
-    }
-
-    // 解析货币代码 (4字节，包含结束符)
-    const currencyBytes = bytes.slice(20, 24);
-    const currencyCode = String.fromCharCode(
-      ...currencyBytes.filter((b) => b !== 0)
-    );
-
-    // 解析序列号 (11字节)
-    const snBytes = bytes.slice(24, 35);
-    const serialNumber = String.fromCharCode(...snBytes.filter((b) => b !== 0));
-
-    const errorCode = bytes[40];
-    const status = bytes[41];
-    const crc = bytes[43];
-
-    return {
-      check: [bytes[0], bytes[1]],
-      length: bytes[2],
-      cmdGroup: bytes[3],
-      totalCount,
-      denomination,
-      totalAmount,
-      currencyCode,
-      serialNumber,
-      reserved1: bytes.slice(35, 40),
-      errorCode,
-      status,
-      reserved2: bytes[42],
-      crc,
-    };
-  } catch (error) {
-    console.error("Error parsing single protocol:", error);
-    return null;
-  }
-};
-
-// 状态码转换函数
-const getStatusDescription = (
-  status: number
-): "counting" | "completed" | "error" | "paused" => {
-  switch (status) {
-    case 0x00:
-      return "counting"; // 开始刷新
-    case 0x01:
-      return "counting"; // 刷新中
-    case 0x02:
-      return "completed"; // 刷新完成
-    case 0x03:
-      return "completed"; // 刷新完成，接钞满
-    default:
-      return "error";
-  }
-};
-
 // Session管理函数 - 处理点钞会话
 const handleSessionUpdate = (
-  protocolData: SerialProtocolData,
+  protocolData: CountingProtocolData,
   currentSession: SessionData | null,
   setCurrentSession: (session: SessionData | null) => void,
   setSessionData: (updater: (prev: SessionData[]) => SessionData[]) => void
 ): SessionData => {
-  const status = getStatusDescription(protocolData.status);
+  const status = getCountingStatus(protocolData.status);
   const now = new Date();
-  
   // 如果状态是开始刷新，创建新Session (开始协议不携带金额和面额)
-  if (protocolData.status === 0x00) {
+  if (isSessionStart(protocolData.status)) {
+    // 如果有已完成的Session，先保存到历史记录
+    if (currentSession && currentSession.status === "completed") {
+      console.log(
+        "Previous completed session archived before starting new session"
+      );
+    }
+
     const newSession: SessionData = {
       id: now.getTime().toString(),
       timestamp: now.toLocaleTimeString(),
@@ -250,62 +82,78 @@ const handleSessionUpdate = (
       totalCount: 0, // 开始时张数为0
       totalAmount: 0, // 开始时金额为0
       status: status,
-      errorCode: protocolData.errorCode !== 0 
-        ? `E${protocolData.errorCode.toString(16).padStart(3, "0").toUpperCase()}`
-        : undefined,
+      errorCode:
+        protocolData.errorCode !== 0
+          ? `E${protocolData.errorCode
+              .toString(16)
+              .padStart(3, "0")
+              .toUpperCase()}`
+          : undefined,
       serialNumber: protocolData.serialNumber,
-      denominationBreakdown: new Map()
+      denominationBreakdown: new Map(),
     };
-    
+
     setCurrentSession(newSession);
     return newSession;
   }
-  
+
   // 如果没有当前Session但不是开始状态，说明有问题，创建一个临时Session
   if (!currentSession) {
     const tempSession: SessionData = {
       id: now.getTime().toString(),
       timestamp: now.toLocaleTimeString(),
       startTime: now.toLocaleString(),
-      totalCount: protocolData.status === 0x01 ? protocolData.totalCount : 0,
-      totalAmount: protocolData.status === 0x01 ? protocolData.totalAmount : 0,
+      totalCount: isSessionUpdate(protocolData.status)
+        ? protocolData.totalCount
+        : 0,
+      totalAmount: isSessionUpdate(protocolData.status)
+        ? protocolData.totalAmount
+        : 0,
       status: status,
-      errorCode: protocolData.errorCode !== 0 
-        ? `E${protocolData.errorCode.toString(16).padStart(3, "0").toUpperCase()}`
-        : undefined,
+      errorCode:
+        protocolData.errorCode !== 0
+          ? `E${protocolData.errorCode
+              .toString(16)
+              .padStart(3, "0")
+              .toUpperCase()}`
+          : undefined,
       serialNumber: protocolData.serialNumber,
-      denominationBreakdown: new Map()
+      denominationBreakdown: new Map(),
     };
-    
+
     setCurrentSession(tempSession);
     return tempSession;
   }
-  
+
   // 更新当前Session
   const updatedSession: SessionData = {
     ...currentSession,
     status: status,
     timestamp: now.toLocaleTimeString(),
-    errorCode: protocolData.errorCode !== 0 
-      ? `E${protocolData.errorCode.toString(16).padStart(3, "0").toUpperCase()}`
-      : undefined,
+    errorCode:
+      protocolData.errorCode !== 0
+        ? `E${protocolData.errorCode
+            .toString(16)
+            .padStart(3, "0")
+            .toUpperCase()}`
+        : undefined,
   };
-  
+
   // 只有在刷新中状态时才更新金额和张数 (因为只有这种协议携带有效的金额和面额数据)
-  if (protocolData.status === 0x01) {
+  if (isSessionUpdate(protocolData.status)) {
     updatedSession.totalCount = protocolData.totalCount;
     updatedSession.totalAmount = protocolData.totalAmount;
   }
-  
-  // 如果Session完成，添加到历史记录并清空当前Session (结束协议不携带金额数据)
-  if (protocolData.status === 0x02 || protocolData.status === 0x03) {
+  // 如果Session完成，添加到历史记录但保留在当前Session显示 (结束协议不携带金额数据)
+  if (isSessionEnd(protocolData.status)) {
     updatedSession.endTime = now.toLocaleString();
-    setSessionData(prev => [updatedSession, ...prev].slice(0, 50));
-    setCurrentSession(null);
+    setSessionData((prev) => [updatedSession, ...prev].slice(0, 50));
+    // 保留完成的Session在界面上，不清空
+    setCurrentSession(updatedSession);
   } else {
     setCurrentSession(updatedSession);
   }
-  
+
   return updatedSession;
 };
 
@@ -338,7 +186,14 @@ const updateDenominationStats = (
 
 export const CounterDashboard: React.FC<CounterDashboardProps> = ({
   className,
-}) => {  const { t } = useTranslation();
+}) => {
+  const { t } = useTranslation();
+
+  // 初始化协议解析器
+  useEffect(() => {
+    initializeProtocols();
+  }, []);
+
   const [sessionData, setSessionData] = useState<SessionData[]>([]); // 改为Session数据
   const [currentSession, setCurrentSession] = useState<SessionData | null>(
     null
@@ -383,32 +238,40 @@ export const CounterDashboard: React.FC<CounterDashboardProps> = ({
       unsubscribeConnected();
       unsubscribeDisconnected();
     };
-  }, []);
-  // 监听串口数据并解析协议 - 增强粘包处理
+  }, []); // 监听串口数据并解析协议 - 使用新的协议管理器
   useEffect(() => {
     const unsubscribeDataReceived = window.electron.onSerialDataReceived(
       (data) => {
         // 只处理十六进制数据
         if (data.hexData && isConnected) {
           try {
-            // 使用新的解析函数，传递isCompletePacket标识
-            const protocolData = parseSerialProtocolData(
+            // 使用协议管理器解析数据
+            const protocolData = protocolManager.parseData(
               data.hexData,
               data.isCompletePacket
-            );
-            if (protocolData) {              // 检查是否为点钞数据 (CMD-G = 0x0E)
-              if (protocolData.cmdGroup === 0x0e) {                // 使用Session管理函数处理数据
+            ) as CountingProtocolData;
+
+            if (
+              protocolData &&
+              protocolData.protocolType === "CountingMachine"
+            ) {
+              // 检查是否为点钞数据 (CMD-G = 0x0E)
+              if (protocolData.cmdGroup === 0x0e) {
+                // 使用Session管理函数处理数据
                 const updatedSession = handleSessionUpdate(
                   protocolData,
                   currentSession,
                   setCurrentSession,
                   setSessionData
-                );                // 只有在刷新中状态时才更新面额统计 (因为只有这种协议携带有效的面额数据)
-                if (protocolData.status === 0x01 && protocolData.denomination > 0) {
+                ); // 只有在刷新中状态时才更新面额统计 (因为只有这种协议携带有效的面额数据)
+                if (
+                  isSessionUpdate(protocolData.status) &&
+                  protocolData.denomination > 0
+                ) {
                   setDenominationStats((prev) =>
                     updateDenominationStats(prev, protocolData.denomination)
                   );
-                  
+
                   console.log(
                     "Updated denomination stats for denomination:",
                     protocolData.denomination
@@ -457,15 +320,25 @@ export const CounterDashboard: React.FC<CounterDashboardProps> = ({
     const filteredData = getFilteredData();
     const newStats: CounterStats = {
       totalSessions: filteredData.length,
-      totalAmount: filteredData.reduce((sum, item) => sum + item.totalAmount, 0),
-      totalNotes: filteredData.reduce((sum, item) => sum + item.totalCount, 0),      averageSpeed: 0, // Session模式下暂不计算速度
+      totalAmount: filteredData.reduce(
+        (sum, item) => sum + item.totalAmount,
+        0
+      ),
+      totalNotes: filteredData.reduce((sum, item) => sum + item.totalCount, 0),
+      averageSpeed: 0, // Session模式下暂不计算速度
       errorPcs: filteredData.filter((item) => item.status === "error").length,
     };
     setStats(newStats);
-  }, [getFilteredData]);  const clearData = () => {
+  }, [getFilteredData]);
+  const clearData = () => {
     setSessionData([]);
     setCurrentSession(null);
     setDenominationStats(new Map()); // 清空面额统计
+  };
+
+  // 清空当前Session，但保留历史记录
+  const clearCurrentSession = () => {
+    setCurrentSession(null);
   };
 
   const exportData = () => {
@@ -609,10 +482,23 @@ export const CounterDashboard: React.FC<CounterDashboardProps> = ({
             <div className="stat-value">{stats.errorPcs.toLocaleString()}</div>
             <div className="stat-label">{t("counter.stats.errorPcs")}</div>
           </div>
-        </div>      </div>{" "}
+        </div>{" "}
+      </div>{" "}
       {/* 当前会话显示 - 常驻显示 */}
       <div className="current-session">
-        <h3>{t("counter.currentSession")}</h3>
+        <div className="session-header">
+          <h3>{t("counter.currentSession")}</h3>
+          {currentSession && (
+            <button
+              className="clear-session-btn"
+              onClick={clearCurrentSession}
+              title={t("counter.clearCurrentSession")}
+            >
+              <span className="clear-icon">🗑️</span>
+              {t("counter.clearSession")}
+            </button>
+          )}
+        </div>
         <div className="session-info">
           {currentSession ? (
             <>
@@ -632,7 +518,9 @@ export const CounterDashboard: React.FC<CounterDashboardProps> = ({
                 <span className="session-label">
                   {t("counter.session.count")}:
                 </span>
-                <span className="session-value">{currentSession.totalCount}</span>
+                <span className="session-value">
+                  {currentSession.totalCount}
+                </span>
               </div>
               <div className="session-item">
                 <span className="session-label">
@@ -642,6 +530,16 @@ export const CounterDashboard: React.FC<CounterDashboardProps> = ({
                   {formatCurrency(currentSession.totalAmount)}
                 </span>
               </div>
+              {currentSession.endTime && (
+                <div className="session-item">
+                  <span className="session-label">
+                    {t("counter.session.endTime")}:
+                  </span>
+                  <span className="session-value end-time">
+                    {currentSession.endTime}
+                  </span>
+                </div>
+              )}
             </>
           ) : (
             <div className="session-item no-session">
@@ -758,7 +656,8 @@ export const CounterDashboard: React.FC<CounterDashboardProps> = ({
             <div className="card-header">
               <h3>
                 <span className="section-icon">📝</span>
-                {t("counter.records")}                <span className="record-count">
+                {t("counter.records")}{" "}
+                <span className="record-count">
                   {sessionData.length > 0 && `(${sessionData.length} records)`}
                 </span>
               </h3>
@@ -776,7 +675,9 @@ export const CounterDashboard: React.FC<CounterDashboardProps> = ({
                     </div>
                   </div>
                 ) : (
-                  <div className="data-table">                    <div className="table-header">
+                  <div className="data-table">
+                    {" "}
+                    <div className="table-header">
                       <div className="col-time">{t("counter.table.time")}</div>
                       <div className="col-status">
                         {t("counter.table.status")}
@@ -787,7 +688,8 @@ export const CounterDashboard: React.FC<CounterDashboardProps> = ({
                       <div className="col-amount">
                         {t("counter.table.amount")}
                       </div>
-                    </div>                    {sessionData.map((item) => (
+                    </div>{" "}
+                    {sessionData.map((item) => (
                       <div key={item.id} className="table-row">
                         <div className="col-time">{item.timestamp}</div>
                         <div className="col-status">

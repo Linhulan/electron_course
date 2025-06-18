@@ -148,17 +148,19 @@ const zhCN = {
         averageSpeed: '平均速度',
         errorPcs: '错误张数',
         speedUnit: '张/分'
-      },
-        // 当前会话
+      },        // 当前会话
       currentSession: '当前点钞会话',
       noCurrentSession: '暂无进行中的点钞会话',
+      clearCurrentSession: '清空当前会话',
+      clearSession: '清空',
       session: {
         status: '状态',
         denomination: '面额',
         count: '张数',
         amount: '金额',
         speed: '速度',
-        device: '设备'
+        device: '设备',
+        endTime: '结束时间'
       },
       
       // 状态
@@ -348,17 +350,19 @@ const enUS = {
         averageSpeed: 'Average Speed',
         errorPcs: 'Error Pcs',
         speedUnit: 'pcs/min'
-      },
-        // Current session
+      },        // Current session
       currentSession: 'Current Counting Session',
       noCurrentSession: 'No active counting session',
+      clearCurrentSession: 'Clear current session',
+      clearSession: 'Clear',
       session: {
         status: 'Status',
         denomination: 'Denom.',
         count: 'Count',
         amount: 'Amount',
         speed: 'Speed',
-        device: 'Device'
+        device: 'Device',
+        endTime: 'End Time'
       },
       
       // Status
