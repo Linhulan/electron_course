@@ -133,21 +133,21 @@ export class StartupOptimizer {
     
     animate();
   }
-
   /**
    * 计算启动窗口到主窗口的过渡参数
    */
   static calculateTransitionBounds(
     splashBounds: { x: number; y: number; width: number; height: number },
     targetWidth: number,
-    targetHeight: number
+    targetHeight: number,
+    screen: Electron.Screen
   ): { from: any; to: any } {
     // 计算启动窗口中心点
     const splashCenterX = splashBounds.x + splashBounds.width / 2;
     const splashCenterY = splashBounds.y + splashBounds.height / 2;
     
     // 计算主窗口应该居中的位置
-    const { width: screenWidth, height: screenHeight } = require('electron').screen.getPrimaryDisplay().workAreaSize;
+    const { width: screenWidth, height: screenHeight } = screen.getPrimaryDisplay().workAreaSize;
     const targetX = Math.round((screenWidth - targetWidth) / 2);
     const targetY = Math.round((screenHeight - targetHeight) / 2);
     
@@ -193,5 +193,99 @@ export class StartupOptimizer {
         window.setOpacity(currentValue);
       }
     }, stepDuration);
+  }  /**
+   * 直接变形动画 - 优化版本，解决卡顿和白色区域问题
+   */
+  static directTransform(
+    fromWindow: Electron.BrowserWindow,
+    toWindow: Electron.BrowserWindow,
+    fromBounds: { x: number; y: number; width: number; height: number },
+    toBounds: { x: number; y: number; width: number; height: number },
+    duration: number,
+    easingType: string = 'easeOutBack',
+    onComplete?: () => void
+  ): void {
+    const startTime = Date.now();
+    const easingFunc = this.easing[easingType as keyof typeof this.easing] || this.easing.easeOutBack;
+    
+    // 设置主窗口背景色与启动窗口一致，避免白色区域
+    toWindow.setBackgroundColor('#ffffff');
+    toWindow.setOpacity(0);
+    toWindow.setBounds(toBounds);
+    
+    // 启动窗口也确保背景色
+    fromWindow.setBackgroundColor('#ffffff');
+    
+    let hasTransitioned = false;
+    let lastBounds = { ...fromBounds };
+    
+    const animate = () => {
+      const elapsed = Date.now() - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+      const eased = easingFunc(progress);
+      
+      // 计算当前尺寸和位置
+      const currentBounds = {
+        x: Math.round(this.lerp(fromBounds.x, toBounds.x, eased)),
+        y: Math.round(this.lerp(fromBounds.y, toBounds.y, eased)),
+        width: Math.round(this.lerp(fromBounds.width, toBounds.width, eased)),
+        height: Math.round(this.lerp(fromBounds.height, toBounds.height, eased)),
+      };
+      
+      // 只在尺寸真正改变时才更新，减少重绘
+      const boundsChanged = 
+        lastBounds.x !== currentBounds.x || 
+        lastBounds.y !== currentBounds.y ||
+        lastBounds.width !== currentBounds.width || 
+        lastBounds.height !== currentBounds.height;
+      
+      if (boundsChanged) {
+        if (!hasTransitioned && fromWindow && !fromWindow.isDestroyed()) {
+          // 对启动窗口进行变形，使用setSize和setPosition分开设置，更流畅
+          fromWindow.setPosition(currentBounds.x, currentBounds.y);
+          fromWindow.setSize(currentBounds.width, currentBounds.height);
+        }
+        
+        // 在动画90%时切换到主窗口（更晚切换，减少视觉差异）
+        if (progress >= 0.9 && !hasTransitioned && fromWindow && !fromWindow.isDestroyed()) {
+          hasTransitioned = true;
+          // 快速切换：隐藏启动窗口，在相同位置显示主窗口
+          fromWindow.hide();
+          toWindow.setBounds(currentBounds);
+          toWindow.setOpacity(1);
+          toWindow.show();
+          // 延迟关闭启动窗口
+          setTimeout(() => {
+            if (!fromWindow.isDestroyed()) {
+              fromWindow.close();
+            }
+          }, 100);
+        }
+        
+        // 如果已经切换到主窗口，继续对主窗口进行变形
+        if (hasTransitioned && !toWindow.isDestroyed()) {
+          toWindow.setPosition(currentBounds.x, currentBounds.y);
+          toWindow.setSize(currentBounds.width, currentBounds.height);
+        }
+        
+        lastBounds = { ...currentBounds };
+      }
+      
+      if (progress < 1) {
+        // 使用requestAnimationFrame的等效实现，更流畅
+        this.timerId = setTimeout(animate, 8); // 更高帧率 ~120fps
+      } else {
+        // 确保最终状态正确
+        if (!toWindow.isDestroyed()) {
+          toWindow.setBounds(toBounds);
+          toWindow.setOpacity(1);
+          toWindow.show();
+        }
+        onComplete?.();
+        this.timerId = null;
+      }
+    };
+    
+    animate();
   }
 }

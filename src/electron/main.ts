@@ -33,8 +33,7 @@ app.on("ready", async () => {
     splash = createSplashWindow();
     splash.show();
     console.log(`启动画面将显示至少 ${minSplashDuration}ms`);
-  }
-  const mainWindow = new BrowserWindow({
+  }  const mainWindow = new BrowserWindow({
     webPreferences: {
       preload: getPreloadPath(),
       contextIsolation: true,
@@ -43,7 +42,7 @@ app.on("ready", async () => {
     },
     frame: false,
     show: false, // 初始隐藏，等待弹出放大动画
-    backgroundColor: '#242424', // 设置与应用主题一致的背景色
+    backgroundColor: '#181b33', // 设置为深色，与启动画面一致，避免切换时的颜色跳跃
     width: 1250,  // 预设最终尺寸
     height: 800,
     // 初始位置将由弹出动画设置
@@ -57,94 +56,62 @@ app.on("ready", async () => {
     if (remainingTime > 0) {
       console.log(`启动画面将再显示 ${remainingTime}ms 以确保流畅体验`);
       await new Promise(resolve => setTimeout(resolve, remainingTime));
-    }
-      // 关闭启动画面并启动弹出放大动画
+    }    // 使用简单的淡入淡出动画
     if (splash) {
       try {
-        // 获取启动窗口的位置和尺寸
-        const splashBounds = splash.getBounds();
+        console.log(`启动画面淡出，主窗口淡入`);
         
-        // 计算主窗口的目标尺寸和位置
-        const targetBounds = StartupOptimizer.calculateTransitionBounds(
-          splashBounds,
-          1250, // 主窗口宽度
-          800   // 主窗口高度
-        );
-        
-        console.log(`启动弹出放大动画: ${splashBounds.width}x${splashBounds.height} -> ${targetBounds.to.width}x${targetBounds.to.height}`);
-        
-        // 先淡出启动画面
+        // 启动画面淡出
         StartupOptimizer.simpleFade(
           splash,
           1,
           0,
           startupConfig.animations.splashFadeOut,
           () => {
-            splash?.close();
-            splash = null;
-            
-            // 延迟一点让启动画面完全消失，然后开始弹出动画
+            if (splash && !splash.isDestroyed()) {
+              splash.close();
+            }
+            // 延迟后显示主窗口
             setTimeout(() => {
-              showMainWindowWithPopup(targetBounds);
+              showMainWindowFadeIn();
             }, startupConfig.animations.delayBetween);
           }
         );
       } catch (error) {
-        console.error('启动画面关闭失败:', error);
-        splash.close();
-        splash = null;
-        showMainWindowFallback();
-      }
-    } else {
-      showMainWindowFallback();
+        console.error('启动画面淡出失败:', error);
+        if (splash && !splash.isDestroyed()) {
+          splash.close();
+        }
+        showMainWindowFadeIn();
+      }    } else {
+      showMainWindowFadeIn();
     }
-    
-    function showMainWindowWithPopup(bounds: { from: any; to: any }) {
+
+    function showMainWindowFadeIn() {
       try {
-        // 使用弹出放大动画
-        StartupOptimizer.popupScale(
-          mainWindow,
-          bounds.from,
-          bounds.to,
-          startupConfig.animations.popupScale,
-          startupConfig.animations.scaleEasing,
-          () => {
-            console.log(`主窗口弹出放大完成，总耗时: ${Date.now() - startTime}ms`);
-          }
-        );
-      } catch (error) {
-        console.error('弹出放大动画失败:', error);
-        showMainWindowFallback();
-      }
-    }
-    
-    function showMainWindowFallback() {
-      try {
-        // 回退方案：简单的淡入动画
+        // 主窗口淡入动画
         mainWindow.setOpacity(0);
         mainWindow.show();
         mainWindow.center(); // 居中显示
         
-        setTimeout(() => {
-          StartupOptimizer.simpleFade(
-            mainWindow,
-            0,
-            1,
-            startupConfig.animations.mainFadeIn,
-            () => {
-              mainWindow.setOpacity(1);
-              console.log(`主窗口启动完成（回退方案），总耗时: ${Date.now() - startTime}ms`);
-            }
-          );
-        }, startupConfig.animations.delayBetween);
-      } catch (error) {
-        console.error('主窗口显示失败:', error);
+        StartupOptimizer.simpleFade(
+          mainWindow,
+          0,
+          1,
+          startupConfig.animations.mainFadeIn,
+          () => {
+            mainWindow.setOpacity(1);
+            console.log(`主窗口淡入完成，总耗时: ${Date.now() - startTime}ms`);
+          }
+        );
+      } catch (error) {        console.error('主窗口淡入失败:', error);
         mainWindow.setOpacity(1);
         mainWindow.show();
         mainWindow.center();
       }
     }
   });
+  
   if (isDev()) {
     mainWindow.loadURL("http://localhost:5123");
   } else {
