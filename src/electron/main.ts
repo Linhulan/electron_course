@@ -18,7 +18,8 @@ app.on("ready", async () => {  const mainWindow = new BrowserWindow({
       nodeIntegration: false,
       sandbox: false, // 需要禁用沙箱以访问串口
     },
-    frame: false,
+    frame: true,
+    // 在开发模式下可以设置为
     // show: false,
   });
 
@@ -33,6 +34,8 @@ app.on("ready", async () => {  const mainWindow = new BrowserWindow({
   }
 
   pollResources(mainWindow);
+  mainWindow.setSize(1250, 800);
+  mainWindow.center();
 
   ipcMainHandle("getStaticData", () => {
     return getStaticData();

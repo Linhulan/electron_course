@@ -146,7 +146,7 @@ const zhCN = {
         totalAmount: '总金额',
         totalNotes: '总张数',
         averageSpeed: '平均速度',
-        errorRate: '错误率',
+        errorPcs: '错误张数',
         speedUnit: '张/分'
       },
       
@@ -168,9 +168,9 @@ const zhCN = {
         error: '错误',
         paused: '已暂停'
       },
-      
-      // 记录表格
+        // 记录表格
       records: '点钞记录',
+      detailedRecords: '面额统计',
       table: {
         time: '时间',
         status: '状态',
@@ -181,10 +181,22 @@ const zhCN = {
         device: '设备'
       },
       
+      // 详细记录表格
+      detailTable: {
+        denomination: '面额',
+        count: '张数',
+        total: '小计',
+        totalRow: '总计',
+        pcs: '张',
+        bills: '张纸币'
+      },
+      
       // 无数据提示
       noData: {
         title: '暂无点钞数据',
-        subtitle: '点击"开始模拟"来生成示例数据'
+        subtitle: '请开始点钞来查看数据',
+        noDetailedRecords: '暂无面额统计',
+        startCountingHint: '开始点钞查看面额分布'
       }
     }
   }
@@ -332,17 +344,17 @@ const enUS = {
       stats: {
         totalSessions: 'Total Sessions',
         totalAmount: 'Total Amount',
-        totalNotes: 'Total Notes',
+        totalNotes: 'Total Pcs',
         averageSpeed: 'Average Speed',
-        errorRate: 'Error Rate',
-        speedUnit: 'notes/min'
+        errorPcs: 'Error Pcs',
+        speedUnit: 'pcs/min'
       },
       
       // Current session
       currentSession: 'Current Counting Session',
       session: {
         status: 'Status',
-        denomination: 'Denomination',
+        denomination: 'Denom.',
         count: 'Count',
         amount: 'Amount',
         speed: 'Speed',
@@ -356,23 +368,35 @@ const enUS = {
         error: 'Error',
         paused: 'Paused'
       },
-      
-      // Records table
+        // Records table
       records: 'Counting Records',
+      detailedRecords: 'Detailed Records',
       table: {
         time: 'Time',
         status: 'Status',
-        denomination: 'Denomination',
+        denomination: 'Denom.',
         count: 'Count',
         amount: 'Amount',
         speed: 'Speed',
         device: 'Device'
       },
       
+      // Detail table
+      detailTable: {
+        denomination: 'Denomination',
+        count: 'Count',
+        total: 'Total',
+        totalRow: 'Total',
+        pcs: 'pcs',
+        bills: 'bills'
+      },
+      
       // No data prompt
       noData: {
         title: 'No counting data available',
-        subtitle: 'Click "Start Simulation" to generate sample data'
+        subtitle: 'Start Counting to see the data',
+        noDetailedRecords: 'No detailed records',
+        startCountingHint: 'Start counting to see denomination breakdown'
       }
     }
   }

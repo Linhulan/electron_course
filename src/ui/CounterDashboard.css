@@ -36,9 +36,9 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 2rem;
+  margin-bottom: 1rem;
   background: #2d2d2d;
-  padding: 1.5rem;
+  padding: 1.2rem;
   border-radius: 12px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
   border: 1px solid #404040;
@@ -148,12 +148,12 @@
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 1rem;
-  margin-bottom: 2rem;
+  margin-bottom: 1rem;
 }
 
 .stat-card {
   background: #2d2d2d;
-  padding: 1.5rem;
+  padding: 1.2rem;
   border-radius: 12px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
   border: 1px solid #404040;
@@ -230,7 +230,7 @@
 
 /* 数据区域 */
 .data-section {
-  margin-top: 2rem;
+  margin-top: 1rem;
 }
 
 /* 记录网格布局 */
@@ -255,13 +255,13 @@
 .card-header {
   background: #3a3a3a;
   border-bottom: 1px solid #555;
-  padding: 1.5rem;
+  padding: 0.5rem;
 }
 
 .card-header h3 {
   margin: 0;
   color: #ffffff;
-  font-size: 1.1rem;
+  font-size: 1.0rem;
   display: flex;
   align-items: center;
   gap: 0.5rem;
@@ -269,7 +269,7 @@
 
 /* Card内容区域 */
 .card-content {
-  padding: 1.5rem;
+  padding: 0;
   max-height: 500px;
   overflow-y: auto;
 }
