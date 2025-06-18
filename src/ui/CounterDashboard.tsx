@@ -15,6 +15,20 @@ interface CounterData {
   details?: DenominationDetail[]; // 面额详细信息
 }
 
+// Session数据结构 - 用于记录完整的点钞会话
+interface SessionData {
+  id: string;
+  timestamp: string;
+  startTime: string;
+  endTime?: string;
+  totalCount: number;
+  totalAmount: number;
+  status: "counting" | "completed" | "error" | "paused";
+  errorCode?: string;
+  serialNumber?: string;
+  denominationBreakdown: Map<number, DenominationDetail>; // 面额分布
+}
+
 // 面额详细信息
 interface DenominationDetail {
   denomination: number; // 面额 (例如: 1, 5, 10, 20, 50, 100)
@@ -34,7 +48,7 @@ interface SerialProtocolData {
   serialNumber: string; // 24:34 SN (11位)
   reserved1: number[]; // 35:39 RESERVED
   errorCode: number; // 40 ErrCode
-  status: number; // 41 状态位
+  status: number; // 41 状态位 0x00: 开始刷新； 0x01: 刷新中; 0x02: 刷新完成； 0x03: 刷新完成，接钞满；
   reserved2: number; // 42 RESERVED
   crc: number; // 43 CRC
 }
@@ -217,27 +231,82 @@ const getStatusDescription = (
   }
 };
 
-// 将协议数据转换为CounterData - 修改为处理单张纸币
-const convertProtocolToCounterData = (
-  protocolData: SerialProtocolData
-): CounterData => {
-  return {
-    id: Date.now().toString(),
-    timestamp: new Date().toLocaleTimeString(),
-    totalCount: protocolData.totalCount,
-    denomination: protocolData.denomination, // 当前这张纸币的面额
-    amount: protocolData.totalAmount,
-    speed: 0, // 需要计算或从其他来源获取
-    status: getStatusDescription(protocolData.status),
-    errorCode:
-      protocolData.errorCode !== 0
-        ? `E${protocolData.errorCode
-            .toString(16)
-            .padStart(3, "0")
-            .toUpperCase()}`
+// Session管理函数 - 处理点钞会话
+const handleSessionUpdate = (
+  protocolData: SerialProtocolData,
+  currentSession: SessionData | null,
+  setCurrentSession: (session: SessionData | null) => void,
+  setSessionData: (updater: (prev: SessionData[]) => SessionData[]) => void
+): SessionData => {
+  const status = getStatusDescription(protocolData.status);
+  const now = new Date();
+  
+  // 如果状态是开始刷新，创建新Session (开始协议不携带金额和面额)
+  if (protocolData.status === 0x00) {
+    const newSession: SessionData = {
+      id: now.getTime().toString(),
+      timestamp: now.toLocaleTimeString(),
+      startTime: now.toLocaleString(),
+      totalCount: 0, // 开始时张数为0
+      totalAmount: 0, // 开始时金额为0
+      status: status,
+      errorCode: protocolData.errorCode !== 0 
+        ? `E${protocolData.errorCode.toString(16).padStart(3, "0").toUpperCase()}`
         : undefined,
-    serialNumber: protocolData.serialNumber,
+      serialNumber: protocolData.serialNumber,
+      denominationBreakdown: new Map()
+    };
+    
+    setCurrentSession(newSession);
+    return newSession;
+  }
+  
+  // 如果没有当前Session但不是开始状态，说明有问题，创建一个临时Session
+  if (!currentSession) {
+    const tempSession: SessionData = {
+      id: now.getTime().toString(),
+      timestamp: now.toLocaleTimeString(),
+      startTime: now.toLocaleString(),
+      totalCount: protocolData.status === 0x01 ? protocolData.totalCount : 0,
+      totalAmount: protocolData.status === 0x01 ? protocolData.totalAmount : 0,
+      status: status,
+      errorCode: protocolData.errorCode !== 0 
+        ? `E${protocolData.errorCode.toString(16).padStart(3, "0").toUpperCase()}`
+        : undefined,
+      serialNumber: protocolData.serialNumber,
+      denominationBreakdown: new Map()
+    };
+    
+    setCurrentSession(tempSession);
+    return tempSession;
+  }
+  
+  // 更新当前Session
+  const updatedSession: SessionData = {
+    ...currentSession,
+    status: status,
+    timestamp: now.toLocaleTimeString(),
+    errorCode: protocolData.errorCode !== 0 
+      ? `E${protocolData.errorCode.toString(16).padStart(3, "0").toUpperCase()}`
+      : undefined,
   };
+  
+  // 只有在刷新中状态时才更新金额和张数 (因为只有这种协议携带有效的金额和面额数据)
+  if (protocolData.status === 0x01) {
+    updatedSession.totalCount = protocolData.totalCount;
+    updatedSession.totalAmount = protocolData.totalAmount;
+  }
+  
+  // 如果Session完成，添加到历史记录并清空当前Session (结束协议不携带金额数据)
+  if (protocolData.status === 0x02 || protocolData.status === 0x03) {
+    updatedSession.endTime = now.toLocaleString();
+    setSessionData(prev => [updatedSession, ...prev].slice(0, 50));
+    setCurrentSession(null);
+  } else {
+    setCurrentSession(updatedSession);
+  }
+  
+  return updatedSession;
 };
 
 // 更新面额统计的函数
@@ -269,10 +338,9 @@ const updateDenominationStats = (
 
 export const CounterDashboard: React.FC<CounterDashboardProps> = ({
   className,
-}) => {
-  const { t } = useTranslation();
-  const [counterData, setCounterData] = useState<CounterData[]>([]);
-  const [currentSession, setCurrentSession] = useState<CounterData | null>(
+}) => {  const { t } = useTranslation();
+  const [sessionData, setSessionData] = useState<SessionData[]>([]); // 改为Session数据
+  const [currentSession, setCurrentSession] = useState<SessionData | null>(
     null
   );
   const [denominationStats, setDenominationStats] = useState<
@@ -328,28 +396,30 @@ export const CounterDashboard: React.FC<CounterDashboardProps> = ({
               data.hexData,
               data.isCompletePacket
             );
-            if (protocolData) {
-              // 检查是否为点钞数据 (CMD-G = 0x0E)
-              if (protocolData.cmdGroup === 0x0e) {
-                const counterData = convertProtocolToCounterData(protocolData);
-
-                // 更新面额统计 - 每个协议包代表一张纸币
-                setDenominationStats((prev) =>
-                  updateDenominationStats(prev, protocolData.denomination)
-                );
-
-                setCurrentSession(counterData);
-                setCounterData((prev) => [counterData, ...prev].slice(0, 50)); // 保留最近50条记录
+            if (protocolData) {              // 检查是否为点钞数据 (CMD-G = 0x0E)
+              if (protocolData.cmdGroup === 0x0e) {                // 使用Session管理函数处理数据
+                const updatedSession = handleSessionUpdate(
+                  protocolData,
+                  currentSession,
+                  setCurrentSession,
+                  setSessionData
+                );                // 只有在刷新中状态时才更新面额统计 (因为只有这种协议携带有效的面额数据)
+                if (protocolData.status === 0x01 && protocolData.denomination > 0) {
+                  setDenominationStats((prev) =>
+                    updateDenominationStats(prev, protocolData.denomination)
+                  );
+                  
+                  console.log(
+                    "Updated denomination stats for denomination:",
+                    protocolData.denomination
+                  );
+                }
 
                 console.log(
-                  "Parsed counter data from",
+                  "Updated session from",
                   data.isCompletePacket ? "complete packet" : "raw data",
                   ":",
-                  counterData
-                );
-                console.log(
-                  "Updated denomination stats for denomination:",
-                  protocolData.denomination
+                  updatedSession
                 );
               }
             }
@@ -362,8 +432,7 @@ export const CounterDashboard: React.FC<CounterDashboardProps> = ({
     return () => {
       unsubscribeDataReceived();
     };
-  }, [isConnected]);
-
+  }, [isConnected, currentSession]);
   const getFilteredData = useCallback(() => {
     const now = new Date();
     const timeRanges = {
@@ -375,48 +444,37 @@ export const CounterDashboard: React.FC<CounterDashboardProps> = ({
 
     const cutoffTime = now.getTime() - timeRanges[selectedTimeRange];
 
-    return counterData.filter((item) => {
+    return sessionData.filter((item) => {
       const itemTime = new Date(
         `${new Date().toDateString()} ${item.timestamp}`
       ).getTime();
       return itemTime >= cutoffTime;
     });
-  }, [counterData, selectedTimeRange]);
+  }, [sessionData, selectedTimeRange]);
 
   // 计算统计数据
   useEffect(() => {
     const filteredData = getFilteredData();
     const newStats: CounterStats = {
       totalSessions: filteredData.length,
-      totalAmount: filteredData.reduce((sum, item) => sum + item.amount, 0),
-      totalNotes: filteredData.reduce((sum, item) => sum + item.totalCount, 0),
-      averageSpeed:
-        filteredData.length > 0
-          ? filteredData.reduce((sum, item) => sum + item.speed, 0) /
-            filteredData.length
-          : 0,
-      errorPcs:
-        filteredData.length > 0
-          ? (filteredData.filter((item) => item.status === "error").length /
-              filteredData.length) *
-            100
-          : 0,
+      totalAmount: filteredData.reduce((sum, item) => sum + item.totalAmount, 0),
+      totalNotes: filteredData.reduce((sum, item) => sum + item.totalCount, 0),      averageSpeed: 0, // Session模式下暂不计算速度
+      errorPcs: filteredData.filter((item) => item.status === "error").length,
     };
     setStats(newStats);
-  }, [getFilteredData]);
-  const clearData = () => {
-    setCounterData([]);
+  }, [getFilteredData]);  const clearData = () => {
+    setSessionData([]);
     setCurrentSession(null);
     setDenominationStats(new Map()); // 清空面额统计
   };
 
   const exportData = () => {
-    const dataStr = JSON.stringify(counterData, null, 2);
+    const dataStr = JSON.stringify(sessionData, null, 2);
     const dataBlob = new Blob([dataStr], { type: "application/json" });
     const url = URL.createObjectURL(dataBlob);
     const link = document.createElement("a");
     link.href = url;
-    link.download = `counter-data-${
+    link.download = `session-data-${
       new Date().toISOString().split("T")[0]
     }.json`;
     link.click();
@@ -551,58 +609,49 @@ export const CounterDashboard: React.FC<CounterDashboardProps> = ({
             <div className="stat-value">{stats.errorPcs.toLocaleString()}</div>
             <div className="stat-label">{t("counter.stats.errorPcs")}</div>
           </div>
+        </div>      </div>{" "}
+      {/* 当前会话显示 - 常驻显示 */}
+      <div className="current-session">
+        <h3>{t("counter.currentSession")}</h3>
+        <div className="session-info">
+          {currentSession ? (
+            <>
+              <div className="session-item">
+                <span className="session-label">
+                  {t("counter.session.status")}:
+                </span>
+                <span
+                  className="session-value"
+                  style={{ color: getStatusColor(currentSession.status) }}
+                >
+                  {getStatusIcon(currentSession.status)}{" "}
+                  {getStatusText(currentSession.status)}
+                </span>
+              </div>
+              <div className="session-item">
+                <span className="session-label">
+                  {t("counter.session.count")}:
+                </span>
+                <span className="session-value">{currentSession.totalCount}</span>
+              </div>
+              <div className="session-item">
+                <span className="session-label">
+                  {t("counter.session.amount")}:
+                </span>
+                <span className="session-value">
+                  {formatCurrency(currentSession.totalAmount)}
+                </span>
+              </div>
+            </>
+          ) : (
+            <div className="session-item no-session">
+              <span className="session-value">
+                {t("counter.noCurrentSession")}
+              </span>
+            </div>
+          )}
         </div>
       </div>{" "}
-      {/* 当前会话显示 */}
-      {currentSession && (
-        <div className="current-session">
-          <h3>{t("counter.currentSession")}</h3>
-          <div className="session-info">
-            <div className="session-item">
-              <span className="session-label">
-                {t("counter.session.status")}:
-              </span>
-              <span
-                className="session-value"
-                style={{ color: getStatusColor(currentSession.status) }}
-              >
-                {getStatusIcon(currentSession.status)}{" "}
-                {getStatusText(currentSession.status)}
-              </span>
-            </div>
-            <div className="session-item">
-              <span className="session-label">
-                {t("counter.session.denomination")}:
-              </span>
-              <span className="session-value">
-                ¥{currentSession.denomination}
-              </span>
-            </div>
-            <div className="session-item">
-              <span className="session-label">
-                {t("counter.session.count")}:
-              </span>
-              <span className="session-value">{currentSession.totalCount}</span>
-            </div>
-            <div className="session-item">
-              <span className="session-label">
-                {t("counter.session.amount")}:
-              </span>
-              <span className="session-value">
-                {formatCurrency(currentSession.amount)}
-              </span>
-            </div>
-            <div className="session-item">
-              <span className="session-label">
-                {t("counter.session.speed")}:
-              </span>
-              <span className="session-value">
-                {currentSession.speed} {t("counter.stats.speedUnit")}
-              </span>
-            </div>
-          </div>
-        </div>
-      )}{" "}
       {/* 数据记录区域 - 分离的Card布局 */}
       <div className="data-section">
         <div className="records-grid">
@@ -709,15 +758,14 @@ export const CounterDashboard: React.FC<CounterDashboardProps> = ({
             <div className="card-header">
               <h3>
                 <span className="section-icon">📝</span>
-                {t("counter.records")}
-                <span className="record-count">
-                  {counterData.length > 0 && `(${counterData.length} records)`}
+                {t("counter.records")}                <span className="record-count">
+                  {sessionData.length > 0 && `(${sessionData.length} records)`}
                 </span>
               </h3>
             </div>
             <div className="card-content">
               <div className="data-list" ref={dataDisplayRef}>
-                {counterData.length === 0 ? (
+                {sessionData.length === 0 ? (
                   <div className="no-data">
                     <div className="no-data-icon">📝</div>
                     <div className="no-data-text">
@@ -728,14 +776,10 @@ export const CounterDashboard: React.FC<CounterDashboardProps> = ({
                     </div>
                   </div>
                 ) : (
-                  <div className="data-table">
-                    <div className="table-header">
+                  <div className="data-table">                    <div className="table-header">
                       <div className="col-time">{t("counter.table.time")}</div>
                       <div className="col-status">
                         {t("counter.table.status")}
-                      </div>
-                      <div className="col-denomination">
-                        {t("counter.table.denomination")}
                       </div>
                       <div className="col-count">
                         {t("counter.table.count")}
@@ -743,14 +787,7 @@ export const CounterDashboard: React.FC<CounterDashboardProps> = ({
                       <div className="col-amount">
                         {t("counter.table.amount")}
                       </div>
-                      <div className="col-speed">
-                        {t("counter.table.speed")}
-                      </div>
-                      <div className="col-serial">
-                        {t("counter.table.device")}
-                      </div>
-                    </div>
-                    {counterData.map((item) => (
+                    </div>                    {sessionData.map((item) => (
                       <div key={item.id} className="table-row">
                         <div className="col-time">{item.timestamp}</div>
                         <div className="col-status">
@@ -758,15 +795,10 @@ export const CounterDashboard: React.FC<CounterDashboardProps> = ({
                             {getStatusIcon(item.status)}
                           </span>
                         </div>
-                        <div className="col-denomination">
-                          ¥{item.denomination}
-                        </div>
                         <div className="col-count">{item.totalCount}</div>
                         <div className="col-amount">
-                          {formatCurrency(item.amount)}
+                          {formatCurrency(item.totalAmount)}
                         </div>
-                        <div className="col-speed">{item.speed}</div>
-                        <div className="col-serial">{item.serialNumber}</div>
                       </div>
                     ))}
                   </div>

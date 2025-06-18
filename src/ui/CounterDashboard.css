@@ -196,7 +196,7 @@
   color: white;
   padding: 1.5rem;
   border-radius: 12px;
-  margin-bottom: 2rem;
+  margin-bottom: 1rem;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
@@ -215,6 +215,18 @@
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
+}
+
+/* 无会话状态样式 */
+.session-item.no-session {
+  text-align: center;
+  padding: 1rem;
+  opacity: 0.7;
+}
+
+.session-item.no-session .session-value {
+  font-style: italic;
+  font-weight: 400;
 }
 
 .session-label {
@@ -236,8 +248,8 @@
 /* 记录网格布局 */
 .records-grid {
   display: grid;
-  grid-template-columns: 1fr 2fr; /* 左栏1份，右栏2份 */
-  gap: 1.5rem;
+  grid-template-columns: 3fr 5fr; /* 左栏3份，右栏5份 */
+  gap: 1rem;
   align-items: start;
 }
 
@@ -362,7 +374,7 @@
 .table-header,
 .table-row {
   display: grid;
-  grid-template-columns: 100px 60px 60px 60px 100px 80px 1fr;
+  grid-template-columns: 150px 80px 80px 1fr;
   gap: 1rem;
   padding: 0.75rem 1.5rem;
   align-items: center;
@@ -400,18 +412,10 @@
   text-align: center;
 }
 
-.col-denomination,
 .col-count,
-.col-amount,
-.col-speed {
+.col-amount {
   text-align: right;
   font-weight: 500;
-}
-
-.col-serial {
-  font-family: monospace;
-  font-size: 0.8rem;
-  color: #666;
 }
 
 /* 两栏记录布局 */
@@ -458,7 +462,7 @@
   flex: 1;
   overflow-y: auto;
   border: 1px solid #444;
-  border-radius: 8px;
+  border-radius: 0px;
   background: #2a2a2a;
 }
 
@@ -470,10 +474,11 @@
   display: grid;
   grid-template-columns: 1fr 1fr 1.5fr;
   gap: 0.5rem;
-  padding: 0.75rem;
+  padding: 0.50rem;
   background: #333;
   border-bottom: 1px solid #555;
-  font-weight: 600;
+  font-size: 0.9rem;
+  font-weight: 400;
   color: #ffffff;
   position: sticky;
   top: 0;

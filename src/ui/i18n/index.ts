@@ -149,9 +149,9 @@ const zhCN = {
         errorPcs: '错误张数',
         speedUnit: '张/分'
       },
-      
-      // 当前会话
+        // 当前会话
       currentSession: '当前点钞会话',
+      noCurrentSession: '暂无进行中的点钞会话',
       session: {
         status: '状态',
         denomination: '面额',
@@ -349,9 +349,9 @@ const enUS = {
         errorPcs: 'Error Pcs',
         speedUnit: 'pcs/min'
       },
-      
-      // Current session
+        // Current session
       currentSession: 'Current Counting Session',
+      noCurrentSession: 'No active counting session',
       session: {
         status: 'Status',
         denomination: 'Denom.',
@@ -383,7 +383,7 @@ const enUS = {
       
       // Detail table
       detailTable: {
-        denomination: 'Denomination',
+        denomination: 'Denom.',
         count: 'Count',
         total: 'Total',
         totalRow: 'Total',
