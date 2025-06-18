@@ -86,8 +86,8 @@ const zhCN = {
       displayMode: "显示模式",
       showTimestamp: "显示时间戳",
       autoScroll: "自动滚动",
-      clearData: "清空数据",
-      exportData: "导出数据",
+      clearData: "清空",
+      exportData: "导出",
 
       // 测试数据
       testData: "测试数据",
@@ -130,8 +130,8 @@ const zhCN = {
       // 控制按钮
       startSimulation: "开始模拟",
       stopSimulation: "停止模拟",
-      clearData: "清空数据",
-      exportData: "导出数据",
+      clearData: "清空",
+      exportData: "导出",
 
       // 时间范围
       timeRange: "时间范围",
@@ -160,7 +160,7 @@ const zhCN = {
         amount: "金额",
         speed: "速度",
         device: "设备",
-        endTime: "结束时间",
+        date: "日期",
         errorCount: "错误张数",
       },
 
@@ -193,14 +193,13 @@ const zhCN = {
         totalRow: "总计",
         pcs: "张",
         bills: "张纸币",
-      },
-
-      // 无数据提示
+      },      // 无数据提示
       noData: {
         title: "暂无点钞数据",
         subtitle: "请开始点钞来查看数据",
         noDetailedRecords: "暂无面额统计",
         startCountingHint: "开始点钞查看面额分布",
+        suggestion: "连接串口并开始点钞即可在此查看记录"
       },
     },
   },
@@ -290,8 +289,8 @@ const enUS = {
       displayMode: "Display Mode",
       showTimestamp: "Show Timestamp",
       autoScroll: "Auto Scroll",
-      clearData: "Clear Data",
-      exportData: "Export Data",
+      clearData: "Clear",
+      exportData: "Export",
 
       // Test data
       testData: "Test Data",
@@ -334,8 +333,8 @@ const enUS = {
       // Control buttons
       startSimulation: "Start Simulation",
       stopSimulation: "Stop Simulation",
-      clearData: "Clear Data",
-      exportData: "Export Data",
+      clearData: "Clear",
+      exportData: "Export",
 
       // Time range
       timeRange: "Time Range",
@@ -364,7 +363,7 @@ const enUS = {
         amount: "Amount",
         speed: "Speed",
         device: "Device",
-        endTime: "End Time",
+        date: "Date",
         errorCount: "Error Count",
       },
 
@@ -397,14 +396,13 @@ const enUS = {
         totalRow: "Total",
         pcs: "pcs",
         bills: "bills",
-      },
-
-      // No data prompt
+      },      // No data prompt
       noData: {
         title: "No counting data available",
         subtitle: "Start Counting to see the data",
         noDetailedRecords: "No detailed records",
         startCountingHint: "Start counting to see denomination breakdown",
+        suggestion: "Connect serial port and start counting to view records here"
       },
     },
   },

@@ -74,7 +74,8 @@ const handleSessionUpdate = (
       console.log(
         "Previous completed session archived before starting new session"
       );
-    }    const newSession: SessionData = {
+    }
+    const newSession: SessionData = {
       id: now.getTime().toString(),
       timestamp: now.toLocaleTimeString(),
       startTime: now.toLocaleString(),
@@ -98,7 +99,8 @@ const handleSessionUpdate = (
   }
 
   // 如果没有当前Session但不是开始状态，说明有问题，创建一个临时Session
-  if (!currentSession) {    const tempSession: SessionData = {
+  if (!currentSession) {
+    const tempSession: SessionData = {
       id: now.getTime().toString(),
       timestamp: now.toLocaleTimeString(),
       startTime: now.toLocaleString(),
@@ -142,7 +144,7 @@ const handleSessionUpdate = (
   if (isSessionUpdate(protocolData.status)) {
     updatedSession.totalCount = protocolData.totalCount;
     updatedSession.totalAmount = protocolData.totalAmount;
-    
+
     // 如果有错误代码，累积错误张数
     if (protocolData.errorCode !== 0) {
       updatedSession.errorCount = (currentSession.errorCount || 0) + 1;
@@ -329,14 +331,24 @@ export const CounterDashboard: React.FC<CounterDashboardProps> = ({
       ),
       totalNotes: filteredData.reduce((sum, item) => sum + item.totalCount, 0),
       averageSpeed: 0, // Session模式下暂不计算速度
-      errorPcs: filteredData.reduce((sum, item) => sum + (item.errorCount || 0), 0),
+      errorPcs: filteredData.reduce(
+        (sum, item) => sum + (item.errorCount || 0),
+        0
+      ),
     };
     setStats(newStats);
-  }, [getFilteredData]);
-  const clearData = () => {
+  }, [getFilteredData]);  const clearData = () => {
     setSessionData([]);
     setCurrentSession(null);
     setDenominationStats(new Map()); // 清空面额统计
+    // 重置统计数据
+    setStats({
+      totalSessions: 0,
+      totalAmount: 0,
+      totalNotes: 0,
+      averageSpeed: 0,
+      errorPcs: 0,
+    });
   };
 
   // 清空当前Session，但保留历史记录
@@ -356,13 +368,25 @@ export const CounterDashboard: React.FC<CounterDashboardProps> = ({
     link.click();
     URL.revokeObjectURL(url);
   };
-
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat("zh-CN", {
       style: "currency",
       currency: "CNY",
     }).format(amount);
   };
+
+  // 根据金额大小动态调整字体大小
+  const getAmountFontSize = (amount: number) => {
+    const formattedAmount = formatCurrency(amount);
+    const length = formattedAmount.length;
+    
+    if (length <= 8) return "1.5rem"; // 默认大小，例如：¥1,234.00
+    if (length <= 12) return "1.3rem"; // 中等金额，例如：¥12,345,678.00  
+    if (length <= 15) return "1.1rem"; // 较大金额，例如：¥123,456,789.00
+    if (length <= 18) return "0.95rem"; // 很大金额，例如：¥1,234,567,890.00
+    return "0.85rem"; // 超大金额
+  };
+
   const getStatusIcon = (status: CounterData["status"]) => {
     switch (status) {
       case "counting":
@@ -461,10 +485,12 @@ export const CounterDashboard: React.FC<CounterDashboardProps> = ({
             <div className="stat-label">{t("counter.stats.totalSessions")}</div>
           </div>
         </div>
-        <div className="stat-card">
-          <div className="stat-icon">💴</div>
+        <div className="stat-card">          <div className="stat-icon">💴</div>
           <div className="stat-info">
-            <div className="stat-value">
+            <div 
+              className="stat-value" 
+              style={{ fontSize: getAmountFontSize(stats.totalAmount) }}
+            >
               {formatCurrency(stats.totalAmount)}
             </div>
             <div className="stat-label">{t("counter.stats.totalAmount")}</div>
@@ -478,11 +504,10 @@ export const CounterDashboard: React.FC<CounterDashboardProps> = ({
             </div>
             <div className="stat-label">{t("counter.stats.totalNotes")}</div>
           </div>
-        </div>
-        <div className="stat-card">
+        </div>        <div className="stat-card">
           <div className="stat-icon">⚠️</div>
           <div className="stat-info">
-            <div className="stat-value">{stats.errorPcs.toLocaleString()}</div>
+            <div className="stat-value error-stat">{stats.errorPcs.toLocaleString()}</div>
             <div className="stat-label">{t("counter.stats.errorPcs")}</div>
           </div>
         </div>{" "}
@@ -524,7 +549,8 @@ export const CounterDashboard: React.FC<CounterDashboardProps> = ({
                 <span className="session-value">
                   {currentSession.totalCount}
                 </span>
-              </div>              <div className="session-item">
+              </div>{" "}
+              <div className="session-item">
                 <span className="session-label">
                   {t("counter.session.amount")}:
                 </span>
@@ -543,7 +569,7 @@ export const CounterDashboard: React.FC<CounterDashboardProps> = ({
               {currentSession.endTime && (
                 <div className="session-item">
                   <span className="session-label">
-                    {t("counter.session.endTime")}:
+                    {t("counter.session.date")}:
                   </span>
                   <span className="session-value end-time">
                     {currentSession.endTime}
@@ -663,33 +689,54 @@ export const CounterDashboard: React.FC<CounterDashboardProps> = ({
 
           {/* 计数记录 Card */}
           <div className="record-card counting-records-card">
-            <div className="card-header">
+            {" "}            <div className="card-header">
               <h3>
                 <span className="section-icon">📝</span>
-                {t("counter.records")}{" "}
+                {t("counter.records")}
                 <span className="record-count">
-                  {sessionData.length > 0 && `(${sessionData.length} records)`}
+                  {sessionData.length > 0 &&
+                    `(${sessionData.length} ${t("counter.stats.totalSessions")})`}
                 </span>
               </h3>
             </div>
             <div className="card-content">
               <div className="data-list" ref={dataDisplayRef}>
+                {" "}
                 {sessionData.length === 0 ? (
-                  <div className="no-data">
-                    <div className="no-data-icon">📝</div>
-                    <div className="no-data-text">
-                      {t("counter.noData.title")}
+                  <div className="no-data enhanced">
+                    <div className="no-data-illustration">
+                      <div className="illustration-circle">
+                        <span className="no-data-icon">📝</span>
+                      </div>
+                      <div className="illustration-dots">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                      </div>
                     </div>
-                    <div className="no-data-hint">
-                      {t("counter.noData.subtitle")}
+                    <div className="no-data-content">
+                      <div className="no-data-text">
+                        {t("counter.noData.title")}
+                      </div>
+                      <div className="no-data-hint">
+                        {t("counter.noData.subtitle")}
+                      </div>
+                      <div className="no-data-suggestion">
+                        💡{" "}
+                        {t(
+                          "counter.noData.suggestion",
+                          "Connect to serial port and start counting to see records here"
+                        )}
+                      </div>
                     </div>
                   </div>
                 ) : (
                   <div className="data-table">
-                    {" "}                    <div className="table-header">
-                      <div className="col-time">{t("counter.table.time")}</div>
-                      <div className="col-status">
-                        {t("counter.table.status")}
+                    {" "}
+                    <div className="table-header">
+                      <div className="col-time">
+                        <span className="header-icon">🕒</span>
+                        {t("counter.table.time")}
                       </div>
                       <div className="col-count">
                         {t("counter.table.count")}
@@ -700,20 +747,41 @@ export const CounterDashboard: React.FC<CounterDashboardProps> = ({
                       <div className="col-error">
                         {t("counter.table.errorPcs")}
                       </div>
-                    </div>{" "}                    {sessionData.map((item) => (
+                    </div>
+                    {sessionData.map((item) => (
                       <div key={item.id} className="table-row">
-                        <div className="col-time">{item.timestamp}</div>
-                        <div className="col-status">
-                          <span style={{ color: getStatusColor(item.status) }}>
-                            {getStatusIcon(item.status)}
-                          </span>
+                        <div className="col-time">
+                          <div className="time-primary">{item.timestamp}</div>
+                          {item.endTime && (
+                            <div className="time-secondary">
+                              {t("counter.session.date")}:{" "}
+                              {new Date(item.endTime).toLocaleDateString()}
+                            </div>
+                          )}
                         </div>
-                        <div className="col-count">{item.totalCount}</div>
+                        <div className="col-count">
+                          <div className="count-value">
+                            {item.totalCount.toLocaleString()}
+                          </div>
+                          <div className="count-unit">
+                            {t("counter.detailTable.pcs")}
+                          </div>
+                        </div>
                         <div className="col-amount">
-                          {formatCurrency(item.totalAmount)}
+                          <div className="amount-value">
+                            {formatCurrency(item.totalAmount)}
+                          </div>
                         </div>
-                        <div className="col-error error-count">
-                          {item.errorCount || 0}
+                        <div className="col-error">
+                          <div
+                            className={`error-value ${
+                              (item.errorCount || 0) > 0
+                                ? "has-error"
+                                : "no-error"
+                            }`}
+                          >
+                            {item.errorCount || 0}
+                          </div>
                         </div>
                       </div>
                     ))}
