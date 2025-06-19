@@ -47,6 +47,10 @@ export class ProtocolManagerImpl implements ProtocolManager {
           continue; // 尝试下一个解析器
         }
       }
+      else
+      {
+        console.log(`Parser ${protocolName} cannot handle data: ${cleanHex.substring(0, 20)}...`);
+      }
     }
     
     console.warn(`No suitable parser found for data: ${cleanHex.substring(0, 20)}...`);

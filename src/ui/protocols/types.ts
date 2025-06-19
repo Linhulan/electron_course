@@ -74,3 +74,50 @@ export enum ProtocolStatus {
 
 // 状态转换映射
 export type CountingStatus = "counting" | "completed" | "error" | "paused";
+
+// CDM协议数据接口
+export interface CDMProtocolData extends BaseProtocolData {
+  header: number[]; // 0:2 协议头: 0xFD 0xDF
+  length: number; // 3 数据长度 (1字节)
+  cmdGroup: number; // 4 CMD-G: 模式码 (1字节)
+  data: number[]; // 5:n-1 数据部分
+  crc: number; // n CRC校验 (1字节)
+}
+
+// CDM协议命令码枚举
+export enum CDMCommandCode {
+  // 设备状态相关
+  DEVICE_STATUS = '01',
+  DEVICE_INFO = '02', 
+  RESET_DEVICE = '03',
+  
+  // 钞票处理相关
+  COUNT_START = '10',
+  COUNT_STOP = '11',
+  COUNT_RESULT = '12',
+  DENOMINATION_INFO = '13',
+  
+  // 故障诊断相关
+  ERROR_STATUS = '20',
+  SENSOR_STATUS = '21',
+  MAINTENANCE_INFO = '22',
+  
+  // 配置相关
+  SET_CONFIG = '30',
+  GET_CONFIG = '31',
+  CALIBRATION = '32',
+  
+  // 自定义扩展
+  CUSTOM_01 = 'A1',
+  CUSTOM_02 = 'A2',
+  CUSTOM_03 = 'A3'
+}
+
+// CDM协议状态枚举
+export enum CDMStatus {
+  IDLE = 0x00,           // 空闲
+  WORKING = 0x01,        // 工作中
+  ERROR = 0x02,          // 错误
+  MAINTENANCE = 0x03,    // 维护模式
+  OFFLINE = 0x04         // 离线
+}

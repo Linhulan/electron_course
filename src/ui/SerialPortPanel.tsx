@@ -102,7 +102,8 @@ export const SerialPortPanel: React.FC<SerialPortPanelProps> = ({ className }) =
     const unsubscribeDisconnected = window.electron.onSerialDisconnected(() => {
       setConnectionStatus({ isConnected: false });
       addToDataDisplay('Disconnected from serial port', 'system');
-    });    const unsubscribeDataReceived = window.electron.onSerialDataReceived((data) => {
+    });    
+    const unsubscribeDataReceived = window.electron.onSerialDataReceived((data) => {
       // 根据时间戳开关决定显示格式
       let displayText = showTimestamp 
         ? (isHexMode ? `${data.timestamp}:${data.hexData}` : `${data.timestamp}:${data.data}`)

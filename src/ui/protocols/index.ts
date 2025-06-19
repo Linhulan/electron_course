@@ -8,6 +8,7 @@ export * from './utils';
 
 // 协议解析器
 export * from './countingMachine';
+export * from './cdmProtocol';
 
 // 协议管理器
 export { ProtocolManagerImpl, protocolManager } from './manager';

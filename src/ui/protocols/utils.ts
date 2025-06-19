@@ -82,6 +82,28 @@ export function bytesToLittleEndianInt(
 }
 
 /**
+ * 将字节数组转换为大端序整数
+ * @param bytes 字节数组
+ * @param startIndex 开始索引
+ * @param length 字节长度
+ * @returns 大端序整数值
+ */
+export function bytesToBigEndianInt(
+  bytes: number[], 
+  startIndex: number, 
+  length: number
+): number {
+  let result = 0;
+  const endIndex = startIndex + length;
+  
+  for (let i = startIndex; i < endIndex && i < bytes.length; i++) {
+    result = (result << 8) | bytes[i];
+  }
+  
+  return result;
+}
+
+/**
  * 从字节数组中提取字符串（过滤空字节）
  * @param bytes 字节数组
  * @param startIndex 开始索引
