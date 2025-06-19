@@ -1,66 +1,65 @@
-import { app, BrowserWindow, screen } from "electron";
+import { app, BrowserWindow } from "electron";
 import { ipcMainHandle, ipcMainOn, isDev } from "./utils.js";
 import { getStaticData, pollResources } from "./resourceManager.js";
 import { getPreloadPath, getUIPath } from "./pathResolver.js";
 import { createTray } from "./tray.js";
 import { createMenu } from "./menu.js";
-import { SerialPortManager, getAvailablePorts } from './serialPort.js';
-import { createSplashWindow } from './splashWindow.js';
-import { StartupOptimizer } from './startupOptimizer.js';
-import { startupConfig } from './startupConfig.js';
+import { SerialPortManager, getAvailablePorts } from "./serialPort.js";
+import { createSplashWindow } from "./splashWindow.js";
+import { StartupOptimizer } from "./startupOptimizer.js";
+import { startupConfig } from "./startupConfig.js";
 // app.commandLine.appendSwitch("enable-lcp");
 // app.commandLine.appendSwitch('disable-features', 'OutOfProcessPdf');
 // app.enableSandbox(); // 必须启用沙箱
 
 // 启动性能优化
-app.commandLine.appendSwitch('--enable-features', 'VaapiVideoDecoder');
-app.commandLine.appendSwitch('--disable-background-timer-throttling');
-app.commandLine.appendSwitch('--disable-backgrounding-occluded-windows');
-app.commandLine.appendSwitch('--disable-renderer-backgrounding');
+app.commandLine.appendSwitch("--enable-features", "VaapiVideoDecoder");
+app.commandLine.appendSwitch("--disable-background-timer-throttling");
+app.commandLine.appendSwitch("--disable-backgrounding-occluded-windows");
+app.commandLine.appendSwitch("--disable-renderer-backgrounding");
 
 // Menu.setApplicationMenu(null);
 
 app.on("ready", async () => {
   // 记录启动时间
   const startTime = Date.now();
-  const minSplashDuration = isDev() 
-    ? startupConfig.minSplashDuration.development 
+  const minSplashDuration = isDev()
+    ? startupConfig.minSplashDuration.development
     : startupConfig.minSplashDuration.production;
-  
   // 创建启动画面 - 在开发和生产环境都显示
   let splash: BrowserWindow | null = null;
   if (startupConfig.showSplashInDev || !isDev()) {
-    splash = createSplashWindow();
-    splash.show();
+    splash = createSplashWindow(); // 启动画面会在内容加载完成后自动显示
     console.log(`启动画面将显示至少 ${minSplashDuration}ms`);
-  }  const mainWindow = new BrowserWindow({
+  }
+  const mainWindow = new BrowserWindow({
     webPreferences: {
       preload: getPreloadPath(),
       contextIsolation: true,
       nodeIntegration: false,
       sandbox: false, // 需要禁用沙箱以访问串口
     },
-    frame: false,
+    frame: isDev(),
     show: false, // 初始隐藏，等待弹出放大动画
-    backgroundColor: '#181b33', // 设置为深色，与启动画面一致，避免切换时的颜色跳跃
-    width: 1250,  // 预设最终尺寸
-    height: 800,
+    backgroundColor: "#181b33", // 设置为深色，与启动画面一致，避免切换时的颜色跳跃
+    width: 1350, // 预设最终尺寸
+    height: 915,
     // 初始位置将由弹出动画设置
-  });// 等待页面准备好后再显示窗口
+  }); // 等待页面准备好后再显示窗口
   mainWindow.once("ready-to-show", async () => {
     // 计算已经过去的时间
     const elapsedTime = Date.now() - startTime;
     const remainingTime = Math.max(0, minSplashDuration - elapsedTime);
-    
+
     // 如果还没有达到最小显示时间，等待剩余时间
     if (remainingTime > 0) {
       console.log(`启动画面将再显示 ${remainingTime}ms 以确保流畅体验`);
-      await new Promise(resolve => setTimeout(resolve, remainingTime));
-    }    // 使用简单的淡入淡出动画
+      await new Promise((resolve) => setTimeout(resolve, remainingTime));
+    } // 使用简单的淡入淡出动画
     if (splash) {
       try {
         console.log(`启动画面淡出，主窗口淡入`);
-        
+
         // 启动画面淡出
         StartupOptimizer.simpleFade(
           splash,
@@ -78,12 +77,13 @@ app.on("ready", async () => {
           }
         );
       } catch (error) {
-        console.error('启动画面淡出失败:', error);
+        console.error("启动画面淡出失败:", error);
         if (splash && !splash.isDestroyed()) {
           splash.close();
         }
         showMainWindowFadeIn();
-      }    } else {
+      }
+    } else {
       showMainWindowFadeIn();
     }
 
@@ -93,7 +93,7 @@ app.on("ready", async () => {
         mainWindow.setOpacity(0);
         mainWindow.show();
         mainWindow.center(); // 居中显示
-        
+
         StartupOptimizer.simpleFade(
           mainWindow,
           0,
@@ -104,14 +104,15 @@ app.on("ready", async () => {
             console.log(`主窗口淡入完成，总耗时: ${Date.now() - startTime}ms`);
           }
         );
-      } catch (error) {        console.error('主窗口淡入失败:', error);
+      } catch (error) {
+        console.error("主窗口淡入失败:", error);
         mainWindow.setOpacity(1);
         mainWindow.show();
         mainWindow.center();
       }
     }
   });
-  
+
   if (isDev()) {
     mainWindow.loadURL("http://localhost:5123");
   } else {
@@ -149,7 +150,8 @@ app.on("ready", async () => {
   // 注册串口相关的IPC处理程序
   ipcMainHandle("list-serial-ports", async () => {
     return await serialPortManager.listPorts();
-  });  ipcMainHandle("connect-serial-port", async (...args: unknown[]) => {
+  });
+  ipcMainHandle("connect-serial-port", async (...args: unknown[]) => {
     const [portPath, config] = args as [string, SerialPortConfig?];
     return await serialPortManager.connect(portPath, config);
   });
@@ -185,16 +187,16 @@ app.on("ready", async () => {
   try {
     const ports = await getAvailablePorts();
     console.log("Serial ports detected:");
-    
+
     // 使用简单的日志格式避免编码问题
     ports.forEach((port, index) => {
       console.log(`Port ${index + 1}:`);
       console.log(`  Path: ${port.path}`);
-      console.log(`  Manufacturer: ${port.manufacturer || 'Unknown'}`);
-      console.log(`  Vendor ID: ${port.vendorId || 'N/A'}`);
-      console.log(`  Product ID: ${port.productId || 'N/A'}`);
-      console.log(`  Serial Number: ${port.serialNumber || 'N/A'}`);
-      console.log('---');
+      console.log(`  Manufacturer: ${port.manufacturer || "Unknown"}`);
+      console.log(`  Vendor ID: ${port.vendorId || "N/A"}`);
+      console.log(`  Product ID: ${port.productId || "N/A"}`);
+      console.log(`  Serial Number: ${port.serialNumber || "N/A"}`);
+      console.log("---");
     });
   } catch (error) {
     console.error("Error getting serial ports:", error);
@@ -221,7 +223,6 @@ app.on("ready", async () => {
   //     callback('') // Could not find any matching devices
   //   }
   // })
-
 });
 
 function handleCloseEvenets(mainWindow: BrowserWindow) {

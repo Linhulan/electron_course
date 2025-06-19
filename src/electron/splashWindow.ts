@@ -15,10 +15,10 @@ export function createSplashWindow(): BrowserWindow {
       // 性能优化
       backgroundThrottling: false,
     },
-    show: false,
+    show: false, // 初始隐藏，等待内容加载完成
     // 硬件加速优化
     paintWhenInitiallyHidden: false,    // iOS 风格圆角
-    backgroundColor: '#ffffff',
+    backgroundColor: '#ffffff', // 设置默认背景色，避免透明闪烁
     vibrancy: 'content', // macOS 上的磨砂效果
   });
   // 创建 iOS 风格的启动页面内容
@@ -307,8 +307,13 @@ export function createSplashWindow(): BrowserWindow {
     </body>
     </html>
   `;
-
   splash.loadURL(`data:text/html;charset=utf-8,${encodeURIComponent(splashHTML)}`);
+  
+  // 等待内容加载完成后再显示窗口，避免透明闪烁
+  splash.webContents.once('did-finish-load', () => {
+    splash.show();
+    splash.center(); // 确保窗口居中显示
+  });
   
   return splash;
 }
