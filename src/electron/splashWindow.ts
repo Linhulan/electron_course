@@ -257,23 +257,21 @@ export function createSplashWindow(): BrowserWindow {
       <div class="container">
         <div class="logo-container">
           <div class="logo">⚡</div>
-        </div>
-        <div class="title">Electron Serial</div>
-        <div class="subtitle">正在启动应用</div>
+        </div>        <div class="title">Electron Serial</div>
+        <div class="subtitle">Starting Application</div>
         <div class="loading-container">
           <div class="loading"></div>
         </div>
-        <div class="progress-text">正在初始化组件...</div>
+        <div class="progress-text">Initializing components...</div>
       </div>
       
-      <script>
-        // 优化的进度文本更新
+      <script>        // 优化的进度文本更新
         const progressTexts = [
-          '正在初始化组件...',
-          '正在加载配置文件...',
-          '正在启动串口服务...',
-          '正在准备用户界面...',
-          '即将完成...'
+          'Initializing components...',
+          'Loading configuration...',
+          'Starting serial service...',
+          'Preparing user interface...',
+          'Almost ready...'
         ];
         
         let currentIndex = 0;
@@ -293,11 +291,10 @@ export function createSplashWindow(): BrowserWindow {
         
         // 1.4秒后停止更换文本，显示最终状态
         setTimeout(() => {
-          clearInterval(textInterval);
-          if (progressElement) {
+          clearInterval(textInterval);          if (progressElement) {
             progressElement.style.opacity = '0.6';
             setTimeout(() => {
-              progressElement.textContent = '启动完成';
+              progressElement.textContent = 'Ready';
               progressElement.style.opacity = '1';
               progressElement.style.color = '#059669'; // 成功绿色
             }, 150);

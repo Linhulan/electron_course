@@ -21,7 +21,7 @@ export interface StartupConfig {
 export const startupConfig: StartupConfig = {
   minSplashDuration: {
     development: 1000,   // 开发模式 1.0 秒（让用户充分欣赏新设计）
-    production: 2500,    // 生产模式 2.5 秒
+    production: 2000,    // 生产模式 2.0 秒
   },
   animations: {
     splashFadeOut: 200, // 启动画面淡出 0.2 秒

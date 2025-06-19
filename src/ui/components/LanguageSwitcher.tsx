@@ -38,7 +38,7 @@ export const LanguageSwitcher: React.FC<LanguageSwitcherProps> = ({
   
   // 改进的语言检测逻辑
   const getCurrentLanguage = () => {
-    const currentLang = i18n.language || 'zh-CN';
+    const currentLang = i18n.language || 'en-US';
     // 完全匹配
     const exactMatch = languages.find(lang => lang.code === currentLang);
     if (exactMatch) return exactMatch;
@@ -47,9 +47,8 @@ export const LanguageSwitcher: React.FC<LanguageSwitcherProps> = ({
     const baseLang = currentLang.split('-')[0];
     const baseMatch = languages.find(lang => lang.code.startsWith(baseLang));
     if (baseMatch) return baseMatch;
-    
-    // 默认返回中文
-    return languages[0];
+      // 默认返回英文
+    return languages[1];
   };
     const currentLanguage = getCurrentLanguage();
   

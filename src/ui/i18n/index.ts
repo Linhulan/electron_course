@@ -418,9 +418,8 @@ i18n
       "en-US": enUS,
       zh: zhCN, // 简化版本
       en: enUS, // 简化版本
-    },
-    fallbackLng: "en-US",
-    lng: "zh-CN", // 默认语言
+    },    fallbackLng: "en-US",
+    lng: "en-US", // 默认语言改为英文
 
     detection: {
       order: ["localStorage", "navigator", "htmlTag"],
