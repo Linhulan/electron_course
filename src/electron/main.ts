@@ -1,4 +1,4 @@
-import { app, BrowserWindow } from "electron";
+import { app, BrowserWindow, screen } from "electron";
 import { ipcMainHandle, ipcMainOn, isDev } from "./utils.js";
 import { getStaticData, pollResources } from "./resourceManager.js";
 import { getPreloadPath, getUIPath } from "./pathResolver.js";
@@ -41,9 +41,9 @@ app.on("ready", async () => {
     },
     frame: isDev(),
     show: false, // 初始隐藏，等待弹出放大动画
-    backgroundColor: "#181b33", // 设置为深色，与启动画面一致，避免切换时的颜色跳跃
-    width: 1350, // 预设最终尺寸
-    height: 915,
+     // 设置为深色，与启动画面一致，避免切换时的颜色跳跃
+      width: Math.floor(screen.getPrimaryDisplay().workAreaSize.width * 0.8), // 屏幕宽度的80%
+      height: Math.floor(screen.getPrimaryDisplay().workAreaSize.height * 0.8), // 屏幕高度的80%
     // 初始位置将由弹出动画设置
   }); // 等待页面准备好后再显示窗口
   mainWindow.once("ready-to-show", async () => {
