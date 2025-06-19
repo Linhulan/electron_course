@@ -333,9 +333,9 @@
 
 /* Card头部 */
 .card-header {
-  background: #3a3a3a;
-  border-bottom: 1px solid #555;
   padding: 0.5rem;
+  background: linear-gradient(135deg, #2d2d2d 0%, #3a3a3a 100%);
+  border-bottom: 2px solid #404040;
 }
 
 .card-header h3 {
@@ -347,12 +347,6 @@
   gap: 0.5rem;
 }
 
-/* Counting Records Card 头部优化 */
-.counting-records-card .card-header {
-  padding: 1rem 1.5rem;
-  background: linear-gradient(135deg, #2d2d2d 0%, #3a3a3a 100%);
-  border-bottom: 2px solid #404040;
-}
 
 .header-main {
   display: flex;
@@ -785,8 +779,13 @@
 
 /* 详细记录表格在Card中的优化 */
 .detailed-records-card .details-header {
-  background: #404040;
-  border-bottom: 1px solid #666;
+  background: linear-gradient(135deg, #404040 0%, #4a4a4a 100%);
+  border-bottom: 2px solid #667eea;
+  border-radius: 0;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
 
 .detailed-records-card .details-row {
@@ -808,7 +807,7 @@
 .counting-records-card .table-header {
   background: linear-gradient(135deg, #404040 0%, #4a4a4a 100%);
   border-bottom: 2px solid #667eea;
-  border-radius: 8px 8px 0 0;
+  border-radius: 0;
   position: sticky;
   top: 0;
   z-index: 10;
@@ -857,7 +856,7 @@
 .data-table {
   display: flex;
   flex-direction: column;
-  border-radius: 8px;
+  border-radius: 0px;
   overflow: hidden;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
 }
@@ -867,7 +866,7 @@
   display: grid;
   grid-template-columns: minmax(60px, 1fr) minmax(60px, 1fr) minmax(100px, 1fr) minmax(50px, 1fr);
   gap: 0.75rem;
-  padding: 0.75rem 1rem;
+  padding: 0.5rem;
   align-items: center;
 }
 
@@ -905,7 +904,7 @@
 .table-header .header-icon {
   margin-right: 0.5rem;
   opacity: 0.9;
-  font-size: 1rem;
+  font-size: 0.85rem;
   color: #667eea;
 }
 
@@ -1112,10 +1111,10 @@
   grid-template-columns: 1fr 1fr 1.5fr;
   gap: 0.5rem;
   padding: 0.50rem;
-  background: #333;
-  border-bottom: 1px solid #555;
-  font-size: 0.9rem;
-  font-weight: 400;
+  background: linear-gradient(135deg, #3a3a3a 0%, #444444 100%);
+  border-bottom: 2px solid #667eea;
+  font-weight: 600;
+  font-size: 0.875rem;
   color: #ffffff;
   position: sticky;
   top: 0;
