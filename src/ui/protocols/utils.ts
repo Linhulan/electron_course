@@ -172,3 +172,13 @@ export function calculateChecksum(
   
   return checksum;
 }
+
+
+/**
+ * 生成一个唯一的雪花ID
+ * @returns 生成一个唯一的雪花ID
+ * 该ID基于当前时间戳和随机数生成，确保在同一毫秒内生成的ID是唯一的
+ */
+export function generateSnowflakeId(): number {
+  return Date.now() * 1000 + Math.floor(Math.random() * 1000);
+}

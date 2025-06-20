@@ -8,11 +8,12 @@ import {
   isSessionStart,
   isSessionEnd,
   isSessionUpdate,
+  generateSnowflakeId,
 } from "./protocols";
 import { initializeProtocols } from "./protocols/init";
 
 interface CounterData {
-  id: string;
+  id: number;
   no: number; // 记录编号
   timestamp: string;
   currencyCode: string; // 货币代码 (例如: "CNY")
@@ -24,7 +25,7 @@ interface CounterData {
 
 // Session数据结构 - 用于记录完整的点钞会话
 interface SessionData {
-  id: string;
+  id: number;
   no: number;
   timestamp: string;
   startTime: string;
@@ -76,7 +77,7 @@ const handleSessionUpdate = (
       );
     }
     const newSession: SessionData = {
-      id: now.getTime().toString(),
+      id: generateSnowflakeId(),
       no: (currentSession ? currentSession.no + 1 : 1) || 1, // 新Session编号
       timestamp: now.toLocaleTimeString(),
       startTime: now.toLocaleString(),
@@ -87,9 +88,9 @@ const handleSessionUpdate = (
       errorCode:
         protocolData.errorCode !== 0
           ? `E${protocolData.errorCode
-              .toString(16)
-              .padStart(3, "0")
-              .toUpperCase()}`
+            .toString(16)
+            .padStart(3, "0")
+            .toUpperCase()}`
           : undefined,
       denominationBreakdown: new Map(),
       details: [], // 初始化为空数组
@@ -102,7 +103,7 @@ const handleSessionUpdate = (
   // 如果没有当前Session但不是开始状态，说明有问题，创建一个临时Session
   if (!currentSession) {
     const tempSession: SessionData = {
-      id: now.getTime().toString(),
+      id: generateSnowflakeId(),
       no: 1,
       timestamp: now.toLocaleTimeString(),
       startTime: now.toLocaleString(),
@@ -117,9 +118,9 @@ const handleSessionUpdate = (
       errorCode:
         protocolData.errorCode !== 0
           ? `E${protocolData.errorCode
-              .toString(16)
-              .padStart(3, "0")
-              .toUpperCase()}`
+            .toString(16)
+            .padStart(3, "0")
+            .toUpperCase()}`
           : undefined,
       denominationBreakdown: new Map(),
     };
@@ -136,13 +137,15 @@ const handleSessionUpdate = (
     errorCode:
       protocolData.errorCode !== 0
         ? `E${protocolData.errorCode
-            .toString(16)
-            .padStart(3, "0")
-            .toUpperCase()}`
+          .toString(16)
+          .padStart(3, "0")
+          .toUpperCase()}`
         : undefined,
   };
+
   // 只有在刷新中状态时才更新金额和张数 (因为只有这种协议携带有效的金额和面额数据)
-  if (isSessionUpdate(protocolData.status)) {
+  if (isSessionUpdate(protocolData.status)) 
+  {
     updatedSession.totalCount = protocolData.totalCount;
     updatedSession.totalAmount = protocolData.totalAmount;
 
@@ -150,7 +153,27 @@ const handleSessionUpdate = (
     if (protocolData.errorCode !== 0) {
       updatedSession.errorCount = (currentSession.errorCount || 0) + 1;
     }
+
+    // 更新面额分布统计
+    updatedSession.denominationBreakdown.set(protocolData.denomination, {
+      denomination: protocolData.denomination,
+      count: (updatedSession.denominationBreakdown.get(protocolData.denomination)?.count || 0) + 1,
+      amount: (updatedSession.denominationBreakdown.get(protocolData.denomination)?.amount || 0) + protocolData.denomination,
+    });
+
+    // 创建计数记录详情
+    updatedSession.details?.push({
+      id: generateSnowflakeId(),
+      no: (currentSession.details?.length || 0) + 1,
+      timestamp: now.toLocaleTimeString(),
+      currencyCode: protocolData.currencyCode,
+      denomination: protocolData.denomination,
+      status: status,
+      errorCode: "E" + protocolData.errorCode.toString(10),
+      serialNumber: protocolData.serialNumber || "",
+    });
   }
+
   // 如果Session完成，添加到历史记录但保留在当前Session显示 (结束协议不携带金额数据)
   if (isSessionEnd(protocolData.status)) {
     updatedSession.endTime = now.toLocaleString();
@@ -207,7 +230,7 @@ export const CounterDashboard: React.FC<CounterDashboardProps> = ({
   );
   const [denominationStats, setDenominationStats] = useState<
     Map<number, DenominationDetail>
-  >(new Map()); // 面额详细统计
+  >(() => new Map()); // 面额详细统计
   const [stats, setStats] = useState<CounterStats>({
     totalSessions: 0,
     totalAmount: 0,
@@ -334,7 +357,7 @@ export const CounterDashboard: React.FC<CounterDashboardProps> = ({
     };
     setStats(newStats);
   }, [getFilteredData]);
-  
+
   const clearData = () => {
     setSessionData([]);
     setCurrentSession(null);
@@ -360,9 +383,8 @@ export const CounterDashboard: React.FC<CounterDashboardProps> = ({
     const url = URL.createObjectURL(dataBlob);
     const link = document.createElement("a");
     link.href = url;
-    link.download = `session-data-${
-      new Date().toISOString().split("T")[0]
-    }.json`;
+    link.download = `session-data-${new Date().toISOString().split("T")[0]
+      }.json`;
     link.click();
     URL.revokeObjectURL(url);
   };
@@ -439,9 +461,8 @@ export const CounterDashboard: React.FC<CounterDashboardProps> = ({
           <h2>💰 {t("counter.title")}</h2>
           <div className="connection-status">
             <span
-              className={`status-indicator ${
-                isConnected ? "connected" : "disconnected"
-              }`}
+              className={`status-indicator ${isConnected ? "connected" : "disconnected"
+                }`}
             ></span>
             <span>
               {isConnected ? t("counter.connected") : t("counter.disconnected")}
@@ -780,11 +801,10 @@ export const CounterDashboard: React.FC<CounterDashboardProps> = ({
                         </div>
                         <div className="col-error">
                           <div
-                            className={`error-value ${
-                              (item.errorCount || 0) > 0
-                                ? "has-error"
-                                : "no-error"
-                            }`}
+                            className={`error-value ${(item.errorCount || 0) > 0
+                              ? "has-error"
+                              : "no-error"
+                              }`}
                           >
                             {item.errorCount || 0}
                           </div>
