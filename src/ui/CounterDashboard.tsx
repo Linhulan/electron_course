@@ -296,6 +296,7 @@ export const CounterDashboard: React.FC<CounterDashboardProps> = ({
       unsubscribeDataReceived();
     };
   }, [isConnected, currentSession]);
+
   const getFilteredData = useCallback(() => {
     const now = new Date();
     const timeRanges = {
@@ -314,6 +315,7 @@ export const CounterDashboard: React.FC<CounterDashboardProps> = ({
       return itemTime >= cutoffTime;
     });
   }, [sessionData, selectedTimeRange]);
+
   // 计算统计数据
   useEffect(() => {
     const filteredData = getFilteredData();
@@ -332,6 +334,7 @@ export const CounterDashboard: React.FC<CounterDashboardProps> = ({
     };
     setStats(newStats);
   }, [getFilteredData]);
+  
   const clearData = () => {
     setSessionData([]);
     setCurrentSession(null);
