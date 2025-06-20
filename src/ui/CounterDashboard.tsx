@@ -13,30 +13,30 @@ import { initializeProtocols } from "./protocols/init";
 
 interface CounterData {
   id: string;
+  no: number; // 记录编号
   timestamp: string;
-  totalCount: number;
+  currencyCode: string; // 货币代码 (例如: "CNY")
   denomination: number; // 面额
-  amount: number; // 金额
-  speed: number; // 点钞速度 (张/分钟)
-  status: "counting" | "completed" | "error" | "paused";
+  status: "counting" | "completed" | "error" | "paused"; // 计数状态
   errorCode?: string;
-  serialNumber?: string; // 机器序列号
-  details?: DenominationDetail[]; // 面额详细信息
+  serialNumber?: string; // 纸币序列号
 }
 
 // Session数据结构 - 用于记录完整的点钞会话
 interface SessionData {
   id: string;
+  no: number;
   timestamp: string;
   startTime: string;
   endTime?: string;
+  machineMode?: string; // 机器模式 (如果有)
   totalCount: number;
   totalAmount: number;
   errorCount: number; // 错误张数
   status: "counting" | "completed" | "error" | "paused";
   errorCode?: string;
-  serialNumber?: string;
   denominationBreakdown: Map<number, DenominationDetail>; // 面额分布
+  details?: CounterData[]; // 每张点钞记录的详细信息
 }
 
 // 面额详细信息
@@ -77,6 +77,7 @@ const handleSessionUpdate = (
     }
     const newSession: SessionData = {
       id: now.getTime().toString(),
+      no: (currentSession ? currentSession.no + 1 : 1) || 1, // 新Session编号
       timestamp: now.toLocaleTimeString(),
       startTime: now.toLocaleString(),
       totalCount: 0, // 开始时张数为0
@@ -90,8 +91,8 @@ const handleSessionUpdate = (
               .padStart(3, "0")
               .toUpperCase()}`
           : undefined,
-      serialNumber: protocolData.serialNumber,
       denominationBreakdown: new Map(),
+      details: [], // 初始化为空数组
     };
 
     setCurrentSession(newSession);
@@ -102,6 +103,7 @@ const handleSessionUpdate = (
   if (!currentSession) {
     const tempSession: SessionData = {
       id: now.getTime().toString(),
+      no: 1,
       timestamp: now.toLocaleTimeString(),
       startTime: now.toLocaleString(),
       totalCount: isSessionUpdate(protocolData.status)
@@ -119,7 +121,6 @@ const handleSessionUpdate = (
               .padStart(3, "0")
               .toUpperCase()}`
           : undefined,
-      serialNumber: protocolData.serialNumber,
       denominationBreakdown: new Map(),
     };
 
@@ -257,40 +258,33 @@ export const CounterDashboard: React.FC<CounterDashboardProps> = ({
               data.isCompletePacket
             ) as CountingProtocolData;
 
-            if (
-              protocolData &&
-              protocolData.protocolType === "CountingMachine"
-            ) {
-              // 检查是否为点钞数据 (CMD-G = 0x0E)
-              if (protocolData.cmdGroup === 0x0e) {
-                // 使用Session管理函数处理数据
-                const updatedSession = handleSessionUpdate(
-                  protocolData,
-                  currentSession,
-                  setCurrentSession,
-                  setSessionData
-                ); // 只有在刷新中状态时才更新面额统计 (因为只有这种协议携带有效的面额数据)
-                if (
-                  isSessionUpdate(protocolData.status) &&
-                  protocolData.denomination > 0
-                ) {
-                  setDenominationStats((prev) =>
-                    updateDenominationStats(prev, protocolData.denomination)
-                  );
-
-                  console.log(
-                    "Updated denomination stats for denomination:",
-                    protocolData.denomination
-                  );
-                }
+            if (protocolData) {
+              const updatedSession = handleSessionUpdate(
+                protocolData,
+                currentSession,
+                setCurrentSession,
+                setSessionData
+              ); // 只有在刷新中状态时才更新面额统计 (因为只有这种协议携带有效的面额数据)
+              if (
+                isSessionUpdate(protocolData.status) &&
+                protocolData.denomination > 0
+              ) {
+                setDenominationStats((prev) =>
+                  updateDenominationStats(prev, protocolData.denomination)
+                );
 
                 console.log(
-                  "Updated session from",
-                  data.isCompletePacket ? "complete packet" : "raw data",
-                  ":",
-                  updatedSession
+                  "Updated denomination stats for denomination:",
+                  protocolData.denomination
                 );
               }
+
+              console.log(
+                "Updated session from",
+                data.isCompletePacket ? "complete packet" : "raw data",
+                ":",
+                updatedSession
+              );
             }
           } catch (error) {
             console.error("Error parsing serial data:", error);
@@ -337,7 +331,8 @@ export const CounterDashboard: React.FC<CounterDashboardProps> = ({
       ),
     };
     setStats(newStats);
-  }, [getFilteredData]);  const clearData = () => {
+  }, [getFilteredData]);
+  const clearData = () => {
     setSessionData([]);
     setCurrentSession(null);
     setDenominationStats(new Map()); // 清空面额统计
@@ -379,9 +374,9 @@ export const CounterDashboard: React.FC<CounterDashboardProps> = ({
   const getAmountFontSize = (amount: number) => {
     const formattedAmount = formatCurrency(amount);
     const length = formattedAmount.length;
-    
+
     if (length <= 8) return "1.5rem"; // 默认大小，例如：¥1,234.00
-    if (length <= 12) return "1.3rem"; // 中等金额，例如：¥12,345,678.00  
+    if (length <= 12) return "1.3rem"; // 中等金额，例如：¥12,345,678.00
     if (length <= 15) return "1.1rem"; // 较大金额，例如：¥123,456,789.00
     if (length <= 18) return "0.95rem"; // 很大金额，例如：¥1,234,567,890.00
     return "0.85rem"; // 超大金额
@@ -485,10 +480,12 @@ export const CounterDashboard: React.FC<CounterDashboardProps> = ({
             <div className="stat-label">{t("counter.stats.totalSessions")}</div>
           </div>
         </div>
-        <div className="stat-card">          <div className="stat-icon">💴</div>
+        <div className="stat-card">
+          {" "}
+          <div className="stat-icon">💴</div>
           <div className="stat-info">
-            <div 
-              className="stat-value" 
+            <div
+              className="stat-value"
               style={{ fontSize: getAmountFontSize(stats.totalAmount) }}
             >
               {formatCurrency(stats.totalAmount)}
@@ -504,10 +501,13 @@ export const CounterDashboard: React.FC<CounterDashboardProps> = ({
             </div>
             <div className="stat-label">{t("counter.stats.totalNotes")}</div>
           </div>
-        </div>        <div className="stat-card">
+        </div>{" "}
+        <div className="stat-card">
           <div className="stat-icon">⚠️</div>
           <div className="stat-info">
-            <div className="stat-value error-stat">{stats.errorPcs.toLocaleString()}</div>
+            <div className="stat-value error-stat">
+              {stats.errorPcs.toLocaleString()}
+            </div>
             <div className="stat-label">{t("counter.stats.errorPcs")}</div>
           </div>
         </div>{" "}
@@ -689,13 +689,16 @@ export const CounterDashboard: React.FC<CounterDashboardProps> = ({
 
           {/* 计数记录 Card */}
           <div className="record-card counting-records-card">
-            {" "}            <div className="card-header">
+            {" "}
+            <div className="card-header">
               <h3>
                 <span className="section-icon">📝</span>
                 {t("counter.records")}
                 <span className="record-count">
                   {sessionData.length > 0 &&
-                    `(${sessionData.length} ${t("counter.stats.totalSessions")})`}
+                    `(${sessionData.length} ${t(
+                      "counter.stats.totalSessions"
+                    )})`}
                 </span>
               </h3>
             </div>
