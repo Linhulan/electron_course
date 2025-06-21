@@ -9,7 +9,9 @@ import {
   validateProtocolHeader,
   cleanHexString,
   bytesToLittleEndianInt,
-  bytesToString
+  bytesToString,
+  debugLog,
+  warningLog
 } from './utils';
 
 /**
@@ -134,17 +136,17 @@ export class CDMProtocolParser implements ProtocolParser<BaseProtocolData[]> {
   private parseSingleProtocol(hexData: string): BaseProtocolData | null {
     try {
       const bytes = hexStringToBytes(hexData);
-      console.log(`[${this.getProtocolName()}] Parsed bytes:`, bytes);
+      debugLog(`[${this.getProtocolName()}] Parsed bytes:`, bytes);
       
       // 验证最小长度 (FDDF + 长度 + CMD-G + CRC = 2 + 1 + 2 + 2 = 7字节最小)
       if (bytes.length < 7) {
-        console.warn(`[${this.getProtocolName()}] Packet too short:`, bytes.length);
+        warningLog(`[${this.getProtocolName()}] Packet too short:`, bytes.length);
         return null;
       }
       
       // 验证协议头
       if (!validateProtocolHeader(bytes, CDMProtocolParser.PROTOCOL_HEADER)) {
-        console.warn(`[${this.getProtocolName()}] Invalid protocol header:`, bytes[0], bytes[1]);
+        warningLog(`[${this.getProtocolName()}] Invalid protocol header:`, bytes[0], bytes[1]);
         return null;
       }
       
@@ -154,7 +156,7 @@ export class CDMProtocolParser implements ProtocolParser<BaseProtocolData[]> {
       const expectedTotalLength = dataLength;
       
       if (bytes.length < expectedTotalLength) {
-        console.warn(`[${this.getProtocolName()}] Incomplete packet. Expected:`, expectedTotalLength, 'Got:', bytes.length);
+        warningLog(`[${this.getProtocolName()}] Incomplete packet. Expected:`, expectedTotalLength, 'Got:', bytes.length);
         return null;
       }
       
@@ -171,7 +173,7 @@ export class CDMProtocolParser implements ProtocolParser<BaseProtocolData[]> {
       
       // 验证CRC
       if (!this.validateCRC(bytes.slice(0, bytes.length - 1), crc)) {
-        console.warn(`[${this.getProtocolName()}] CRC validation failed`);
+        warningLog(`[${this.getProtocolName()}] CRC validation failed`);
         return null;
       }
 
@@ -179,13 +181,13 @@ export class CDMProtocolParser implements ProtocolParser<BaseProtocolData[]> {
       return parsedData;
 
     } catch (error) {
-      console.error(`[${this.getProtocolName()}] Error parsing single protocol:`, error);
+      debugLog(`[${this.getProtocolName()}] Error parsing single protocol:`, error);
       return null;
     }
   }
   
   private parseDataByCmdGroup(cmdGroup: number, data: number[]): BaseProtocolData | null {
-    console.log(`[${this.getProtocolName()}] Parsing data by CMD-G: ${cmdGroup}`, data);
+    debugLog(`[${this.getProtocolName()}] Parsing data by CMD-G: ${cmdGroup}`, data);
     switch (cmdGroup) {
       case CDMCommandCode.COUNT_RESULT:
         return this.parseCountResultData(data);

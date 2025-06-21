@@ -182,3 +182,19 @@ export function calculateChecksum(
 export function generateSnowflakeId(): number {
   return Date.now() * 1000 + Math.floor(Math.random() * 1000);
 }
+
+
+/**
+ * 开发模式下才输出日志
+ */
+export function debugLog(message: string, ...optionalParams: any[]): void {
+  if (import.meta.env.DEV) {
+    console.debug(`[DEBUG] ${message}`, ...optionalParams);
+  }
+}
+
+export function warningLog(message: string, ...optionalParams: any[]): void {
+  if (import.meta.env.DEV) {
+    console.warn(`[WARN] ${message}`, ...optionalParams);
+  }
+}
