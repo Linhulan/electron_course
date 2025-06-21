@@ -88,9 +88,9 @@ const handleSessionUpdate = (
       errorCode:
         protocolData.errorCode !== 0
           ? `E${protocolData.errorCode
-            .toString(16)
-            .padStart(3, "0")
-            .toUpperCase()}`
+              .toString(16)
+              .padStart(3, "0")
+              .toUpperCase()}`
           : undefined,
       denominationBreakdown: new Map(),
       details: [], // 初始化为空数组
@@ -118,9 +118,9 @@ const handleSessionUpdate = (
       errorCode:
         protocolData.errorCode !== 0
           ? `E${protocolData.errorCode
-            .toString(16)
-            .padStart(3, "0")
-            .toUpperCase()}`
+              .toString(16)
+              .padStart(3, "0")
+              .toUpperCase()}`
           : undefined,
       denominationBreakdown: new Map(),
     };
@@ -137,15 +137,14 @@ const handleSessionUpdate = (
     errorCode:
       protocolData.errorCode !== 0
         ? `E${protocolData.errorCode
-          .toString(16)
-          .padStart(3, "0")
-          .toUpperCase()}`
+            .toString(16)
+            .padStart(3, "0")
+            .toUpperCase()}`
         : undefined,
   };
 
   // 只有在刷新中状态时才更新金额和张数 (因为只有这种协议携带有效的金额和面额数据)
-  if (isSessionUpdate(protocolData.status)) 
-  {
+  if (isSessionUpdate(protocolData.status)) {
     updatedSession.totalCount = protocolData.totalCount;
     updatedSession.totalAmount = protocolData.totalAmount;
 
@@ -157,8 +156,12 @@ const handleSessionUpdate = (
     // 更新面额分布统计
     updatedSession.denominationBreakdown.set(protocolData.denomination, {
       denomination: protocolData.denomination,
-      count: (updatedSession.denominationBreakdown.get(protocolData.denomination)?.count || 0) + 1,
-      amount: (updatedSession.denominationBreakdown.get(protocolData.denomination)?.amount || 0) + protocolData.denomination,
+      count:
+        (updatedSession.denominationBreakdown.get(protocolData.denomination)
+          ?.count || 0) + 1,
+      amount:
+        (updatedSession.denominationBreakdown.get(protocolData.denomination)
+          ?.amount || 0) + protocolData.denomination,
     });
 
     // 创建计数记录详情
@@ -274,13 +277,14 @@ export const CounterDashboard: React.FC<CounterDashboardProps> = ({
       (data) => {
         // 只处理十六进制数据
         if (data.hexData && isConnected) {
-          try {            // 使用协议管理器解析数据
+          try {
+            // 使用协议管理器解析数据
             const protocolDataArr = protocolManager.parseData(
               data.hexData
             ) as CountingProtocolData[];
 
             if (protocolDataArr && protocolDataArr.length > 0) {
-              for ( const protocolData of protocolDataArr) {
+              for (const protocolData of protocolDataArr) {
                 const updatedSession = handleSessionUpdate(
                   protocolData,
                   currentSession,
@@ -294,17 +298,14 @@ export const CounterDashboard: React.FC<CounterDashboardProps> = ({
                   setDenominationStats((prev) =>
                     updateDenominationStats(prev, protocolData.denomination)
                   );
-  
+
                   console.log(
                     "Updated denomination stats for denomination:",
                     protocolData.denomination
                   );
                 }
-  
-                console.log(
-                  "Updated session from hex data:",
-                  updatedSession
-                );
+
+                console.log("Updated session from hex data:", updatedSession);
               }
             }
           } catch (error) {
@@ -375,14 +376,23 @@ export const CounterDashboard: React.FC<CounterDashboardProps> = ({
     setCurrentSession(null);
   };
 
+  const serializeSessionData = (session: SessionData[]): string => {
+    return JSON.stringify(
+      session.map((s) => ({
+        ...s,
+        denominationBreakdown: [...s.denominationBreakdown.entries()],
+      })) ,null, 2);
+  };
+
   const exportData = () => {
-    const dataStr = JSON.stringify(sessionData, null, 2);
+    const dataStr = serializeSessionData(sessionData);
     const dataBlob = new Blob([dataStr], { type: "application/json" });
     const url = URL.createObjectURL(dataBlob);
     const link = document.createElement("a");
     link.href = url;
-    link.download = `session-data-${new Date().toISOString().split("T")[0]
-      }.json`;
+    link.download = `session-data-${
+      new Date().toISOString().split("T")[0]
+    }.json`;
     link.click();
     URL.revokeObjectURL(url);
   };
@@ -459,8 +469,9 @@ export const CounterDashboard: React.FC<CounterDashboardProps> = ({
           <h2>💰 {t("counter.title")}</h2>
           <div className="connection-status">
             <span
-              className={`status-indicator ${isConnected ? "connected" : "disconnected"
-                }`}
+              className={`status-indicator ${
+                isConnected ? "connected" : "disconnected"
+              }`}
             ></span>
             <span>
               {isConnected ? t("counter.connected") : t("counter.disconnected")}
@@ -799,10 +810,11 @@ export const CounterDashboard: React.FC<CounterDashboardProps> = ({
                         </div>
                         <div className="col-error">
                           <div
-                            className={`error-value ${(item.errorCount || 0) > 0
-                              ? "has-error"
-                              : "no-error"
-                              }`}
+                            className={`error-value ${
+                              (item.errorCount || 0) > 0
+                                ? "has-error"
+                                : "no-error"
+                            }`}
                           >
                             {item.errorCount || 0}
                           </div>
