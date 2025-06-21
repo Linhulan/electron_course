@@ -307,33 +307,33 @@ export const SessionDetailDrawer: React.FC<SessionDetailDrawerProps> = ({
                 </div>
               ) : (
                 <div className="transaction-table">                  <div className="transaction-header">
-                    <div className="col-no">#</div>
-                    <div className="col-serial">
+                    <div className="transaction-col-no">#</div>
+                    <div className="transaction-col-serial">
                       {t("counter.sessionDetail.serialNumber")}
                     </div>
-                    <div className="col-denomination">
+                    <div className="transaction-col-denomination">
                       {t("counter.detailTable.denomination")}
                     </div>
-                    <div className="col-currency">
+                    <div className="transaction-col-currency">
                       {t("counter.sessionDetail.currency")}
                     </div>
-                    <div className="col-error">
+                    <div className="transaction-col-error">
                       {t("counter.sessionDetail.error")}
                     </div>
                   </div>{" "}
                   <div className="transaction-body">                    {sessionData.details.map((detail) => (
                       <div key={detail.id} className="transaction-row">
-                        <div className="col-no">{detail.no}</div>
-                        <div className="col-serial">
+                        <div className="transaction-col-no">{detail.no}</div>
+                        <div className="transaction-col-serial">
                           {detail.serialNumber || "-"}
                         </div>
-                        <div className="col-denomination">
+                        <div className="transaction-col-denomination">
                           ¥{detail.denomination}
                         </div>
-                        <div className="col-currency">
+                        <div className="transaction-col-currency">
                           {detail.currencyCode}
                         </div>
-                        <div className="col-error">
+                        <div className="transaction-col-error">
                           {detail.errorCode || "-"}
                         </div>
                       </div>
