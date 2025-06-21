@@ -10,21 +10,21 @@ import { cleanHexString } from './utils';
  * 负责管理多个协议解析器并提供统一的解析接口
  */
 export class ProtocolManagerImpl implements ProtocolManager {
-  private parsers: Map<string, ProtocolParser<BaseProtocolData>> = new Map();
+  private parsers: Map<string, ProtocolParser<BaseProtocolData[]>> = new Map();
   
   /**
    * 注册协议解析器
    */
-  registerParser<T extends BaseProtocolData>(parser: ProtocolParser<T>): void {
+  registerParser<T extends BaseProtocolData[]>(parser: ProtocolParser<T>): void {
     const protocolName = parser.getProtocolName();
     // 类型断言，因为我们知道所有解析器都继承自BaseProtocolData
-    this.parsers.set(protocolName, parser as ProtocolParser<BaseProtocolData>);
+    this.parsers.set(protocolName, parser as ProtocolParser<BaseProtocolData[]>);
     console.log(`Protocol parser registered: ${protocolName}`);
   }
     /**
    * 解析数据 - 自动选择合适的解析器
    */
-  parseData(hexData: string): BaseProtocolData | null {
+  parseData(hexData: string): BaseProtocolData[] | null {
     const cleanHex = cleanHexString(hexData);
     
     if (!cleanHex) {
@@ -37,9 +37,9 @@ export class ProtocolManagerImpl implements ProtocolManager {
       if (parser.canHandle(cleanHex)) {
         console.log(`Using parser: ${protocolName} for data: ${cleanHex.substring(0, 20)}...`);
         try {
-          const result = parser.parse(cleanHex);
-          if (result) {
-            return result;
+          const results = parser.parse(cleanHex);
+          if (results) {
+            return results;
           }
         } catch (error) {
           console.error(`Error in parser ${protocolName}:`, error);

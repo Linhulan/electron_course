@@ -275,35 +275,37 @@ export const CounterDashboard: React.FC<CounterDashboardProps> = ({
         // 只处理十六进制数据
         if (data.hexData && isConnected) {
           try {            // 使用协议管理器解析数据
-            const protocolData = protocolManager.parseData(
+            const protocolDataArr = protocolManager.parseData(
               data.hexData
-            ) as CountingProtocolData;
+            ) as CountingProtocolData[];
 
-            if (protocolData) {
-              const updatedSession = handleSessionUpdate(
-                protocolData,
-                currentSession,
-                setCurrentSession,
-                setSessionData
-              ); // 只有在刷新中状态时才更新面额统计 (因为只有这种协议携带有效的面额数据)
-              if (
-                isSessionUpdate(protocolData.status) &&
-                protocolData.denomination > 0
-              ) {
-                setDenominationStats((prev) =>
-                  updateDenominationStats(prev, protocolData.denomination)
-                );
-
+            if (protocolDataArr && protocolDataArr.length > 0) {
+              for ( const protocolData of protocolDataArr) {
+                const updatedSession = handleSessionUpdate(
+                  protocolData,
+                  currentSession,
+                  setCurrentSession,
+                  setSessionData
+                ); // 只有在刷新中状态时才更新面额统计 (因为只有这种协议携带有效的面额数据)
+                if (
+                  isSessionUpdate(protocolData.status) &&
+                  protocolData.denomination > 0
+                ) {
+                  setDenominationStats((prev) =>
+                    updateDenominationStats(prev, protocolData.denomination)
+                  );
+  
+                  console.log(
+                    "Updated denomination stats for denomination:",
+                    protocolData.denomination
+                  );
+                }
+  
                 console.log(
-                  "Updated denomination stats for denomination:",
-                  protocolData.denomination
+                  "Updated session from hex data:",
+                  updatedSession
                 );
               }
-
-              console.log(
-                "Updated session from hex data:",
-                updatedSession
-              );
             }
           } catch (error) {
             console.error("Error parsing serial data:", error);

@@ -16,7 +16,7 @@ import {
  * CDM协议解析器
  * 支持协议格式：FDDF + 长度 + CMD-G(模式码) + 数据 + CRC
  */
-export class CDMProtocolParser implements ProtocolParser<BaseProtocolData> {
+export class CDMProtocolParser implements ProtocolParser<BaseProtocolData[]> {
   private static readonly PROTOCOL_HEADER = [0xFD, 0xDF];
   private static readonly PROTOCOL_HEADER_STR = "FDDF";
   private static readonly MIN_PACKET_LENGTH = 16; // 8字节 = 16个十六进制字符 (最小包：头部4 + 长度2 + CMD-G2 + CRC2)
@@ -39,10 +39,13 @@ export class CDMProtocolParser implements ProtocolParser<BaseProtocolData> {
     }
     
     return true;
-  }  parse(hexData: string): BaseProtocolData | null {
+  }  
+  
+  parse(hexData: string): BaseProtocolData[] | null {
     try {
       // console.log(`[${this.getProtocolName()}] Parsing data: ${hexData}`);
       const cleanHex = cleanHexString(hexData);
+      const results: BaseProtocolData[] = [];
       
       // 检查是否能处理该协议
       if (!this.canHandle(cleanHex)) {
@@ -57,11 +60,12 @@ export class CDMProtocolParser implements ProtocolParser<BaseProtocolData> {
       for (const protocolHex of protocols) {
         const result = this.parseSingleProtocol(protocolHex);
         if (result) {
-          return result;
+          results.push(result);
         }
       }
-      
-      return null;
+
+      return results.length > 0 ? results : null;
+
     } catch (error) {
       console.error(`[${this.getProtocolName()}] Error parsing protocol data:`, error);
       return null;

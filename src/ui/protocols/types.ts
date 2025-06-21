@@ -26,12 +26,12 @@ export interface ProtocolManager {
   /**
    * 注册协议解析器
    */
-  registerParser<T extends BaseProtocolData>(parser: ProtocolParser<T>): void;
+  registerParser<T extends BaseProtocolData[]>(parser: ProtocolParser<T>): void;
   
   /**
    * 解析数据
    */
-  parseData(hexData: string): BaseProtocolData | null;
+  parseData(hexData: string): BaseProtocolData[] | null;
   
   /**
    * 获取支持的协议列表
