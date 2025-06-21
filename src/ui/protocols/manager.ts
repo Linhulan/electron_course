@@ -65,7 +65,7 @@ export class ProtocolManagerImpl implements ProtocolManager {
     /**
    * 获取指定协议的解析器
    */
-  getParser<T extends BaseProtocolData>(protocolName: string): ProtocolParser<T> | null {
+  getParser<T extends BaseProtocolData[]>(protocolName: string): ProtocolParser<T> | null {
     const parser = this.parsers.get(protocolName);
     return parser ? (parser as ProtocolParser<T>) : null;
   }
