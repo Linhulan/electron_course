@@ -422,7 +422,7 @@ export class SerialPortManager {
       // 设置延时发送，合并连续的数据包
       this.dataTimeout = setTimeout(() => {
         this.flushHexBuffer();
-      }, 50); // 50ms延时，合并数据包
+      }, 10); // 10ms延时，合并数据包
     });
   }  /**
    * 设置行数据监听器（文本模式）- 包含消息类型识别
