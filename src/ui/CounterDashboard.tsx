@@ -11,6 +11,7 @@ import {
   generateSnowflakeId,
 } from "./protocols";
 import { initializeProtocols } from "./protocols/init";
+import { SessionDetailDrawer } from "./components/SessionDetailDrawer";
 
 interface CounterData {
   id: number;
@@ -241,12 +242,15 @@ export const CounterDashboard: React.FC<CounterDashboardProps> = ({
     averageSpeed: 0,
     errorPcs: 0,
   });
-  const [isConnected, setIsConnected] = useState(false);
-  const [selectedTimeRange, setSelectedTimeRange] = useState<
+  const [isConnected, setIsConnected] = useState(false);  const [selectedTimeRange, setSelectedTimeRange] = useState<
     "1h" | "24h" | "7d" | "30d"
   >("24h");
 
-  const dataDisplayRef = useRef<HTMLDivElement>(null); // 监听真实的串口连接状态
+  // 抽屉相关状态
+  const [selectedSessionId, setSelectedSessionId] = useState<number | null>(null);
+  const [isDetailDrawerOpen, setIsDetailDrawerOpen] = useState(false);
+
+  const dataDisplayRef = useRef<HTMLDivElement>(null);// 监听真实的串口连接状态
   useEffect(() => {
     // 检查初始连接状态
     const checkInitialStatus = async () => {
@@ -370,10 +374,26 @@ export const CounterDashboard: React.FC<CounterDashboardProps> = ({
       errorPcs: 0,
     });
   };
-
   // 清空当前Session，但保留历史记录
   const clearCurrentSession = () => {
     setCurrentSession(null);
+  };
+
+  // 处理Session详情抽屉
+  const handleSessionClick = (sessionId: number) => {
+    setSelectedSessionId(sessionId);
+    setIsDetailDrawerOpen(true);
+  };
+
+  const handleCloseDrawer = () => {
+    setIsDetailDrawerOpen(false);
+    setSelectedSessionId(null);
+  };
+
+  // 获取选中的Session数据
+  const getSelectedSession = (): SessionData | null => {
+    if (!selectedSessionId) return null;
+    return sessionData.find(session => session.id === selectedSessionId) || null;
   };
 
   const serializeSessionData = (session: SessionData[]): string => {
@@ -783,9 +803,13 @@ export const CounterDashboard: React.FC<CounterDashboardProps> = ({
                       <div className="col-error">
                         {t("counter.table.errorPcs")}
                       </div>
-                    </div>
-                    {sessionData.map((item) => (
-                      <div key={item.id} className="table-row">
+                    </div>                    {sessionData.map((item) => (
+                      <div 
+                        key={item.id} 
+                        className="table-row clickable"
+                        onClick={() => handleSessionClick(item.id)}
+                        title={t("counter.clickToViewDetails", "Click to view details")}
+                      >
                         <div className="col-time">
                           <div className="time-primary">{item.timestamp}</div>
                           {item.endTime && (
@@ -822,12 +846,18 @@ export const CounterDashboard: React.FC<CounterDashboardProps> = ({
                       </div>
                     ))}
                   </div>
-                )}
-              </div>
+                )}              </div>
             </div>
           </div>
         </div>
       </div>
+
+      {/* Session详情抽屉 */}
+      <SessionDetailDrawer
+        isOpen={isDetailDrawerOpen}
+        sessionData={getSelectedSession()}
+        onClose={handleCloseDrawer}
+      />
     </div>
   );
 };

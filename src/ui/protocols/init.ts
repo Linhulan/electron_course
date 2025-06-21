@@ -1,5 +1,4 @@
 import { protocolManager } from './manager';
-import { CountingMachineParser } from './countingMachine';
 import { CDMProtocolParser } from './cdmProtocol';
 
 /**

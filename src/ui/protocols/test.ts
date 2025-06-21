@@ -18,19 +18,18 @@ export function testProtocolParsing(): void {
   
   console.log('测试数据:', testHexData);
   console.log('支持的协议:', protocolManager.getSupportedProtocols());
+    // 解析测试数据
+  const result = protocolManager.parseData(testHexData) as CountingProtocolData[];
   
-  // 解析测试数据
-  const result = protocolManager.parseData(testHexData, true) as CountingProtocolData;
-  
-  if (result) {
+  if (result && result.length > 0) {
     console.log('解析成功:');
-    console.log('- 协议类型:', result.protocolType);
-    console.log('- 总张数:', result.totalCount);
-    console.log('- 面额:', result.denomination);
-    console.log('- 总金额:', result.totalAmount);
-    console.log('- 状态:', result.status);
-    console.log('- 序列号:', result.serialNumber);
-    console.log('- 货币代码:', result.currencyCode);
+    const firstResult = result[0] as CountingProtocolData;
+    console.log('- 协议类型:', firstResult.protocolType);
+    console.log('- 总张数:', firstResult.totalCount);
+    console.log('- 面额:', firstResult.denomination);    console.log('- 总金额:', firstResult.totalAmount);
+    console.log('- 状态:', firstResult.status);
+    console.log('- 序列号:', firstResult.serialNumber);
+    console.log('- 货币代码:', firstResult.currencyCode);
   } else {
     console.log('解析失败');
   }

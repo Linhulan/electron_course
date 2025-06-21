@@ -196,11 +196,29 @@ const zhCN = {
       },      // 无数据提示
       noData: {
         title: "暂无点钞数据",
-        subtitle: "请开始点钞来查看数据",
-        noDetailedRecords: "暂无面额统计",
+        subtitle: "请开始点钞来查看数据",        noDetailedRecords: "暂无面额统计",
         startCountingHint: "开始点钞查看面额分布",
         suggestion: "连接串口并开始点钞即可在此查看记录"
+      },      // Session详情抽屉
+      sessionDetail: {
+        title: "点钞会话详情",
+        basicInfo: "基本信息",
+        denominationBreakdown: "面额分布",
+        transactionDetails: "交易明细",
+        exportSession: "导出会话",
+        noDenominationData: "暂无面额数据",
+        noTransactionData: "暂无交易明细",        serialNumber: "序列号",
+        startTime: "开始时间",        endTime: "结束时间",
+        currency: "货币",
+        error: "错误",
+        countRatio: "张数占比",
+        amountRatio: "金额占比",
+        showDetails: "显示详情",
+        hideDetails: "隐藏详情",
       },
+
+      // 点击提示
+      clickToViewDetails: "点击查看详情",
     },
   },
 };
@@ -400,10 +418,28 @@ const enUS = {
       noData: {
         title: "No counting data available",
         subtitle: "Start Counting to see the data",
-        noDetailedRecords: "No detailed records",
-        startCountingHint: "Start counting to see denomination breakdown",
+        noDetailedRecords: "No detailed records",        startCountingHint: "Start counting to see denomination breakdown",
         suggestion: "Connect serial port and start counting to view records here"
+      },      // Session detail drawer
+      sessionDetail: {
+        title: "Session Details",
+        basicInfo: "Basic Information",
+        denominationBreakdown: "Denomination Breakdown",
+        transactionDetails: "Transaction Details",
+        exportSession: "Export Session",
+        noDenominationData: "No denomination data",
+        noTransactionData: "No transaction details",        serialNumber: "Serial Number",
+        startTime: "Start Time",        endTime: "End Time",
+        currency: "Currency",
+        error: "Error",
+        countRatio: "Count Ratio",
+        amountRatio: "Amount Ratio",
+        showDetails: "Show Details",
+        hideDetails: "Hide Details",
       },
+
+      // Click hint
+      clickToViewDetails: "Click to view details",
     },
   },
 };
