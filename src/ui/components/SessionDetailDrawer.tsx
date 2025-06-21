@@ -1,6 +1,9 @@
 import React, { useState } from "react";
 import { useTranslation } from "react-i18next";
 import "./SessionDetailDrawer.css";
+import { SerializationUsageExample } from "../utils/serializationExample";
+import { dataStorageService } from "../utils/storageService";
+import { debugLog } from "../protocols";
 
 interface CounterData {
   id: number;
@@ -101,6 +104,13 @@ export const SessionDetailDrawer: React.FC<SessionDetailDrawerProps> = ({
     }
   };
 
+  const onExport = async (sessionData: SessionData) => {
+    // SerializationUsageExample.runAllExamples();
+    dataStorageService.saveSessionData("TEST", sessionData);
+    let s = await dataStorageService.loadSessionData("TEST");
+    debugLog("Storage Stats:", s);
+  };
+
   if (!isOpen || !sessionData) {
     return null;
   }
@@ -183,18 +193,21 @@ export const SessionDetailDrawer: React.FC<SessionDetailDrawerProps> = ({
                 <span className="info-value">{sessionData.startTime}</span>
               </div>
             </div>
-          </div>          {/* 面额分布 */}
+          </div>{" "}
+          {/* 面额分布 */}
           <div className="detail-section">
             <h4 className="section-title">
               <span className="section-icon">💰</span>
-              {t("counter.sessionDetail.denominationBreakdown")}              <button 
-                className={`toggle-detail-btn ${showDetailedBreakdown ? 'active' : ''}`}
+              {t("counter.sessionDetail.denominationBreakdown")}{" "}
+              <button
+                className={`toggle-detail-btn ${
+                  showDetailedBreakdown ? "active" : ""
+                }`}
                 onClick={() => setShowDetailedBreakdown(!showDetailedBreakdown)}
               >
-                {showDetailedBreakdown 
-                  ? t("counter.sessionDetail.hideDetails", "隐藏详情") 
-                  : t("counter.sessionDetail.showDetails", "显示详情")
-                }
+                {showDetailedBreakdown
+                  ? t("counter.sessionDetail.hideDetails", "隐藏详情")
+                  : t("counter.sessionDetail.showDetails", "显示详情")}
               </button>
             </h4>
             <div className="denomination-breakdown">
@@ -208,10 +221,14 @@ export const SessionDetailDrawer: React.FC<SessionDetailDrawerProps> = ({
                     <div
                       key={detail.denomination}
                       className="denomination-item compact"
-                    >                      {/* 紧凑的主要信息行 */}
+                    >
+                      {" "}
+                      {/* 紧凑的主要信息行 */}
                       <div className="denomination-main-info">
                         <div className="denomination-basic">
-                          <span className="denomination-value">¥{detail.denomination}</span>
+                          <span className="denomination-value">
+                            ¥{detail.denomination}
+                          </span>
                           <span className="denomination-count">
                             {detail.count} {t("counter.detailTable.pcs")}
                           </span>
@@ -220,26 +237,35 @@ export const SessionDetailDrawer: React.FC<SessionDetailDrawerProps> = ({
                           </span>
                         </div>
                       </div>
-
                       {/* 详细占比图表（可折叠） */}
                       {showDetailedBreakdown && (
                         <div className="denomination-detailed">
-                          <div className="denomination-bars">                            {/* 张数占比条 */}
+                          <div className="denomination-bars">
+                            {" "}
+                            {/* 张数占比条 */}
                             <div className="denomination-bar-container">
                               <div className="bar-label">
                                 <span className="bar-icon">📄</span>
                                 <span className="bar-text">
-                                  {t("counter.sessionDetail.countRatio", "张数占比")}
+                                  {t(
+                                    "counter.sessionDetail.countRatio",
+                                    "张数占比"
+                                  )}
                                 </span>
                                 <span className="bar-percentage">
-                                  {((detail.count / totalCount) * 100).toFixed(1)}%
+                                  {((detail.count / totalCount) * 100).toFixed(
+                                    1
+                                  )}
+                                  %
                                 </span>
                               </div>
                               <div className="denomination-bar count-bar">
                                 <div
                                   className="denomination-fill count-fill"
                                   style={{
-                                    width: `${(detail.count / totalCount) * 100}%`,
+                                    width: `${
+                                      (detail.count / totalCount) * 100
+                                    }%`,
                                   }}
                                 />
                               </div>
@@ -249,17 +275,26 @@ export const SessionDetailDrawer: React.FC<SessionDetailDrawerProps> = ({
                               <div className="bar-label">
                                 <span className="bar-icon">💰</span>
                                 <span className="bar-text">
-                                  {t("counter.sessionDetail.amountRatio", "金额占比")}
+                                  {t(
+                                    "counter.sessionDetail.amountRatio",
+                                    "金额占比"
+                                  )}
                                 </span>
                                 <span className="bar-percentage">
-                                  {((detail.amount / totalAmount) * 100).toFixed(1)}%
+                                  {(
+                                    (detail.amount / totalAmount) *
+                                    100
+                                  ).toFixed(1)}
+                                  %
                                 </span>
                               </div>
                               <div className="denomination-bar amount-bar">
                                 <div
                                   className="denomination-fill amount-fill"
                                   style={{
-                                    width: `${(detail.amount / totalAmount) * 100}%`,
+                                    width: `${
+                                      (detail.amount / totalAmount) * 100
+                                    }%`,
                                   }}
                                 />
                               </div>
@@ -268,7 +303,8 @@ export const SessionDetailDrawer: React.FC<SessionDetailDrawerProps> = ({
                         </div>
                       )}
                     </div>
-                  ))}                  {/* 总计行 */}
+                  ))}{" "}
+                  {/* 总计行 */}
                   <div className="denomination-item total compact">
                     <div className="denomination-main-info">
                       <div className="denomination-basic">
@@ -288,7 +324,6 @@ export const SessionDetailDrawer: React.FC<SessionDetailDrawerProps> = ({
               )}
             </div>
           </div>
-
           {/* 交易明细 */}
           <div className="detail-section">
             <h4 className="section-title">
@@ -306,7 +341,9 @@ export const SessionDetailDrawer: React.FC<SessionDetailDrawerProps> = ({
                   {t("counter.sessionDetail.noTransactionData")}
                 </div>
               ) : (
-                <div className="transaction-table">                  <div className="transaction-header">
+                <div className="transaction-table">
+                  {" "}
+                  <div className="transaction-header">
                     <div className="transaction-col-no">#</div>
                     <div className="transaction-col-serial">
                       {t("counter.sessionDetail.serialNumber")}
@@ -321,7 +358,9 @@ export const SessionDetailDrawer: React.FC<SessionDetailDrawerProps> = ({
                       {t("counter.sessionDetail.error")}
                     </div>
                   </div>{" "}
-                  <div className="transaction-body">                    {sessionData.details.map((detail) => (
+                  <div className="transaction-body">
+                    {" "}
+                    {sessionData.details.map((detail) => (
                       <div key={detail.id} className="transaction-row">
                         <div className="transaction-col-no">{detail.no}</div>
                         <div className="transaction-col-serial">
@@ -347,10 +386,13 @@ export const SessionDetailDrawer: React.FC<SessionDetailDrawerProps> = ({
 
         {/* 抽屉底部操作 */}
         <div className="drawer-footer">
-          <button className="action-btn secondary" onClick={onClose}>
+          <button className="action-btn secondary" onClick={() => onClose}>
             {t("common.close")}
           </button>
-          <button className="action-btn primary">
+          <button
+            className="action-btn primary"
+            onClick={() => onExport(sessionData)}
+          >
             {t("counter.sessionDetail.exportSession")}
           </button>
         </div>

@@ -1,3 +1,5 @@
+import protobuf from 'protobufjs/minimal';
+
 // SessionData 相关类型定义
 interface CounterData {
   id: number;
@@ -30,6 +32,39 @@ interface SessionData {
   errorCode?: string;
   denominationBreakdown: Map<number, DenominationDetail>;
   details?: CounterData[];
+}
+
+// Protobuf 数据格式接口
+interface ProtoSessionData {
+  id: number;
+  no: number;
+  timestamp: string;
+  start_time: string;
+  end_time: string;
+  machine_mode: string;
+  total_count: number;
+  total_amount: number;
+  error_count: number;
+  status: string;
+  error_code: string;
+  denomination_breakdown: DenominationBreakdownEntry[];
+  details: ProtoCounterData[];
+}
+
+interface DenominationBreakdownEntry {
+  key: number;
+  value: DenominationDetail;
+}
+
+interface ProtoCounterData {
+  id: number;
+  no: number;
+  timestamp: string;
+  currency_code: string;
+  denomination: number;
+  status: string;
+  error_code: string;
+  serial_number: string;
 }
 
 // 纯JavaScript实现的轻量级序列化器（避免CSP问题）
@@ -378,6 +413,8 @@ class BinaryReader {
 
 // 向后兼容的 ProtobufSerializationService
 export class ProtobufSerializationService {
+  private initialized = true;
+
   constructor() {
     console.log('Simple Protobuf serialization service initialized successfully (CSP-safe mode)');
   }
@@ -469,5 +506,3 @@ export class ProtobufSerializationService {
     return SimpleProtobufSerializer.compareWithJSON(sessionData);
   }
 }
-
-export type { SessionData, CounterData, DenominationDetail };

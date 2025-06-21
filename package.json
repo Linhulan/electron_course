@@ -23,11 +23,13 @@
   },
   "dependencies": {
     "@serialport/parser-readline": "^13.0.0",
+    "@types/protobufjs": "^6.0.0",
     "i18next": "^25.2.1",
     "i18next-browser-languagedetector": "^8.2.0",
     "iconv-lite": "^0.6.3",
     "os-utils": "^0.0.14",
     "playwright": "^1.51.1",
+    "protobufjs": "^7.5.3",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-i18next": "^15.5.3",
