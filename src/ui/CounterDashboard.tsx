@@ -12,6 +12,7 @@ import {
 } from "./protocols";
 import { initializeProtocols } from "./protocols/init";
 import { SessionDetailDrawer } from "./components/SessionDetailDrawer";
+import ExportPanel from "./components/ExportPanel";
 
 interface CounterData {
   id: number;
@@ -241,14 +242,17 @@ export const CounterDashboard: React.FC<CounterDashboardProps> = ({
     totalNotes: 0,
     averageSpeed: 0,
     errorPcs: 0,
-  });
-  const [isConnected, setIsConnected] = useState(false);  const [selectedTimeRange, setSelectedTimeRange] = useState<
+  });  const [isConnected, setIsConnected] = useState(false);
+  const [isSimulationMode, setIsSimulationMode] = useState(false);
+  const [simulationInterval, setSimulationInterval] = useState<number | null>(null);
+  const [simulationSession, setSimulationSession] = useState<SessionData | null>(null);const [selectedTimeRange, setSelectedTimeRange] = useState<
     "1h" | "24h" | "7d" | "30d"
   >("24h");
 
   // 抽屉相关状态
   const [selectedSessionId, setSelectedSessionId] = useState<number | null>(null);
   const [isDetailDrawerOpen, setIsDetailDrawerOpen] = useState(false);
+  const [isExportPanelOpen, setIsExportPanelOpen] = useState(false);
 
   const dataDisplayRef = useRef<HTMLDivElement>(null);// 监听真实的串口连接状态
   useEffect(() => {
@@ -389,32 +393,236 @@ export const CounterDashboard: React.FC<CounterDashboardProps> = ({
     setIsDetailDrawerOpen(false);
     setSelectedSessionId(null);
   };
+  const handleExportPanelOpen = () => {
+    setIsExportPanelOpen(true);
+  };
 
+  const handleExportPanelClose = () => {
+    setIsExportPanelOpen(false);
+  };
+  const handleExportComplete = (result: any) => {
+    console.log('Export completed in dashboard:', result);
+    // 可以在这里添加导出完成后的处理逻辑
+    // 比如显示成功消息、更新状态等
+  };
+
+  // 仿真数据生成器
+  const generateSimulationData = (): CountingProtocolData => {
+    const denominations = [1, 5, 10, 20, 50, 100];
+    const randomDenomination = denominations[Math.floor(Math.random() * denominations.length)];
+    
+    // 随机生成一些错误
+    const hasError = Math.random() < 0.05; // 5% 错误率
+      return {
+      timestamp: new Date().toLocaleString(),
+      protocolType: "counting",
+      rawData: "simulation_data",
+      status: 0x02, // 刷新中状态
+      totalCount: (simulationSession?.totalCount || 0) + 1,
+      totalAmount: (simulationSession?.totalAmount || 0) + randomDenomination,
+      denomination: randomDenomination,
+      currencyCode: "CNY",
+      errorCode: hasError ? Math.floor(Math.random() * 10) + 1 : 0,      serialNumber: `SIM${Date.now().toString().slice(-6)}`,
+      reserved1: [0, 0, 0, 0],
+      reserved2: 0
+    };
+  };
+
+  // 开始仿真模式
+  const startSimulation = () => {
+    if (isSimulationMode) return;
+    
+    console.log("🎮 Starting simulation mode...");
+    setIsSimulationMode(true);
+    
+    // 创建新的仿真会话
+    const newSession: SessionData = {
+      id: generateSnowflakeId(),
+      no: (currentSession ? currentSession.no + 1 : 1) || 1,
+      timestamp: new Date().toLocaleTimeString(),
+      startTime: new Date().toLocaleString(),
+      totalCount: 0,
+      totalAmount: 0,
+      errorCount: 0,
+      status: "counting",
+      denominationBreakdown: new Map(),
+      details: []
+    };
+    
+    setCurrentSession(newSession);
+    setSimulationSession(newSession);
+    
+    // 每500ms生成一个仿真数据
+    const interval = window.setInterval(() => {
+      const simulationData = generateSimulationData();
+      const updatedSession = handleSessionUpdate(
+        simulationData,
+        simulationSession,
+        setSimulationSession,
+        setSessionData
+      );
+      
+      setCurrentSession(updatedSession);
+      
+      // 更新面额统计
+      if (simulationData.denomination > 0) {
+        setDenominationStats((prev) =>
+          updateDenominationStats(prev, simulationData.denomination)
+        );
+      }
+      
+      console.log("Generated simulation data:", simulationData);
+    }, 500);
+    
+    setSimulationInterval(interval);
+  };
+
+  // 停止仿真模式
+  const stopSimulation = () => {
+    if (!isSimulationMode) return;
+    
+    console.log("🛑 Stopping simulation mode...");
+    setIsSimulationMode(false);
+    
+    if (simulationInterval) {
+      clearInterval(simulationInterval);
+      setSimulationInterval(null);
+    }
+    
+    // 完成当前仿真会话
+    if (simulationSession) {
+      const completedSession: SessionData = {
+        ...simulationSession,
+        status: "completed",
+        endTime: new Date().toLocaleString()
+      };
+      
+      setCurrentSession(completedSession);
+      setSessionData((prev) => [completedSession, ...prev].slice(0, 50));
+      setSimulationSession(null);
+    }
+  };
+
+  // 生成批量测试数据
+  const generateTestData = () => {
+    console.log("📊 Generating test data...");
+    
+    const testSessions: SessionData[] = [];
+    const now = new Date();
+    
+    // 生成5个测试会话
+    for (let i = 0; i < 5; i++) {
+      const sessionTime = new Date(now.getTime() - (i * 60 * 60 * 1000)); // 每小时一个会话
+      const denominationBreakdown = new Map<number, DenominationDetail>();
+      const details: CounterData[] = [];
+      
+      let totalCount = 0;
+      let totalAmount = 0;
+      let errorCount = 0;
+      
+      // 为每个会话生成随机数据
+      const noteCount = Math.floor(Math.random() * 100) + 20; // 20-120张
+      
+      for (let j = 0; j < noteCount; j++) {
+        const denominations = [1, 5, 10, 20, 50, 100];
+        const denomination = denominations[Math.floor(Math.random() * denominations.length)];
+        const hasError = Math.random() < 0.03; // 3% 错误率
+        
+        totalCount++;
+        totalAmount += denomination;
+        if (hasError) errorCount++;
+        
+        // 更新面额统计
+        const existing = denominationBreakdown.get(denomination);
+        if (existing) {
+          denominationBreakdown.set(denomination, {
+            denomination,
+            count: existing.count + 1,
+            amount: existing.amount + denomination
+          });
+        } else {
+          denominationBreakdown.set(denomination, {
+            denomination,
+            count: 1,
+            amount: denomination
+          });
+        }
+        
+        // 添加详细记录
+        details.push({
+          id: generateSnowflakeId(),
+          no: j + 1,
+          timestamp: new Date(sessionTime.getTime() + j * 1000).toLocaleTimeString(),
+          currencyCode: "CNY",
+          denomination,
+          status: hasError ? "error" : "completed",
+          errorCode: hasError ? `E${Math.floor(Math.random() * 10) + 1}` : undefined,
+          serialNumber: `TEST${Date.now().toString().slice(-6)}${j}`
+        });
+      }
+      
+      const testSession: SessionData = {
+        id: generateSnowflakeId(),
+        no: 1000 + i,
+        timestamp: sessionTime.toLocaleTimeString(),
+        startTime: sessionTime.toLocaleString(),
+        endTime: new Date(sessionTime.getTime() + 5 * 60 * 1000).toLocaleString(), // 5分钟后结束
+        machineMode: i % 2 === 0 ? "AUTO" : "MANUAL",
+        totalCount,
+        totalAmount,
+        errorCount,
+        status: "completed",
+        denominationBreakdown,
+        details
+      };
+      
+      testSessions.push(testSession);
+    }
+    
+    // 添加到会话数据中
+    setSessionData((prev) => [...testSessions, ...prev].slice(0, 50));
+    
+    // 更新面额统计（累计所有测试数据）
+    testSessions.forEach(session => {
+      session.denominationBreakdown.forEach((detail, denomination) => {
+        setDenominationStats((prev) => {
+          const newStats = new Map(prev);
+          const existing = newStats.get(denomination);
+          
+          if (existing) {
+            newStats.set(denomination, {
+              denomination,
+              count: existing.count + detail.count,
+              amount: existing.amount + detail.amount
+            });
+          } else {
+            newStats.set(denomination, detail);
+          }
+          
+          return newStats;
+        });
+      });
+    });
+    
+    console.log(`✅ Generated ${testSessions.length} test sessions with total data`);
+  };
   // 获取选中的Session数据
   const getSelectedSession = (): SessionData | null => {
     if (!selectedSessionId) return null;
     return sessionData.find(session => session.id === selectedSessionId) || null;
   };
-
-  const serializeSessionData = (session: SessionData[]): string => {
-    return JSON.stringify(
-      session.map((s) => ({
-        ...s,
-        denominationBreakdown: [...s.denominationBreakdown.entries()],
-      })) ,null, 2);
-  };
-
   const exportData = () => {
-    const dataStr = serializeSessionData(sessionData);
-    const dataBlob = new Blob([dataStr], { type: "application/json" });
-    const url = URL.createObjectURL(dataBlob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = `session-data-${
-      new Date().toISOString().split("T")[0]
-    }.json`;
-    link.click();
-    URL.revokeObjectURL(url);
+    console.log("Exporting session data...");
+    
+    // 检查是否有数据可以导出
+    if (sessionData.length === 0) {
+      console.warn("No session data to export");
+      // 可以在这里显示一个提示消息
+      return;
+    }
+    
+    // 打开导出面板
+    handleExportPanelOpen();
   };
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat("zh-CN", {
@@ -497,8 +705,7 @@ export const CounterDashboard: React.FC<CounterDashboardProps> = ({
               {isConnected ? t("counter.connected") : t("counter.disconnected")}
             </span>
           </div>
-        </div>
-        <div className="dashboard-controls">
+        </div>        <div className="dashboard-controls">
           <select
             value={selectedTimeRange}
             onChange={(e) =>
@@ -512,13 +719,54 @@ export const CounterDashboard: React.FC<CounterDashboardProps> = ({
             <option value="24h">{t("counter.last24Hours")}</option>
             <option value="7d">{t("counter.last7Days")}</option>
             <option value="30d">{t("counter.last30Days")}</option>
-          </select>
+          </select>          {/* 开发模式下显示仿真控制按钮 */}
+          {import.meta.env.DEV && (
+            <div className="simulation-controls">
+              {!isSimulationMode ? (
+                <>
+                  <button 
+                    onClick={startSimulation} 
+                    className="control-btn simulation-start"
+                    title="Start simulation mode"
+                  >
+                    🎮 Start Simulation
+                  </button>
+                  <button 
+                    onClick={generateTestData} 
+                    className="control-btn test-data"
+                    title="Generate batch test data"
+                  >
+                    📊 Generate Test Data
+                  </button>
+                </>
+              ) : (
+                <button 
+                  onClick={stopSimulation} 
+                  className="control-btn simulation-stop"
+                  title="Stop simulation mode"
+                >
+                  🛑 Stop Simulation
+                </button>
+              )}
+              {isSimulationMode && (
+                <div className="simulation-status">
+                  <span className="simulation-indicator">🎮</span>
+                  <span>Simulation Active</span>
+                </div>
+              )}
+            </div>
+          )}
 
           <button onClick={clearData} className="control-btn clear">
             {t("counter.clearData")}
           </button>
 
-          <button onClick={exportData} className="control-btn export">
+          <button 
+            onClick={exportData} 
+            className={`control-btn export ${sessionData.length === 0 ? 'disabled' : ''}`}
+            disabled={sessionData.length === 0}
+            title={sessionData.length === 0 ? t("counter.noDataToExport", "No data to export") : t("counter.exportData")}
+          >
             {t("counter.exportData")}
           </button>
         </div>
@@ -858,6 +1106,15 @@ export const CounterDashboard: React.FC<CounterDashboardProps> = ({
         sessionData={getSelectedSession()}
         onClose={handleCloseDrawer}
       />
+
+        {/* 导出面额统计面板 */}
+      <ExportPanel
+        isOpen={isExportPanelOpen}
+        sessionData={sessionData}
+        onExportComplete={handleExportComplete}
+        onClose={handleExportPanelClose}
+      />
+
     </div>
   );
 };

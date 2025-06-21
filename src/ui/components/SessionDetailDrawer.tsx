@@ -1,9 +1,9 @@
 import React, { useState } from "react";
 import { useTranslation } from "react-i18next";
 import "./SessionDetailDrawer.css";
-import { SerializationUsageExample } from "../utils/serializationExample";
-import { dataStorageService } from "../utils/storageService";
 import { debugLog } from "../protocols";
+import ExportPanel from "./ExportPanel";
+import { ConvertResult } from "../utils/convertFile";
 
 interface CounterData {
   id: number;
@@ -51,6 +51,7 @@ export const SessionDetailDrawer: React.FC<SessionDetailDrawerProps> = ({
 }) => {
   const { t } = useTranslation();
   const [showDetailedBreakdown, setShowDetailedBreakdown] = useState(false);
+  const [showExportPanel, setShowExportPanel] = useState(false);
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat("zh-CN", {
@@ -102,13 +103,19 @@ export const SessionDetailDrawer: React.FC<SessionDetailDrawerProps> = ({
       default:
         return "#6c757d";
     }
+  };  const onExport = async (_sessionData: SessionData) => {
+    // 显示导出面板
+    setShowExportPanel(true);
   };
 
-  const onExport = async (sessionData: SessionData) => {
-    // SerializationUsageExample.runAllExamples();
-    dataStorageService.saveSessionData("TEST", sessionData);
-    let s = await dataStorageService.loadSessionData("TEST");
-    debugLog("Storage Stats:", s);
+  const handleExportComplete = (result: ConvertResult) => {
+    debugLog("Export completed:", result);
+    // 可以在这里添加成功/失败的提示
+    if (result.success) {
+      console.log(`✅ 导出成功: ${result.filePath}`);
+    } else {
+      console.error(`❌ 导出失败: ${result.error}`);
+    }
   };
 
   if (!isOpen || !sessionData) {
@@ -382,9 +389,7 @@ export const SessionDetailDrawer: React.FC<SessionDetailDrawerProps> = ({
               )}
             </div>
           </div>
-        </div>
-
-        {/* 抽屉底部操作 */}
+        </div>        {/* 抽屉底部操作 */}
         <div className="drawer-footer">
           <button className="action-btn secondary" onClick={() => onClose}>
             {t("common.close")}
@@ -397,6 +402,16 @@ export const SessionDetailDrawer: React.FC<SessionDetailDrawerProps> = ({
           </button>
         </div>
       </div>
+
+      {/* 导出面板 */}
+      {showExportPanel && (
+        <ExportPanel
+          isOpen={showExportPanel}
+          sessionData={sessionData ? [sessionData] : []}
+          onExportComplete={handleExportComplete}
+          onClose={() => setShowExportPanel(false)}
+        />
+      )}
     </>
   );
 };
