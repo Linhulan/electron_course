@@ -2,7 +2,6 @@ import {
   ProtocolParser, 
   CDMCommandCode,
   BaseProtocolData,
-  CDMCountResultData,
   CountingProtocolData
 } from './types';
 import { 
@@ -40,19 +39,12 @@ export class CDMProtocolParser implements ProtocolParser<BaseProtocolData> {
     }
     
     return true;
-  }
-  
-  parse(hexData: string, isCompletePacket?: boolean): BaseProtocolData | null {
+  }  parse(hexData: string): BaseProtocolData | null {
     try {
       // console.log(`[${this.getProtocolName()}] Parsing data: ${hexData}`);
       const cleanHex = cleanHexString(hexData);
       
-      // 如果不是完整包且数据较短，可能是分包，不进行解析
-      if (!isCompletePacket && cleanHex.length < CDMProtocolParser.MIN_PACKET_LENGTH) {
-        console.log(`[${this.getProtocolName()}] Incomplete packet detected, waiting for more data`);
-        return null;
-      }
-      
+      // 检查是否能处理该协议
       if (!this.canHandle(cleanHex)) {
         console.warn(`[${this.getProtocolName()}] Cannot handle this protocol data`);
         return null;

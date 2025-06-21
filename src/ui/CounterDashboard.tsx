@@ -274,11 +274,9 @@ export const CounterDashboard: React.FC<CounterDashboardProps> = ({
       (data) => {
         // 只处理十六进制数据
         if (data.hexData && isConnected) {
-          try {
-            // 使用协议管理器解析数据
+          try {            // 使用协议管理器解析数据
             const protocolData = protocolManager.parseData(
-              data.hexData,
-              data.isCompletePacket
+              data.hexData
             ) as CountingProtocolData;
 
             if (protocolData) {
@@ -303,9 +301,7 @@ export const CounterDashboard: React.FC<CounterDashboardProps> = ({
               }
 
               console.log(
-                "Updated session from",
-                data.isCompletePacket ? "complete packet" : "raw data",
-                ":",
+                "Updated session from hex data:",
                 updatedSession
               );
             }

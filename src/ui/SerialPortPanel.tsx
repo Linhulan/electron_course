@@ -16,7 +16,7 @@ export const SerialPortPanel: React.FC<SerialPortPanelProps> = ({ className }) =
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string>('');const [isHexMode, setIsHexMode] = useState<boolean>(false);
   const [showTimestamp, setShowTimestamp] = useState<boolean>(true);
-  const [isHexSendMode, setIsHexSendMode] = useState<boolean>(false); // 发送模式：false=文本，true=十六进制
+  const [isHexSendMode, setIsHexSendMode] = useState<boolean>(true); // 发送模式：false=文本，true=十六进制
   const [config, setConfig] = useState<SerialPortConfig>({
     baudRate: 115200,
     dataBits: 8,
@@ -105,14 +105,9 @@ export const SerialPortPanel: React.FC<SerialPortPanelProps> = ({ className }) =
     });    
     const unsubscribeDataReceived = window.electron.onSerialDataReceived((data) => {
       // 根据时间戳开关决定显示格式
-      let displayText = showTimestamp 
-        ? (isHexMode ? `${data.timestamp}:${data.hexData}` : `${data.timestamp}:${data.data}`)
-        : (isHexMode ? data.hexData : data.data);
-      
-      // 如果是完整的协议包，添加标识
-      if (data.isCompletePacket) {
-        displayText += ' [完整协议包]';
-      }
+      const displayText = showTimestamp 
+        ? (isHexMode ? `${data.timestamp}:${data.hexData}` : `${data.timestamp}:${data.textData}`)
+        : (isHexMode ? data.hexData : data.textData);
       
       // 使用从后端传来的messageType
       addToDataDisplay(displayText, data.messageType as 'system' | 'sent' | 'received' | 'error' | 'warning' | 'success' | 'info' | 'normal', true);

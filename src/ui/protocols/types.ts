@@ -5,10 +5,9 @@ export interface ProtocolParser<T> {
   /**
    * 解析协议数据
    * @param hexData 十六进制数据字符串
-   * @param isCompletePacket 是否为完整包
    * @returns 解析后的数据或null
    */
-  parse(hexData: string, isCompletePacket?: boolean): T | null;
+  parse(hexData: string): T | null;
   
   /**
    * 获取协议名称
@@ -32,7 +31,7 @@ export interface ProtocolManager {
   /**
    * 解析数据
    */
-  parseData(hexData: string, isCompletePacket?: boolean): BaseProtocolData | null;
+  parseData(hexData: string): BaseProtocolData | null;
   
   /**
    * 获取支持的协议列表

@@ -46,16 +46,9 @@ export class CountingMachineParser implements ProtocolParser<CountingProtocolDat
     
     return false;
   }
-  
-  parse(hexData: string, isCompletePacket?: boolean): CountingProtocolData | null {
+    parse(hexData: string): CountingProtocolData | null {
     try {
       const cleanHex = cleanHexString(hexData);
-      
-      // 如果不是完整包且数据较短，可能是分包，不进行解析
-      if (!isCompletePacket && cleanHex.length < CountingMachineParser.MIN_PACKET_LENGTH) {
-        console.log(`[${this.getProtocolName()}] Incomplete packet detected, waiting for more data`);
-        return null;
-      }
       
       // 检查是否能处理该协议
       if (!this.canHandle(cleanHex)) {

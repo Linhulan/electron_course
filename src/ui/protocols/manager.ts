@@ -21,11 +21,10 @@ export class ProtocolManagerImpl implements ProtocolManager {
     this.parsers.set(protocolName, parser as ProtocolParser<BaseProtocolData>);
     console.log(`Protocol parser registered: ${protocolName}`);
   }
-  
-  /**
+    /**
    * 解析数据 - 自动选择合适的解析器
    */
-  parseData(hexData: string, isCompletePacket?: boolean): BaseProtocolData | null {
+  parseData(hexData: string): BaseProtocolData | null {
     const cleanHex = cleanHexString(hexData);
     
     if (!cleanHex) {
@@ -38,7 +37,7 @@ export class ProtocolManagerImpl implements ProtocolManager {
       if (parser.canHandle(cleanHex)) {
         console.log(`Using parser: ${protocolName} for data: ${cleanHex.substring(0, 20)}...`);
         try {
-          const result = parser.parse(cleanHex, isCompletePacket);
+          const result = parser.parse(cleanHex);
           if (result) {
             return result;
           }

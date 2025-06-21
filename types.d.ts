@@ -25,12 +25,10 @@ type SerialPortConnectionData = {
 };
 
 type SerialDataReceived = {
-  data: string;
-  hexData: string;
-  rawBuffer: number[];
+  hexData: string; // hex模式下的十六进制数据
+  textData: string; // 行模式下的文本数据
   timestamp: string;
-  messageType: 'normal' | 'warning' | 'error' | 'success' | 'info';
-  isCompletePacket?: boolean; // 标识是否为完整的协议包
+  messageType?: 'normal' | 'warning' | 'error' | 'success' | 'info'; // 行模式下可能包含消息类型
 };
 
 type SerialError = {
