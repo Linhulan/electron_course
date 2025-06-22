@@ -1,6 +1,7 @@
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { SessionData } from './serialization';
+import { formatCurrency, formatDenomination } from '../common';
 
 // Export format types
 export type ExportFormat = 'excel' | 'pdf';
@@ -211,7 +212,7 @@ async function createDenominationSheet(workbook: any, sessionDataList: SessionDa
 
   denominationStats.forEach(stat => {
     worksheet.addRow({
-      denomination: `¥${stat.denomination}`,
+      denomination: formatDenomination(stat.denomination),
       count: stat.count,
       amount: stat.amount.toFixed(2),
       percentage: `${stat.percentage.toFixed(2)}%`
@@ -285,7 +286,7 @@ async function exportToPDF(
     body: [
       ['Total Sessions', totalSessions, ''],
       ['Total Notes', totalCount, 'notes'],
-      ['Total Amount', totalAmount.toLocaleString(undefined, {minimumFractionDigits: 2}), 'CNY'],
+      ['Total Amount', formatCurrency(totalAmount), ''],
       ['Completed Sessions', completedSessions, ''],
       ['Error Sessions', errorSessions, ''],
       ['Success Rate', ((completedSessions / totalSessions) * 100).toFixed(2), '%'],
@@ -309,11 +310,10 @@ async function exportToPDF(
 
   autoTable(pdf, {
     startY: currentY + 5,
-    head: [['Denomination', 'Count', 'Amount', 'Percentage']],
-    body: denominationStats.map(stat => [
-      `¥${stat.denomination}`,
+    head: [['Denomination', 'Count', 'Amount', 'Percentage']],    body: denominationStats.map(stat => [
+      formatDenomination(stat.denomination),
       stat.count,
-      stat.amount.toLocaleString(undefined, {minimumFractionDigits: 2}),
+      formatCurrency(stat.amount),
       `${stat.percentage.toFixed(2)}%`
     ]),
     theme: 'striped',
@@ -343,7 +343,7 @@ async function exportToPDF(
         session.no,
         new Date(session.startTime).toLocaleString(),
         session.totalCount,
-        session.totalAmount.toLocaleString(undefined, {minimumFractionDigits: 2}),
+        formatCurrency(session.totalAmount),
         session.errorCount || 0,
         duration > 0 ? `${duration} min` : '-'
       ];
@@ -374,7 +374,7 @@ async function exportToPDF(
     pdf.setFontSize(10);
     pdf.setTextColor(60, 60, 60);
     pdf.text(
-      `Start: ${session.startTime}   |   Notes: ${session.totalCount}   |   Amount: ¥${session.totalAmount.toLocaleString(undefined, {minimumFractionDigits: 2})}   ${session.errorCount ? `|   Errors: ${session.errorCount}` : ''}`,
+      `Start: ${session.startTime}   |   Notes: ${session.totalCount}   |   Amount: ${formatCurrency(session.totalAmount)}   ${session.errorCount ? `|   Errors: ${session.errorCount}` : ''}`,
       12,
       currentY + 7
     );
@@ -386,7 +386,7 @@ async function exportToPDF(
       body: (session.details ?? []).map(detail => [
         detail.no,
         detail.timestamp,
-        `¥${detail.denomination}`,
+        formatDenomination(detail.denomination),
         detail.currencyCode,
         detail.serialNumber || '-',
         detail.errorCode && detail.errorCode !== 'E0' ? detail.errorCode : '-',
@@ -420,7 +420,7 @@ async function exportToPDF(
     const okCount = session.details!.filter(d => d.status !== 'error' && (!d.errorCode || d.errorCode === 'E0')).length;
     const errCount = session.details!.filter(d => d.status === 'error' || (d.errorCode && d.errorCode !== 'E0')).length;
     const breakdown = Array.from(session.denominationBreakdown.entries())
-      .map(([denom, detail]) => `¥${denom}×${detail.count}`).join(', ');
+      .map(([denom, detail]) => `${formatDenomination(denom)}×${detail.count}`).join(', ');
     pdf.setFontSize(9);
     pdf.setTextColor(110, 110, 110);
     pdf.text(
@@ -594,7 +594,7 @@ async function createBanknoteDetailsSheet(workbook: any, sessionDataList: Sessio
           sessionId: session.id,
           noteNo: detail.no,
           timestamp: detail.timestamp,
-          denomination: `¥${detail.denomination}`,
+          denomination: formatDenomination(detail.denomination),
           currencyCode: detail.currencyCode || 'CNY',
           serialNumber: detail.serialNumber || '-',
           errorCode: detail.errorCode && detail.errorCode !== 'E0' ? detail.errorCode : '-',

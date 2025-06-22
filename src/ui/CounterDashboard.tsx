@@ -13,6 +13,7 @@ import {
 import { initializeProtocols } from "./protocols/init";
 import { SessionDetailDrawer } from "./components/SessionDetailDrawer";
 import ExportPanel from "./components/ExportPanel";
+import { formatCurrency, formatDenomination } from "./common";
 
 interface CounterData {
   id: number;
@@ -624,12 +625,6 @@ export const CounterDashboard: React.FC<CounterDashboardProps> = ({
     // 打开导出面板
     handleExportPanelOpen();
   };
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat("zh-CN", {
-      style: "currency",
-      currency: "CNY",
-    }).format(amount);
-  };
 
   // 根据金额大小动态调整字体大小
   const getAmountFontSize = (amount: number) => {
@@ -936,10 +931,9 @@ export const CounterDashboard: React.FC<CounterDashboardProps> = ({
                     {Array.from(denominationStats.values())
                       .sort((a, b) => b.denomination - a.denomination) // 按面额从大到小排序
                       .map((detail) => (
-                        <div key={detail.denomination} className="details-row">
-                          <div className="col-denom">
+                        <div key={detail.denomination} className="details-row">                          <div className="col-denom">
                             <span className="denom-value">
-                              ¥{detail.denomination}
+                              {formatDenomination(detail.denomination)}
                             </span>
                           </div>{" "}
                           <div className="col-pcs">

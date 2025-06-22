@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import "./SessionDetailDrawer.css";
 import { debugLog } from "../protocols";
 import ExportPanel from "./ExportPanel";
+import { formatCurrency, formatDenomination } from "../common";
 
 interface CounterData {
   id: number;
@@ -51,13 +52,6 @@ export const SessionDetailDrawer: React.FC<SessionDetailDrawerProps> = ({
   const { t } = useTranslation();
   const [showDetailedBreakdown, setShowDetailedBreakdown] = useState(false);
   const [showExportPanel, setShowExportPanel] = useState(false);
-
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat("zh-CN", {
-      style: "currency",
-      currency: "CNY",
-    }).format(amount);
-  };
 
   const getStatusIcon = (status: string) => {
     switch (status) {
@@ -231,9 +225,8 @@ export const SessionDetailDrawer: React.FC<SessionDetailDrawerProps> = ({
                       {" "}
                       {/* 紧凑的主要信息行 */}
                       <div className="denomination-main-info">
-                        <div className="denomination-basic">
-                          <span className="denomination-value">
-                            ¥{detail.denomination}
+                        <div className="denomination-basic">                          <span className="denomination-value">
+                            {formatDenomination(detail.denomination)}
                           </span>
                           <span className="denomination-count">
                             {detail.count} {t("counter.detailTable.pcs")}
@@ -371,9 +364,8 @@ export const SessionDetailDrawer: React.FC<SessionDetailDrawerProps> = ({
                         <div className="transaction-col-no">{detail.no}</div>
                         <div className="transaction-col-serial">
                           {detail.serialNumber || "-"}
-                        </div>
-                        <div className="transaction-col-denomination">
-                          ¥{detail.denomination}
+                        </div>                        <div className="transaction-col-denomination">
+                          {formatDenomination(detail.denomination)}
                         </div>
                         <div className="transaction-col-currency">
                           {detail.currencyCode}

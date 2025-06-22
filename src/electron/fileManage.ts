@@ -3,6 +3,8 @@ import * as fs from 'fs/promises';
 import * as path from 'path';
 import jsPDF from 'jspdf';
 import ExcelJS from 'exceljs';
+import { formatCurrency, formatDenomination } from './utils.js';
+
 
 declare module 'jspdf' {
   interface jsPDF {
@@ -24,6 +26,7 @@ interface SessionData {
   totalAmount: number;
   errorCount: number;
   machineMode?: string;
+  currencyCode?: string;
   denominationBreakdown: Map<number, { count: number; amount: number }>;
   details?: Array<{
     no: number;
@@ -366,8 +369,10 @@ export class FileManager {
     // 创建各个工作表
     await this.createBanknoteDetailsSheet(workbook, sessionDataList);
     await this.createDenominationSheet(workbook, sessionDataList);
-    await this.createSummarySheet(workbook, sessionDataList);
-    await this.createDetailSheet(workbook, sessionDataList);
+    if (sessionDataList.length > 1) {
+      await this.createSummarySheet(workbook, sessionDataList);
+      await this.createDetailSheet(workbook, sessionDataList);
+    }
 
     return await workbook.xlsx.writeBuffer() as unknown as Buffer;
   }
@@ -426,11 +431,11 @@ export class FileManager {
       body: [
         ['Total Sessions', totalSessions, ''],
         ['Total Notes', totalCount, 'notes'],
-        ['Total Amount', totalAmount.toLocaleString(undefined, { minimumFractionDigits: 2 }), 'CNY'],
+        ['Total Amount', formatCurrency(totalAmount), ''],
         ['Completed Sessions', completedSessions, ''],
         ['Error Sessions', errorSessions, ''],
         ['Success Rate', ((completedSessions / totalSessions) * 100).toFixed(2), '%'],
-        ['Avg. Session Amount', (totalAmount / totalSessions).toFixed(2), 'CNY'],
+        ['Avg. Session Amount', formatCurrency(totalAmount / totalSessions), ''],
       ],
       margin: { left: 15, right: 15 },
       theme: 'grid',
@@ -450,11 +455,11 @@ export class FileManager {
 
     pdf.autoTable({
       startY: currentY + 5,
-      head: [['Denomination', 'Count', 'Amount', 'Percentage']],
+      head: [['Denomination', 'Count', 'Amount', 'Percentage']],      
       body: denominationStats.map(stat => [
-        `¥${stat.denomination}`,
+        formatDenomination(stat.denomination),
         stat.count,
-        stat.amount.toLocaleString(undefined, { minimumFractionDigits: 2 }),
+        formatCurrency(stat.amount),
         `${stat.percentage.toFixed(2)}%`
       ]),
       theme: 'striped',
@@ -483,7 +488,7 @@ export class FileManager {
           session.no,
           new Date(session.startTime).toLocaleString(),
           session.totalCount,
-          session.totalAmount.toLocaleString(undefined, { minimumFractionDigits: 2 }),
+          formatCurrency(session.totalAmount),
           session.errorCount || 0,
           duration > 0 ? `${duration} min` : '-'
         ];
@@ -513,7 +518,7 @@ export class FileManager {
       pdf.setFontSize(10);
       pdf.setTextColor(60, 60, 60);
       pdf.text(
-        `Start: ${session.startTime}   |   Notes: ${session.totalCount}   |   Amount: ¥${session.totalAmount.toLocaleString(undefined, { minimumFractionDigits: 2 })}   ${session.errorCount ? `|   Errors: ${session.errorCount}` : ''}`,
+        `Start: ${session.startTime}   |   Notes: ${session.totalCount}   |   Amount: ${formatCurrency(session.totalAmount)}   ${session.errorCount ? `|   Errors: ${session.errorCount}` : ''}`,
         12,
         currentY + 7
       );
@@ -522,11 +527,10 @@ export class FileManager {
       if (session.details && session.details.length > 0) {
         pdf.autoTable({
           startY: currentY,
-          head: [['No.', 'Timestamp', 'Denomination', 'Currency', 'Serial No.', 'Error Code', 'Status']],
-          body: session.details.map(detail => [
+          head: [['No.', 'Timestamp', 'Denomination', 'Currency', 'Serial No.', 'Error Code', 'Status']],          body: session.details.map(detail => [
             detail.no,
             detail.timestamp,
-            `¥${detail.denomination}`,
+            formatDenomination(detail.denomination),
             detail.currencyCode || 'CNY',
             detail.serialNumber || '-',
             detail.errorCode && detail.errorCode !== 'E0' ? detail.errorCode : '-',
@@ -558,9 +562,8 @@ export class FileManager {
 
       // Session stats row
       const okCount = session.details!.filter(d => d.status !== 'error' && (!d.errorCode || d.errorCode === 'E0')).length;
-      const errCount = session.details!.filter(d => d.status === 'error' || (d.errorCode && d.errorCode !== 'E0')).length;
-      const breakdown = Array.from(session.denominationBreakdown.entries())
-        .map(([denom, detail]) => `¥${denom}×${detail.count}`).join(', ');
+      const errCount = session.details!.filter(d => d.status === 'error' || (d.errorCode && d.errorCode !== 'E0')).length;      const breakdown = Array.from(session.denominationBreakdown.entries())
+        .map(([denom, detail]) => `${formatDenomination(denom)}×${detail.count}`).join(', ');
       pdf.setFontSize(9);
       pdf.setTextColor(110, 110, 110);
       pdf.text(
@@ -745,11 +748,9 @@ export class FileManager {
       { header: 'Count', key: 'count', width: 12 },
       { header: 'Amount', key: 'amount', width: 12 },
       { header: 'Percentage', key: 'percentage', width: 10 },
-    ];
-
-    denominationStats.forEach(stat => {
+    ];    denominationStats.forEach(stat => {
       worksheet.addRow({
-        denomination: `¥${stat.denomination}`,
+        denomination: formatDenomination(stat.denomination),
         count: stat.count,
         amount: stat.amount.toFixed(2),
         percentage: `${stat.percentage.toFixed(2)}%`
@@ -786,7 +787,7 @@ export class FileManager {
             sessionNo: session.no,
             noteNo: detail.no,
             timestamp: detail.timestamp,
-            denomination: `¥${detail.denomination}`,
+            denomination: formatDenomination(detail.denomination),
             currencyCode: detail.currencyCode || 'CNY',
             serialNumber: detail.serialNumber || '-',
             errorCode: detail.errorCode && detail.errorCode !== 'E0' ? detail.errorCode : '-',
