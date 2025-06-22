@@ -1,7 +1,7 @@
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { SessionData } from './serialization';
-import { formatCurrency, formatDenomination } from '../common';
+import { formatCurrency, formatDenomination } from '../common/common';
 
 // Export format types
 export type ExportFormat = 'excel' | 'pdf';

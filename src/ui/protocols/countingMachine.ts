@@ -2,7 +2,7 @@ import {
   ProtocolParser, 
   CountingProtocolData, 
   ProtocolStatus 
-} from './types';
+} from '../common/types';
 import { 
   extractMultipleProtocols,
   hexStringToBytes,

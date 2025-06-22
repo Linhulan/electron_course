@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next";
 import "./SessionDetailDrawer.css";
 import { debugLog } from "../protocols";
 import ExportPanel from "./ExportPanel";
-import { formatCurrency, formatDenomination } from "../common";
+import { formatCurrency, formatDenomination } from "../common/common";
 
 interface CounterData {
   id: number;

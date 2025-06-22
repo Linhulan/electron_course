@@ -1,36 +1,4 @@
-// SessionData 相关类型定义
-interface CounterData {
-  id: number;
-  no: number;
-  timestamp: string;
-  currencyCode: string;
-  denomination: number;
-  status: "counting" | "completed" | "error" | "paused";
-  errorCode?: string;
-  serialNumber?: string;
-}
-
-interface DenominationDetail {
-  denomination: number;
-  count: number;
-  amount: number;
-}
-
-interface SessionData {
-  id: number;
-  no: number;
-  timestamp: string;
-  startTime: string;
-  endTime?: string;
-  machineMode?: string;
-  totalCount: number;
-  totalAmount: number;
-  errorCount: number;
-  status: "counting" | "completed" | "error" | "paused";
-  errorCode?: string;
-  denominationBreakdown: Map<number, DenominationDetail>;
-  details?: CounterData[];
-}
+import { SessionData, CounterData, DenominationDetail } from "../common/common";
 
 // 纯JavaScript实现的轻量级序列化器（避免CSP问题）
 export class SimpleProtobufSerializer {

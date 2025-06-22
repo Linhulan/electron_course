@@ -1,7 +1,7 @@
 // 协议解析模块统一导出
 
 // 类型定义
-export * from './types';
+export * from '../common/types';
 
 // 工具函数
 export * from './utils';

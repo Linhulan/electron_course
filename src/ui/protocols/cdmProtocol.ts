@@ -3,7 +3,7 @@ import {
   CDMCommandCode,
   BaseProtocolData,
   CountingProtocolData
-} from './types';
+} from '../common/types';
 import { 
   hexStringToBytes,
   validateProtocolHeader,

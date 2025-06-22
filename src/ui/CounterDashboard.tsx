@@ -13,49 +13,20 @@ import {
 import { initializeProtocols } from "./protocols/init";
 import { SessionDetailDrawer } from "./components/SessionDetailDrawer";
 import ExportPanel from "./components/ExportPanel";
-import { formatCurrency, formatDenomination } from "./common";
-
-interface CounterData {
-  id: number;
-  no: number; // 记录编号
-  timestamp: string;
-  currencyCode: string; // 货币代码 (例如: "CNY")
-  denomination: number; // 面额
-  status: "counting" | "completed" | "error" | "paused"; // 计数状态
-  errorCode?: string;
-  serialNumber?: string; // 纸币序列号
-}
-
-// Session数据结构 - 用于记录完整的点钞会话
-interface SessionData {
-  id: number;
-  no: number;
-  timestamp: string;
-  startTime: string;
-  endTime?: string;
-  machineMode?: string; // 机器模式 (如果有)
-  totalCount: number;
-  totalAmount: number;
-  errorCount: number; // 错误张数
-  status: "counting" | "completed" | "error" | "paused";
-  errorCode?: string;
-  denominationBreakdown: Map<number, DenominationDetail>; // 面额分布
-  details?: CounterData[]; // 每张点钞记录的详细信息
-}
-
-// 面额详细信息
-interface DenominationDetail {
-  denomination: number; // 面额 (例如: 1, 5, 10, 20, 50, 100)
-  count: number; // 张数
-  amount: number; // 小计金额
-}
+import { formatCurrency, formatDenomination } from "./common/common";
+import { SessionData, DenominationDetail, CounterData, CurrencyCountRecord } from "./common/types";
 
 interface CounterStats {
+  totalRecords?: CurrencyCountRecord;
   totalSessions: number;
-  totalAmount: number;
-  totalNotes: number;
-  averageSpeed: number;
-  errorPcs: number;
+  totalNotes?: number;
+  averageSpeed?: number;
+  errorPcs?: number;
+  
+  /**
+   * @deprecated 请使用 totalRecords 替代
+   */
+  totalAmount?: number;
 }
 
 interface CounterDashboardProps {
@@ -91,9 +62,9 @@ const handleSessionUpdate = (
       errorCode:
         protocolData.errorCode !== 0
           ? `E${protocolData.errorCode
-              .toString(16)
-              .padStart(3, "0")
-              .toUpperCase()}`
+            .toString(16)
+            .padStart(3, "0")
+            .toUpperCase()}`
           : undefined,
       denominationBreakdown: new Map(),
       details: [], // 初始化为空数组
@@ -121,9 +92,9 @@ const handleSessionUpdate = (
       errorCode:
         protocolData.errorCode !== 0
           ? `E${protocolData.errorCode
-              .toString(16)
-              .padStart(3, "0")
-              .toUpperCase()}`
+            .toString(16)
+            .padStart(3, "0")
+            .toUpperCase()}`
           : undefined,
       denominationBreakdown: new Map(),
     };
@@ -140,9 +111,9 @@ const handleSessionUpdate = (
     errorCode:
       protocolData.errorCode !== 0
         ? `E${protocolData.errorCode
-            .toString(16)
-            .padStart(3, "0")
-            .toUpperCase()}`
+          .toString(16)
+          .padStart(3, "0")
+          .toUpperCase()}`
         : undefined,
   };
 
@@ -157,13 +128,13 @@ const handleSessionUpdate = (
     }
 
     // 更新面额分布统计
-    updatedSession.denominationBreakdown.set(protocolData.denomination, {
+    updatedSession.denominationBreakdown.set(protocolData.currencyCode, {
       denomination: protocolData.denomination,
       count:
-        (updatedSession.denominationBreakdown.get(protocolData.denomination)
+        (updatedSession.denominationBreakdown.get(protocolData.currencyCode)
           ?.count || 0) + 1,
       amount:
-        (updatedSession.denominationBreakdown.get(protocolData.denomination)
+        (updatedSession.denominationBreakdown.get(protocolData.currencyCode)
           ?.amount || 0) + protocolData.denomination,
     });
 
@@ -235,7 +206,7 @@ export const CounterDashboard: React.FC<CounterDashboardProps> = ({
     null
   );
   const [denominationStats, setDenominationStats] = useState<
-    Map<number, DenominationDetail>
+    Map<string, DenominationDetail>
   >(() => new Map()); // 面额详细统计
   const [stats, setStats] = useState<CounterStats>({
     totalSessions: 0,
@@ -243,12 +214,12 @@ export const CounterDashboard: React.FC<CounterDashboardProps> = ({
     totalNotes: 0,
     averageSpeed: 0,
     errorPcs: 0,
-  });  const [isConnected, setIsConnected] = useState(false);
+  });
+  const [isConnected, setIsConnected] = useState(false);
   const [isSimulationMode, setIsSimulationMode] = useState(false);
   const [simulationInterval, setSimulationInterval] = useState<number | null>(null);
-  const [simulationSession, setSimulationSession] = useState<SessionData | null>(null);const [selectedTimeRange, setSelectedTimeRange] = useState<
-    "1h" | "24h" | "7d" | "30d"
-  >("24h");
+  const [simulationSession, setSimulationSession] = useState<SessionData | null>(null);
+  const [selectedTimeRange, setSelectedTimeRange] = useState<"1h" | "24h" | "7d" | "30d">("24h");
 
   // 抽屉相关状态
   const [selectedSessionId, setSelectedSessionId] = useState<number | null>(null);
@@ -411,10 +382,10 @@ export const CounterDashboard: React.FC<CounterDashboardProps> = ({
   const generateSimulationData = (): CountingProtocolData => {
     const denominations = [1, 5, 10, 20, 50, 100];
     const randomDenomination = denominations[Math.floor(Math.random() * denominations.length)];
-    
+
     // 随机生成一些错误
     const hasError = Math.random() < 0.05; // 5% 错误率
-      return {
+    return {
       timestamp: new Date().toLocaleString(),
       protocolType: "counting",
       rawData: "simulation_data",
@@ -423,7 +394,7 @@ export const CounterDashboard: React.FC<CounterDashboardProps> = ({
       totalAmount: (simulationSession?.totalAmount || 0) + randomDenomination,
       denomination: randomDenomination,
       currencyCode: "CNY",
-      errorCode: hasError ? Math.floor(Math.random() * 10) + 1 : 0,      serialNumber: `SIM${Date.now().toString().slice(-6)}`,
+      errorCode: hasError ? Math.floor(Math.random() * 10) + 1 : 0, serialNumber: `SIM${Date.now().toString().slice(-6)}`,
       reserved1: [0, 0, 0, 0],
       reserved2: 0
     };
@@ -432,10 +403,13 @@ export const CounterDashboard: React.FC<CounterDashboardProps> = ({
   // 开始仿真模式
   const startSimulation = () => {
     if (isSimulationMode) return;
-    
+
     console.log("🎮 Starting simulation mode...");
     setIsSimulationMode(true);
-    
+
+    const currencyCodes = ["CNY", "USD", "EUR", "JPY", "GBP", "AUD", "CAD", "CHF", "HKD", "SGD"];
+    let currencyCode = "CNY"; // 默认货币代码
+
     // 创建新的仿真会话
     const newSession: SessionData = {
       id: generateSnowflakeId(),
@@ -445,14 +419,15 @@ export const CounterDashboard: React.FC<CounterDashboardProps> = ({
       totalCount: 0,
       totalAmount: 0,
       errorCount: 0,
+      currencyCode: currencyCode,
       status: "counting",
       denominationBreakdown: new Map(),
       details: []
     };
-    
+
     setCurrentSession(newSession);
     setSimulationSession(newSession);
-    
+
     // 每500ms生成一个仿真数据
     const interval = window.setInterval(() => {
       const simulationData = generateSimulationData();
@@ -462,34 +437,34 @@ export const CounterDashboard: React.FC<CounterDashboardProps> = ({
         setSimulationSession,
         setSessionData
       );
-      
+
       setCurrentSession(updatedSession);
-      
+
       // 更新面额统计
       if (simulationData.denomination > 0) {
         setDenominationStats((prev) =>
           updateDenominationStats(prev, simulationData.denomination)
         );
       }
-      
+
       console.log("Generated simulation data:", simulationData);
     }, 500);
-    
+
     setSimulationInterval(interval);
   };
 
   // 停止仿真模式
   const stopSimulation = () => {
     if (!isSimulationMode) return;
-    
+
     console.log("🛑 Stopping simulation mode...");
     setIsSimulationMode(false);
-    
+
     if (simulationInterval) {
       clearInterval(simulationInterval);
       setSimulationInterval(null);
     }
-    
+
     // 完成当前仿真会话
     if (simulationSession) {
       const completedSession: SessionData = {
@@ -497,7 +472,7 @@ export const CounterDashboard: React.FC<CounterDashboardProps> = ({
         status: "completed",
         endTime: new Date().toLocaleString()
       };
-      
+
       setCurrentSession(completedSession);
       setSessionData((prev) => [completedSession, ...prev].slice(0, 50));
       setSimulationSession(null);
@@ -507,61 +482,66 @@ export const CounterDashboard: React.FC<CounterDashboardProps> = ({
   // 生成批量测试数据
   const generateTestData = () => {
     console.log("📊 Generating test data...");
-    
+
     const testSessions: SessionData[] = [];
     const now = new Date();
-    
+    const currencyCodes = ["CNY", "USD", "EUR", "JPY", "GBP", "AUD", "CAD", "CHF", "HKD", "SGD"];
+    let currencyCode = "CNY"; // 默认货币代码
+
     // 生成5个测试会话
     for (let i = 0; i < 5; i++) {
       const sessionTime = new Date(now.getTime() - (i * 60 * 60 * 1000)); // 每小时一个会话
-      const denominationBreakdown = new Map<number, DenominationDetail>();
+      const denominationBreakdown = new Map<string, DenominationDetail>();
       const details: CounterData[] = [];
-      
+
       let totalCount = 0;
       let totalAmount = 0;
       let errorCount = 0;
-      
+
       // 为每个会话生成随机数据
       const noteCount = Math.floor(Math.random() * 100) + 20; // 20-120张
-      
+      // 每个会话生成随机的货币代码
+
+      currencyCode = currencyCodes[Math.floor(Math.random() * currencyCodes.length)];
+
       for (let j = 0; j < noteCount; j++) {
         const denominations = [1, 5, 10, 20, 50, 100];
         const denomination = denominations[Math.floor(Math.random() * denominations.length)];
         const hasError = Math.random() < 0.03; // 3% 错误率
-        
+
         totalCount++;
         totalAmount += denomination;
         if (hasError) errorCount++;
-        
+
         // 更新面额统计
-        const existing = denominationBreakdown.get(denomination);
+        const existing = denominationBreakdown.get(currencyCode);
         if (existing) {
-          denominationBreakdown.set(denomination, {
+          denominationBreakdown.set(currencyCode, {
             denomination,
             count: existing.count + 1,
             amount: existing.amount + denomination
           });
         } else {
-          denominationBreakdown.set(denomination, {
+          denominationBreakdown.set(currencyCode, {
             denomination,
             count: 1,
             amount: denomination
           });
         }
-        
+
         // 添加详细记录
         details.push({
           id: generateSnowflakeId(),
           no: j + 1,
           timestamp: new Date(sessionTime.getTime() + j * 1000).toLocaleTimeString(),
-          currencyCode: "CNY",
+          currencyCode: currencyCode,
           denomination,
           status: hasError ? "error" : "completed",
           errorCode: hasError ? `E${Math.floor(Math.random() * 10) + 1}` : undefined,
           serialNumber: `TEST${Date.now().toString().slice(-6)}${j}`
         });
       }
-      
+
       const testSession: SessionData = {
         id: generateSnowflakeId(),
         no: 1000 + i,
@@ -576,35 +556,35 @@ export const CounterDashboard: React.FC<CounterDashboardProps> = ({
         denominationBreakdown,
         details
       };
-      
+
       testSessions.push(testSession);
     }
-    
+
     // 添加到会话数据中
     setSessionData((prev) => [...testSessions, ...prev].slice(0, 50));
-    
+
     // 更新面额统计（累计所有测试数据）
     testSessions.forEach(session => {
-      session.denominationBreakdown.forEach((detail, denomination) => {
+      session.denominationBreakdown.forEach((detail, currencyCode) => {
         setDenominationStats((prev) => {
           const newStats = new Map(prev);
-          const existing = newStats.get(denomination);
-          
+          const existing = newStats.get(currencyCode);
+
           if (existing) {
-            newStats.set(denomination, {
-              denomination,
+            newStats.set(currencyCode, {
+              denomination: existing.denomination,
               count: existing.count + detail.count,
               amount: existing.amount + detail.amount
             });
           } else {
-            newStats.set(denomination, detail);
+            newStats.set(currencyCode, detail);
           }
-          
+
           return newStats;
         });
       });
     });
-    
+
     console.log(`✅ Generated ${testSessions.length} test sessions with total data`);
   };
   // 获取选中的Session数据
@@ -614,14 +594,14 @@ export const CounterDashboard: React.FC<CounterDashboardProps> = ({
   };
   const exportData = () => {
     console.log("Exporting session data...");
-    
+
     // 检查是否有数据可以导出
     if (sessionData.length === 0) {
       console.warn("No session data to export");
       // 可以在这里显示一个提示消息
       return;
     }
-    
+
     // 打开导出面板
     handleExportPanelOpen();
   };
@@ -692,9 +672,8 @@ export const CounterDashboard: React.FC<CounterDashboardProps> = ({
           <h2>💰 {t("counter.title")}</h2>
           <div className="connection-status">
             <span
-              className={`status-indicator ${
-                isConnected ? "connected" : "disconnected"
-              }`}
+              className={`status-indicator ${isConnected ? "connected" : "disconnected"
+                }`}
             ></span>
             <span>
               {isConnected ? t("counter.connected") : t("counter.disconnected")}
@@ -719,15 +698,15 @@ export const CounterDashboard: React.FC<CounterDashboardProps> = ({
             <div className="simulation-controls">
               {!isSimulationMode ? (
                 <>
-                  <button 
-                    onClick={startSimulation} 
+                  <button
+                    onClick={startSimulation}
                     className="control-btn simulation-start"
                     title="Start simulation mode"
                   >
                     🎮 Start Simulation
                   </button>
-                  <button 
-                    onClick={generateTestData} 
+                  <button
+                    onClick={generateTestData}
                     className="control-btn test-data"
                     title="Generate batch test data"
                   >
@@ -735,8 +714,8 @@ export const CounterDashboard: React.FC<CounterDashboardProps> = ({
                   </button>
                 </>
               ) : (
-                <button 
-                  onClick={stopSimulation} 
+                <button
+                  onClick={stopSimulation}
                   className="control-btn simulation-stop"
                   title="Stop simulation mode"
                 >
@@ -756,8 +735,8 @@ export const CounterDashboard: React.FC<CounterDashboardProps> = ({
             {t("counter.clearData")}
           </button>
 
-          <button 
-            onClick={exportData} 
+          <button
+            onClick={exportData}
             className={`control-btn export ${sessionData.length === 0 ? 'disabled' : ''}`}
             disabled={sessionData.length === 0}
             title={sessionData.length === 0 ? t("counter.noDataToExport", "No data to export") : t("counter.exportData")}
@@ -932,10 +911,10 @@ export const CounterDashboard: React.FC<CounterDashboardProps> = ({
                       .sort((a, b) => b.denomination - a.denomination) // 按面额从大到小排序
                       .map((detail) => (
                         <div key={detail.denomination} className="details-row">                          <div className="col-denom">
-                            <span className="denom-value">
-                              {formatDenomination(detail.denomination)}
-                            </span>
-                          </div>{" "}
+                          <span className="denom-value">
+                            {formatDenomination(detail.denomination)}
+                          </span>
+                        </div>{" "}
                           <div className="col-pcs">
                             <span className="count-value">{detail.count}</span>
                             <span className="count-label">
@@ -1046,8 +1025,8 @@ export const CounterDashboard: React.FC<CounterDashboardProps> = ({
                         {t("counter.table.errorPcs")}
                       </div>
                     </div>                    {sessionData.map((item) => (
-                      <div 
-                        key={item.id} 
+                      <div
+                        key={item.id}
                         className="table-row clickable"
                         onClick={() => handleSessionClick(item.id)}
                         title={t("counter.clickToViewDetails", "Click to view details")}
@@ -1076,11 +1055,10 @@ export const CounterDashboard: React.FC<CounterDashboardProps> = ({
                         </div>
                         <div className="col-error">
                           <div
-                            className={`error-value ${
-                              (item.errorCount || 0) > 0
+                            className={`error-value ${(item.errorCount || 0) > 0
                                 ? "has-error"
                                 : "no-error"
-                            }`}
+                              }`}
                           >
                             {item.errorCount || 0}
                           </div>
@@ -1101,7 +1079,7 @@ export const CounterDashboard: React.FC<CounterDashboardProps> = ({
         onClose={handleCloseDrawer}
       />
 
-        {/* 导出面额统计面板 */}
+      {/* 导出面额统计面板 */}
       <ExportPanel
         isOpen={isExportPanelOpen}
         sessionData={sessionData}

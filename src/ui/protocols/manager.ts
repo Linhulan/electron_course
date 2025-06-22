@@ -2,7 +2,7 @@ import {
   ProtocolManager, 
   ProtocolParser, 
   BaseProtocolData 
-} from './types';
+} from '../common/types';
 import { cleanHexString } from './utils';
 
 /**
