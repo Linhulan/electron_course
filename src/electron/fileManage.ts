@@ -2,6 +2,7 @@ import { app, dialog, shell } from 'electron';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import jsPDF from 'jspdf';
+import ExcelJS from 'exceljs';
 
 declare module 'jspdf' {
   interface jsPDF {
@@ -353,7 +354,7 @@ export class FileManager {
    * 生成 Excel buffer - 集成完整的导出逻辑
    */
   private async generateExcelBuffer(sessionDataList: SessionData[]): Promise<Buffer> {
-    const ExcelJS = await import('exceljs');
+    // const ExcelJS = await import('exceljs');
     const workbook = new ExcelJS.Workbook();
 
     // 设置工作簿属性
@@ -363,10 +364,10 @@ export class FileManager {
     workbook.modified = new Date();
 
     // 创建各个工作表
+    await this.createBanknoteDetailsSheet(workbook, sessionDataList);
+    await this.createDenominationSheet(workbook, sessionDataList);
     await this.createSummarySheet(workbook, sessionDataList);
     await this.createDetailSheet(workbook, sessionDataList);
-    await this.createDenominationSheet(workbook, sessionDataList);
-    await this.createBanknoteDetailsSheet(workbook, sessionDataList);
 
     return await workbook.xlsx.writeBuffer() as unknown as Buffer;
   }
@@ -767,7 +768,6 @@ export class FileManager {
 
     worksheet.columns = [
       { header: 'Session No.', key: 'sessionNo', width: 12 },
-      { header: 'Session ID', key: 'sessionId', width: 10 },
       { header: 'Note No.', key: 'noteNo', width: 8 },
       { header: 'Timestamp', key: 'timestamp', width: 20 },
       { header: 'Denomination', key: 'denomination', width: 12 },
@@ -775,7 +775,6 @@ export class FileManager {
       { header: 'Serial Number', key: 'serialNumber', width: 20 },
       { header: 'Error Code', key: 'errorCode', width: 10 },
       { header: 'Status', key: 'status', width: 10 },
-      { header: 'Session Start Time', key: 'sessionStartTime', width: 20 },
     ];
 
     const allBanknoteDetails: any[] = [];
@@ -785,7 +784,6 @@ export class FileManager {
         session.details.forEach(detail => {
           allBanknoteDetails.push({
             sessionNo: session.no,
-            sessionId: session.id,
             noteNo: detail.no,
             timestamp: detail.timestamp,
             denomination: `¥${detail.denomination}`,
@@ -793,7 +791,6 @@ export class FileManager {
             serialNumber: detail.serialNumber || '-',
             errorCode: detail.errorCode && detail.errorCode !== 'E0' ? detail.errorCode : '-',
             status: (detail.status === 'error' || (detail.errorCode && detail.errorCode !== 'E0')) ? 'Error' : 'OK',
-            sessionStartTime: session.startTime
           });
         });
       }
@@ -801,10 +798,30 @@ export class FileManager {
 
     worksheet.addRows(allBanknoteDetails);
 
-    // 设置标题行样式
-    worksheet.getRow(1).font = { bold: true };
-    worksheet.getRow(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF4A90E2' } };
-    worksheet.getRow(1).font = { ...worksheet.getRow(1).font, color: { argb: 'FFFFFFFF' } };
+    // 自动调整列宽
+    worksheet.columns.forEach((column: any) => {
+      const maxLength = column.values.reduce((max: number, value: any) => {
+        return Math.max(max, String(value).length);
+      }, 0);
+      column.width = maxLength + 2; // 加一些额外的空间
+    });
+
+    // 都设置为左对齐，垂直居中
+    // worksheet.properties.defaultRowHeight = 20;
+    worksheet.eachRow((row: any) => {
+      // row.height = 20; // 设置行高
+      row.alignment = { vertical: 'middle', horizontal: 'left' }; // 垂直居中，水平左对齐
+    });
+
+    // 标题行样式到status列后结束
+    worksheet.getRow(1).eachCell((cell: any, colNumber: number) => {
+      if (colNumber <= 8) {
+        cell.alignment = { vertical: 'middle', horizontal: 'left' };
+        cell.font = { bold: true };
+        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF4A90E2' } };
+        cell.font = { ...cell.font, color: { argb: 'FFFFFFFF' } };
+      }
+    });
 
     // 状态列条件格式
     worksheet.getColumn('status').eachCell((cell: any, rowNumber: number) => {
