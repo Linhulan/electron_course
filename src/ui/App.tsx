@@ -4,6 +4,7 @@ import { LanguageSwitcher } from './components/LanguageSwitcher';
 import "./App.css";
 import { SerialPortPanel } from "./SerialPortPanel";
 import { CounterDashboard } from "./CounterDashboard";
+import { FileManagerPage } from "./components/FileManagerPage";
 import { Sidebar, PageType } from "./Sidebar";
 
 interface AppProps {
@@ -21,7 +22,7 @@ function App({ onAppReady }: AppProps) {
       const timer = setTimeout(() => {
         onAppReady();
       }, 100);
-      
+
       return () => clearTimeout(timer);
     }
   }, [ready, onAppReady]);
@@ -29,13 +30,14 @@ function App({ onAppReady }: AppProps) {
   const handlePageChange = (newPage: PageType) => {
     setCurrentPage(newPage);
   };
-
   const getPageTitle = () => {
     switch (currentPage) {
       case 'serial-port':
         return t('serialPort.title');
       case 'counter-dashboard':
         return t('counter.title');
+      case 'file-manager':
+        return t('fileManager.title');
       default:
         return t('app.title');
     }
@@ -52,6 +54,9 @@ function App({ onAppReady }: AppProps) {
           </div>
           <div className={`page-container ${currentPage === 'counter-dashboard' ? 'active' : 'hidden'}`}>
             <CounterDashboard className="page-content" />
+          </div>
+          <div className={`page-container ${currentPage === 'file-manager' ? 'active' : 'hidden'}`}>
+            <FileManagerPage className="page-content" />
           </div>
         </main>
       </div>

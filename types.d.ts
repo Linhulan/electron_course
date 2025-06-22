@@ -68,12 +68,22 @@ type EventPayloadMapping = {
   "serial-disconnected": Record<string, never>;
   "serial-data-received": SerialDataReceived;
   "serial-error": SerialError;
-  "list-serial-ports": SerialPortInfo[];  "connect-serial-port": boolean;
+  "list-serial-ports": SerialPortInfo[];
+  "connect-serial-port": boolean;
   "disconnect-serial-port": void;
   "send-serial-data": void;
   "send-serial-hex-data": void;
   "get-serial-connection-status": SerialConnectionStatus;
   "set-serial-receive-mode": boolean;
+  // 文件管理相关事件
+  "export-excel": ExportResult;
+  "export-pdf": ExportResult;
+  "get-export-history": ExportFileInfo[];
+  "open-file": boolean;
+  "show-in-folder": boolean;
+  "delete-file": boolean;
+  "get-default-export-dir": string;
+  "set-default-export-dir": boolean;
 };
 
 type UnsubscribeFunction = () => void;
@@ -90,9 +100,11 @@ interface Window {
 
     getStaticData: () => Promise<StaticData>;
     sendFrameAction: (payload: FrameWindowAction) => void;
-      // Serial Port functions
+    
+    // Serial Port functions
     listSerialPorts: () => Promise<SerialPortInfo[]>;
-    connectSerialPort: (portPath: string, config?: SerialPortConfig) => Promise<boolean>;    disconnectSerialPort: () => Promise<void>;
+    connectSerialPort: (portPath: string, config?: SerialPortConfig) => Promise<boolean>;
+    disconnectSerialPort: () => Promise<void>;
     sendSerialData: (data: string) => Promise<void>;
     sendSerialHexData: (hexString: string) => Promise<void>;
     getSerialConnectionStatus: () => Promise<SerialConnectionStatus>;
@@ -103,5 +115,40 @@ interface Window {
     onSerialDisconnected: (callback: () => void) => UnsubscribeFunction;
     onSerialDataReceived: (callback: (data: SerialDataReceived) => void) => UnsubscribeFunction;
     onSerialError: (callback: (error: SerialError) => void) => UnsubscribeFunction;
+    
+    // 文件管理函数
+    exportExcel: (sessionData: any[], options?: ExportOptions) => Promise<ExportResult>;
+    exportPDF: (sessionData: any[], options?: ExportOptions) => Promise<ExportResult>;
+    getExportHistory: () => Promise<ExportFileInfo[]>;
+    openFile: (filePath: string) => Promise<boolean>;
+    showInFolder: (filePath: string) => Promise<boolean>;
+    deleteFile: (filePath: string) => Promise<boolean>;
+    getDefaultExportDir: () => Promise<string>;
+    setDefaultExportDir: (dirPath: string) => Promise<boolean>;
   };
 }
+
+// 文件管理相关类型
+type ExportFileInfo = {
+  id: string;
+  filename: string;
+  filePath: string;
+  fileType: 'excel' | 'pdf';
+  size: number;
+  createdAt: string;
+  sessionCount: number;
+};
+
+type ExportOptions = {
+  format?: 'excel' | 'pdf';
+  filename?: string;
+  useDefaultDir?: boolean;
+  openAfterExport?: boolean;
+};
+
+type ExportResult = {
+  success: boolean;
+  filePath?: string;
+  fileInfo?: ExportFileInfo;
+  error?: string;
+};

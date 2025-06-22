@@ -3,7 +3,6 @@ import { useTranslation } from "react-i18next";
 import "./SessionDetailDrawer.css";
 import { debugLog } from "../protocols";
 import ExportPanel from "./ExportPanel";
-import { ConvertResult } from "../utils/convertFile";
 
 interface CounterData {
   id: number;
@@ -108,11 +107,11 @@ export const SessionDetailDrawer: React.FC<SessionDetailDrawerProps> = ({
     setShowExportPanel(true);
   };
 
-  const handleExportComplete = (result: ConvertResult) => {
+  const handleExportComplete = (result: { success: boolean; filePath?: string; error?: string }) => {
     debugLog("Export completed:", result);
     // 可以在这里添加成功/失败的提示
     if (result.success) {
-      console.log(`✅ 导出成功: ${result.filePath}`);
+      console.log(`✅ 导出成功: ${result.filePath || 'Unknown path'}`);
     } else {
       console.error(`❌ 导出失败: ${result.error}`);
     }

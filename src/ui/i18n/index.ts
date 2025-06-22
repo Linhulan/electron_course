@@ -39,14 +39,15 @@ const zhCN = {
     app: {
       title: "串口监控系统",
       subtitle: "点钞机数据监控平台",
-    },
-    // 侧边栏
+    },    // 侧边栏
     sidebar: {
       controlPanel: "控制面板",
       serialPort: "串口监控",
       counterDashboard: "点钞数据",
+      fileManager: "文件管理",
       serialPortDesc: "串口通信监控",
       counterDashboardDesc: "点钞机数据看板",
+      fileManagerDesc: "导出文件管理",
       collapse: "收起侧边栏",
       expand: "展开侧边栏",
     },
@@ -219,6 +220,36 @@ const zhCN = {
 
       // 点击提示
       clickToViewDetails: "点击查看详情",
+    },    // 文件管理
+    fileManager: {
+      title: "文件管理",
+      exportHistory: "导出历史",
+      exportFiles: "导出文件",
+      recentExports: "最近导出",
+      fileOperations: "文件操作",
+      exportData: "导出数据",
+      openFile: "打开",
+      showInFolder: "文件夹",
+      deleteFile: "删除",
+      refreshHistory: "刷新",
+      noFilesFound: "未找到文件",
+      fileDeleted: "文件已删除",
+      operationFailed: "操作失败",
+      exportSettings: "导出设置",
+      defaultDirectory: "默认目录",
+      setDefaultDirectory: "设置默认目录",
+      loadingHistory: "加载导出历史...",
+      confirmDelete: "删除 {{filename}}?",
+      enterDirectory: "输入新的默认目录:",
+      directoryUpdated: "默认目录更新成功!",
+      directoryUpdateFailed: "更新默认目录失败。",
+      notSet: "未设置",
+      setting: "设置中...",
+      change: "更改",
+      exportOptions: "导出选项",
+      autoSaveInfo: "文件自动保存到默认目录",
+      historyInfo: "导出历史自动维护",
+      formatsInfo: "支持格式: Excel (.xlsx), PDF (.pdf)",
     },
   },
 };
@@ -260,14 +291,15 @@ const enUS = {
     app: {
       title: "Serial Port Monitor",
       subtitle: "Money Counter Data Monitoring Platform",
-    },
-    // Sidebar
+    },    // Sidebar
     sidebar: {
       controlPanel: "Control Panel",
       serialPort: "Serial Port",
       counterDashboard: "Counter Data",
+      fileManager: "File Manager",
       serialPortDesc: "Serial Port Communication Monitor",
       counterDashboardDesc: "Money Counter Dashboard",
+      fileManagerDesc: "Export File Management",
       collapse: "Collapse Sidebar",
       expand: "Expand Sidebar",
     },
@@ -440,6 +472,36 @@ const enUS = {
 
       // Click hint
       clickToViewDetails: "Click to view details",
+    },    // File Manager
+    fileManager: {
+      title: "File Manager",
+      exportHistory: "Export History",
+      exportFiles: "Export Files",
+      recentExports: "Recent Exports",
+      fileOperations: "File Operations",
+      exportData: "Export Data",
+      openFile: "Open",
+      showInFolder: "Folder",
+      deleteFile: "Delete",
+      refreshHistory: "Refresh",
+      noFilesFound: "No files found",
+      fileDeleted: "File deleted",
+      operationFailed: "Operation failed",
+      exportSettings: "Export Settings",
+      defaultDirectory: "Default Directory",
+      setDefaultDirectory: "Set Default Directory",
+      loadingHistory: "Loading export history...",
+      confirmDelete: "Delete {{filename}}?",
+      enterDirectory: "Enter new default directory:",
+      directoryUpdated: "Default directory updated successfully!",
+      directoryUpdateFailed: "Failed to update default directory.",
+      notSet: "Not set",
+      setting: "Setting...",
+      change: "Change",
+      exportOptions: "Export Options",
+      autoSaveInfo: "Files are automatically saved to the default directory",
+      historyInfo: "Export history is maintained automatically",
+      formatsInfo: "Supported formats: Excel (.xlsx), PDF (.pdf)",
     },
   },
 };

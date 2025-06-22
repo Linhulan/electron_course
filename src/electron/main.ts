@@ -8,6 +8,7 @@ import { SerialPortManager, getAvailablePorts } from "./serialPort.js";
 import { createSplashWindow } from "./splashWindow.js";
 import { StartupOptimizer } from "./startupOptimizer.js";
 import { startupConfig } from "./startupConfig.js";
+import { fileManager } from "./fileManage.js";
 // app.commandLine.appendSwitch("enable-lcp");
 // app.commandLine.appendSwitch('disable-features', 'OutOfProcessPdf');
 // app.enableSandbox(); // 必须启用沙箱
@@ -179,6 +180,55 @@ app.on("ready", async () => {
     serialPortManager.setReceiveMode(useRawMode);
     return true;
   });
+
+  // ========== 文件管理 IPC 处理程序 ==========  // 导出 Excel 文件
+  ipcMainHandle("export-excel", async (...args: unknown[]) => {
+    const [sessionData, options = {}] = args as [any[], any];
+    return await fileManager.exportExcel(sessionData, options);
+  });
+
+  // 导出 PDF 文件
+  ipcMainHandle("export-pdf", async (...args: unknown[]) => {
+    const [sessionData, options = {}] = args as [any[], any];
+    return await fileManager.exportPDF(sessionData, options);
+  });
+
+  // 获取导出历史
+  ipcMainHandle("get-export-history", async () => {
+    return await fileManager.getExportHistory();
+  });
+
+  // 打开文件
+  ipcMainHandle("open-file", async (...args: unknown[]) => {
+    const [filePath] = args as [string];
+    return await fileManager.openFile(filePath);
+  });
+
+  // 在文件夹中显示文件
+  ipcMainHandle("show-in-folder", async (...args: unknown[]) => {
+    const [filePath] = args as [string];
+    await fileManager.showInFolder(filePath);
+    return true;
+  });
+
+  // 删除文件
+  ipcMainHandle("delete-file", async (...args: unknown[]) => {
+    const [filePath] = args as [string];
+    return await fileManager.deleteFile(filePath);
+  });
+
+  // 获取默认导出目录
+  ipcMainHandle("get-default-export-dir", () => {
+    return fileManager.getDefaultExportDir();
+  });
+
+  // 设置默认导出目录
+  ipcMainHandle("set-default-export-dir", async (...args: unknown[]) => {
+    const [dirPath] = args as [string];
+    return await fileManager.setDefaultExportDir(dirPath);
+  });
+
+  // ==========================================
 
   createTray(mainWindow);
   createMenu(mainWindow);

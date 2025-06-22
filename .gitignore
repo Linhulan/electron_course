@@ -12,7 +12,7 @@ dist
 dist-react
 dist-electron
 *.local
-
+Data/
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

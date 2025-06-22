@@ -1,16 +1,27 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  exportSessionsToExcel, 
-  exportSessionsToPDF, 
-  type ConvertResult 
-} from '../utils/convertFile';
 import { SessionData } from '../utils/serialization';
 import './ExportPanel.css';
+
+// 使用 Electron 的导出结果类型
+interface ElectronExportResult {
+  success: boolean;
+  filePath?: string;
+  fileInfo?: {
+    id: string;
+    filename: string;
+    filePath: string;
+    fileType: 'excel' | 'pdf';
+    size: number;
+    createdAt: string;
+    sessionCount: number;
+  };
+  error?: string;
+}
 
 interface ExportPanelProps {
   isOpen: boolean;
   sessionData: SessionData[];
-  onExportComplete?: (result: ConvertResult) => void;
+  onExportComplete?: (result: ElectronExportResult) => void;
   onClose?: () => void;
 }
 
@@ -45,7 +56,6 @@ const ExportPanel: React.FC<ExportPanelProps> = ({
       document.body.style.overflow = 'unset';
     };
   }, [isOpen, onClose]);
-
   /**
    * 处理Excel导出
    */
@@ -59,7 +69,11 @@ const ExportPanel: React.FC<ExportPanelProps> = ({
     setExportStatus('📊 正在生成Excel文件...');
 
     try {
-      const result = await exportSessionsToExcel(sessionData, filename);
+      const result = await window.electron.exportExcel(sessionData, {
+        filename: `${filename}.xlsx`,
+        useDefaultDir: true,
+        openAfterExport: true
+      });
       
       if (result.success) {
         setExportStatus(`✅ Excel导出成功！文件已保存到: ${result.filePath}`);
@@ -74,7 +88,6 @@ const ExportPanel: React.FC<ExportPanelProps> = ({
       setIsExporting(false);
     }
   };
-
   /**
    * 处理PDF导出
    */
@@ -88,7 +101,11 @@ const ExportPanel: React.FC<ExportPanelProps> = ({
     setExportStatus('📄 正在生成PDF文件...');
 
     try {
-      const result = await exportSessionsToPDF(sessionData, filename, includeCharts);
+      const result = await window.electron.exportPDF(sessionData, {
+        filename: `${filename}.pdf`,
+        useDefaultDir: true,
+        openAfterExport: true
+      });
       
       if (result.success) {
         setExportStatus(`✅ PDF导出成功！文件已保存到: ${result.filePath}`);
@@ -103,7 +120,6 @@ const ExportPanel: React.FC<ExportPanelProps> = ({
       setIsExporting(false);
     }
   };
-
   /**
    * 处理批量导出
    */
@@ -118,8 +134,16 @@ const ExportPanel: React.FC<ExportPanelProps> = ({
 
     try {
       const [excelResult, pdfResult] = await Promise.all([
-        exportSessionsToExcel(sessionData, `${filename}_excel`),
-        exportSessionsToPDF(sessionData, `${filename}_pdf`, includeCharts)
+        window.electron.exportExcel(sessionData, {
+          filename: `${filename}_excel.xlsx`,
+          useDefaultDir: true,
+          openAfterExport: false
+        }),
+        window.electron.exportPDF(sessionData, {
+          filename: `${filename}_pdf.pdf`,
+          useDefaultDir: true,
+          openAfterExport: false
+        })
       ]);
 
       const excelStatus = excelResult.success ? '✅' : '❌';
@@ -139,7 +163,7 @@ const ExportPanel: React.FC<ExportPanelProps> = ({
     } finally {
       setIsExporting(false);
     }
-  };  /**
+  };/**
    * 清除状态消息
    */
   const clearStatus = () => {
@@ -261,14 +285,13 @@ const ExportPanel: React.FC<ExportPanelProps> = ({
             ✕
           </button>
         </div>
-      )}
-
-      <div className="export-info">
+      )}      <div className="export-info">
         <h4>📋 导出说明</h4>
-        <ul>          <li><strong>Excel导出:</strong> 包含概览统计、详细数据和面额统计三个工作表</li>
-          <li><strong>PDF导出:</strong> 生成格式化的报告，可选择包含图表</li>
+        <ul>
+          <li><strong>Excel导出:</strong> 包含概览统计、详细数据、面额统计和纸币详情四个工作表</li>
+          <li><strong>PDF导出:</strong> 生成格式化的专业报告，包含统计表格和会话详情</li>
           <li><strong>批量导出:</strong> 同时生成Excel和PDF两种格式</li>
-          <li><strong>文件位置:</strong> 默认保存到项目的exports目录</li>
+          <li><strong>文件位置:</strong> 自动保存到项目的Data目录，可在文件管理器中查看历史记录</li>
         </ul>
       </div>
         </div>

@@ -22,12 +22,21 @@ electron.contextBridge.exposeInMainWorld("electron", {
   sendSerialData: (data: string) => ipcInvoke("send-serial-data", data),
   sendSerialHexData: (hexString: string) => ipcInvoke("send-serial-hex-data", hexString),
   getSerialConnectionStatus: () => ipcInvoke("get-serial-connection-status"),
-  setSerialReceiveMode: (useRawMode: boolean) => ipcInvoke("set-serial-receive-mode", useRawMode),
-  // Serial Port event subscriptions
+  setSerialReceiveMode: (useRawMode: boolean) => ipcInvoke("set-serial-receive-mode", useRawMode),  // Serial Port event subscriptions
   onSerialConnected: (callback: (data: SerialPortConnectionData) => void) => ipcOn("serial-connected", callback),
   onSerialDisconnected: (callback: () => void) => ipcOn("serial-disconnected", callback),
   onSerialDataReceived: (callback: (data: SerialDataReceived) => void) => ipcOn("serial-data-received", callback),
   onSerialError: (callback: (error: SerialError) => void) => ipcOn("serial-error", callback),
+  
+  // 文件管理函数
+  exportExcel: (sessionData: any[], options?: any) => ipcInvoke("export-excel", sessionData, options),
+  exportPDF: (sessionData: any[], options?: any) => ipcInvoke("export-pdf", sessionData, options),
+  getExportHistory: () => ipcInvoke("get-export-history"),
+  openFile: (filePath: string) => ipcInvoke("open-file", filePath),
+  showInFolder: (filePath: string) => ipcInvoke("show-in-folder", filePath),
+  deleteFile: (filePath: string) => ipcInvoke("delete-file", filePath),
+  getDefaultExportDir: () => ipcInvoke("get-default-export-dir"),
+  setDefaultExportDir: (dirPath: string) => ipcInvoke("set-default-export-dir", dirPath),
 } satisfies Window["electron"]);
 
 function ipcInvoke<Key extends keyof EventPayloadMapping>(

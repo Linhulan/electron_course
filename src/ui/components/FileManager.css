@@ -1,0 +1,253 @@
+/* 文件历史面板样式 - 暗色主题 */
+.file-history-panel {
+  background: #1e1e1e;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  overflow: hidden;
+  border: 1px solid #333;
+}
+
+.panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  background: #2d2d2d;
+  border-bottom: 1px solid #404040;
+}
+
+.panel-header h3 {
+  margin: 0;
+  color: #e0e0e0;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.refresh-btn {
+  padding: 6px 12px;
+  background: #0d6efd;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  transition: background-color 0.2s;
+}
+
+.refresh-btn:hover {
+  background: #0b5ed7;
+}
+
+.empty-state {
+  padding: 40px 20px;
+  text-align: center;
+  color: #9ca3af;
+}
+
+.empty-state p {
+  margin: 0;
+  font-style: italic;
+}
+
+.file-list {
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.file-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 20px;
+  border-bottom: 1px solid #404040;
+  transition: background-color 0.2s;
+}
+
+.file-item:hover {
+  background: #2d2d2d;
+}
+
+.file-item:last-child {
+  border-bottom: none;
+}
+
+.file-info {
+  flex: 1;
+}
+
+.file-name {
+  font-weight: 500;
+  color: #e0e0e0;
+  margin-bottom: 4px;
+  font-size: 14px;
+}
+
+.file-meta {
+  display: flex;
+  gap: 12px;
+  font-size: 12px;
+  color: #9ca3af;
+}
+
+.file-type {
+  background: #404040;
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-weight: 500;
+  text-transform: uppercase;
+  color: #e0e0e0;
+}
+
+.file-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.action-btn {
+  padding: 6px 10px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.open-btn {
+  background: #198754;
+  color: white;
+}
+
+.open-btn:hover {
+  background: #157347;
+}
+
+.folder-btn {
+  background: #fd7e14;
+  color: white;
+}
+
+.folder-btn:hover {
+  background: #e8690b;
+}
+
+.delete-btn {
+  background: #dc3545;
+  color: white;
+}
+
+.delete-btn:hover {
+  background: #bb2d3b;
+}
+
+/* 导出设置样式 - 暗色主题 */
+.export-settings {
+  padding: 20px;
+  background: #1e1e1e;
+  border-radius: 8px;
+  border: 1px solid #333;
+}
+
+.setting-item {
+  margin-bottom: 20px;
+}
+
+.setting-item:last-child {
+  margin-bottom: 0;
+}
+
+.setting-label {
+  display: block;
+  font-weight: 600;
+  color: #e0e0e0;
+  margin-bottom: 8px;
+  font-size: 14px;
+}
+
+.directory-control {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  background: #2d2d2d;
+  border-radius: 6px;
+  border: 1px solid #404040;
+}
+
+.directory-path {
+  flex: 1;
+  font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+  font-size: 13px;
+  color: #e0e0e0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  padding: 4px 8px;
+  background: #1e1e1e;
+  border-radius: 4px;
+  border: 1px solid #555;
+}
+
+.change-dir-btn {
+  padding: 8px 16px;
+  background: #0d6efd;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 500;
+  transition: background-color 0.2s;
+  white-space: nowrap;
+}
+
+.change-dir-btn:hover:not(:disabled) {
+  background: #0b5ed7;
+}
+
+.change-dir-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.options-info {
+  background: #2d2d2d;
+  padding: 16px;
+  border-radius: 6px;
+  border-left: 4px solid #17a2b8;
+  border: 1px solid #404040;
+}
+
+.info-text {
+  margin: 0 0 8px 0;
+  font-size: 13px;
+  color: #e0e0e0;
+  line-height: 1.4;
+}
+
+.info-text:last-child {
+  margin-bottom: 0;
+}
+
+/* 加载状态 - 暗色主题 */
+.loading {
+  padding: 20px;
+  text-align: center;
+  color: #9ca3af;
+  font-style: italic;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .file-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  
+  .file-actions {
+    align-self: stretch;
+    justify-content: flex-end;
+  }
+  
+}

@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { LanguageSwitcher } from './components/LanguageSwitcher';
 import './Sidebar.css';
 
-export type PageType = 'serial-port' | 'counter-dashboard';
+export type PageType = 'serial-port' | 'counter-dashboard' | 'file-manager';
 
 interface SidebarProps {
   currentPage: PageType;
@@ -13,7 +13,7 @@ interface SidebarProps {
 export const Sidebar: React.FC<SidebarProps> = ({ currentPage, onPageChange }) => {
   const { t } = useTranslation();
   const [isCollapsed, setIsCollapsed] = useState(false);
-    const menuItems = [
+  const menuItems = [
     {
       id: 'serial-port' as PageType,
       label: t('sidebar.serialPort'),
@@ -25,6 +25,12 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentPage, onPageChange }) =
       label: t('sidebar.counterDashboard'),
       icon: '💰',
       description: t('sidebar.counterDashboardDesc')
+    },
+    {
+      id: 'file-manager' as PageType,
+      label: t('sidebar.fileManager'),
+      icon: '📁',
+      description: t('sidebar.fileManagerDesc')
     }
   ];
 
