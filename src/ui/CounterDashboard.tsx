@@ -872,6 +872,22 @@ export const CounterDashboard: React.FC<CounterDashboardProps> = ({
     }
   };
 
+  // 获取Session的货币显示
+  const getSessionCurrencyDisplay = (session: SessionData): string => {
+    // 如果有新的货币记录结构
+    if (session.currencyCountRecords && session.currencyCountRecords.size > 0) {
+      const currencies = Array.from(session.currencyCountRecords.keys());
+      if (currencies.length === 1) {
+        return currencies[0];
+      } else if (currencies.length > 1) {
+        return "MULTI";
+      }
+    }
+    
+    // 兼容旧数据结构
+    return session.currencyCode || "CNY";
+  };
+
   return (
     <div className={`counter-dashboard ${className || ""}`}>
       {" "}
@@ -1235,8 +1251,7 @@ export const CounterDashboard: React.FC<CounterDashboardProps> = ({
                   </div>
                 ) : (
                   <div className="data-table">
-                    {" "}
-                    <div className="table-header">
+                    {" "}                    <div className="table-header">
                       <div className="col-time">
                         <span className="header-icon">🕒</span>
                         {t("counter.table.time")}
@@ -1246,6 +1261,9 @@ export const CounterDashboard: React.FC<CounterDashboardProps> = ({
                       </div>
                       <div className="col-amount">
                         {t("counter.table.amount")}
+                      </div>
+                      <div className="col-currency">
+                        {t("counter.table.currency", "Currency")}
                       </div>
                       <div className="col-error">
                         {t("counter.table.errorPcs")}
@@ -1277,10 +1295,16 @@ export const CounterDashboard: React.FC<CounterDashboardProps> = ({
                           <div className="count-unit">
                             {t("counter.detailTable.pcs")}
                           </div>
-                        </div>
-                        <div className="col-amount">
+                        </div>                        <div className="col-amount">
                           <div className="amount-value">
                             {formatCurrency(item.totalAmount || 0)}
+                          </div>
+                        </div>                        <div className="col-currency">
+                          <div 
+                            className="currency-value"
+                            data-currency={getSessionCurrencyDisplay(item)}
+                          >
+                            {getSessionCurrencyDisplay(item)}
                           </div>
                         </div>
                         <div className="col-error">
