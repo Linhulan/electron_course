@@ -162,7 +162,7 @@
 /* 基本信息网格 */
 .info-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
+  grid-template-columns: 1fr 1fr 1fr 1fr;
   gap: 1rem;
 }
 
@@ -688,6 +688,240 @@
   background: #45a049;
 }
 
+/* 面额分布 */
+/* 多货币Tab切换 - SessionDetailDrawer */
+.detail-section .currency-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 1rem 0;
+  padding: 0.5rem;
+  background: #2a2a2a;
+  border-radius: 8px;
+  border: 1px solid #404040;
+}
+
+.detail-section .currency-tab {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.5rem 0.75rem;
+  background: #1a1a1a;
+  border: 1px solid #404040;
+  border-radius: 6px;
+  color: #ccc;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-width: fit-content;
+  white-space: nowrap;
+}
+
+.detail-section .currency-tab:hover {
+  background: #333;
+  border-color: #666;
+  color: #fff;
+}
+
+.detail-section .currency-tab.active {
+  background: #007acc;
+  border-color: #0099ff;
+  color: #ffffff;
+  font-weight: 500;
+}
+
+.detail-section .currency-tab .tab-icon {
+  font-size: 1rem;
+}
+
+.detail-section .currency-tab .tab-label {
+  font-weight: 500;
+}
+
+.detail-section .currency-tab .tab-count {
+  background: rgba(255, 255, 255, 0.15);
+  padding: 0.1rem 0.4rem;
+  border-radius: 10px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  min-width: 20px;
+  text-align: center;
+}
+
+.detail-section .currency-tab.active .tab-count {
+  background: rgba(255, 255, 255, 0.25);
+  color: #ffffff;
+}
+
+.denomination-breakdown {
+  margin-top: 1rem;
+}
+
+/* 货币统计区域 */
+.currency-breakdown {
+  margin-top: 1.5rem;
+  padding: 0.75rem;
+  background: #2a2a2a;
+  border-radius: 8px;
+  border: 1px solid #404040;
+}
+
+.currency-breakdown-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0 0 0.75rem 0;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #ffffff;
+}
+
+.currency-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 0.75rem;
+}
+
+.currency-stat-item {
+  background: #1a1a1a;
+  border: 1px solid #404040;
+  border-radius: 6px;
+  padding: 0.75rem;
+  transition: all 0.2s ease;
+}
+
+.currency-stat-item:hover {
+  border-color: #555;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.currency-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+  padding-bottom: 0.4rem;
+  border-bottom: 1px solid #404040;
+}
+
+.currency-code {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #ffffff;
+}
+
+.currency-flag {
+  font-size: 1rem;
+}
+
+.currency-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.currency-stat {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.2rem 0;
+}
+
+.currency-stat .stat-label {
+  font-size: 0.8rem;
+  color: #aaa;
+  font-weight: 500;
+}
+
+.currency-stat .stat-value {
+  font-size: 0.85rem;
+  color: #ffffff;
+  font-weight: 600;
+}
+
+/* 紧凑货币列表布局（货币数量>2时使用） */
+.currency-stats-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.currency-stat-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1rem;
+  background: #1a1a1a;
+  border: 1px solid #404040;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+}
+
+.currency-stat-row:hover {
+  border-color: #555;
+  background: #222;
+  transform: translateX(2px);
+}
+
+.currency-info {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+.currency-info .currency-flag {
+  font-size: 1.1rem;
+}
+
+.currency-info .currency-code {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #ffffff;
+  min-width: 40px;
+}
+
+.currency-values {
+  display: flex;
+  gap: 1.5rem;
+  align-items: center;
+}
+
+.currency-values .stat-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  white-space: nowrap;
+}
+
+.currency-values .stat-label {
+  font-size: 0.8rem;
+  color: #aaa;
+  font-weight: 500;
+}
+
+.currency-values .stat-value {
+  font-size: 0.85rem;
+  color: #ffffff;
+  font-weight: 600;
+}
+
+/* 响应式：小屏幕上调整紧凑布局 */
+@media (max-width: 768px) {
+  .currency-stat-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+  
+  .currency-values {
+    width: 100%;
+    justify-content: space-between;
+    gap: 1rem;
+  }
+}
+
 /* 响应式设计 */
 @media (max-width: 1200px) {
   .session-detail-drawer {
@@ -703,7 +937,7 @@
   }
   
   .info-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: 1fr 1fr;
   }  .transaction-header,
   .transaction-row {
     grid-template-columns: 40px 1fr 60px 60px 80px;
@@ -711,11 +945,19 @@
     padding: 0.75rem;
     font-size: 0.85rem;
   }
+
+  .currency-stats-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 @media (max-width: 480px) {
   .session-detail-drawer {
     width: 100%;
     right: -100%;
+  }
+  
+  .info-grid {
+    grid-template-columns: 1fr;
   }
 }

@@ -1,4 +1,4 @@
-import { SessionData, CounterData, DenominationDetail } from "../common/common";
+import { SessionData, CounterData, DenominationDetail } from "../common/types";
 
 // 纯JavaScript实现的轻量级序列化器（避免CSP问题）
 export class SimpleProtobufSerializer {
@@ -124,7 +124,7 @@ export class SimpleProtobufSerializer {
     writer.writeString(data.endTime || '');
     writer.writeString(data.machineMode || '');
     writer.writeUInt32(data.totalCount);
-    writer.writeUInt64(data.totalAmount);
+    writer.writeUInt64(data.totalAmount || 0);
     writer.writeUInt32(data.errorCount);
     writer.writeString(data.status);
     writer.writeString(data.errorCode || '');

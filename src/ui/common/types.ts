@@ -135,15 +135,17 @@ export interface CounterData {
 export interface CurrencyCountRecord {
   currencyCode: string; // 货币代码 (例如: "CNY")
   totalCount: number; // 总张数
-  totalAmount?: number; // 总金额
+  totalAmount: number; // 总金额
   errorCount: number; // 错误张数
-  denominationBreakdown: Map<string, DenominationDetail>; // 面额分布 Ex. {"CNY": {denomination: 100, count: 5, amount: 500}}
+  denominationBreakdown: Map<number, DenominationDetail>; // 面额分布 Ex. {"CNY": {denomination: 100, count: 5, amount: 500}}
 }
 
 // Session数据结构 - 用于记录完整的点钞会话
 export interface SessionData {
   id: number;
   no: number;
+  user?: string; // 用户名 (如果有)
+  machineId?: string; // 机器ID (如果有)
   timestamp: string;
   startTime: string;
   endTime?: string;
@@ -152,8 +154,8 @@ export interface SessionData {
   currencyCountRecords?: Map<string, CurrencyCountRecord>; // 记录不同货币的点钞信息, 主要为了兼容MIX模式点钞
   details?: CounterData[]; // 每张点钞记录的详细信息
   status: "counting" | "completed" | "error" | "paused";
-  totalCount?: number;
-  errorCount?: number; // 错误张数
+  totalCount: number;
+  errorCount: number; // 错误张数
   errorCode?: string;
 
   /* 以下字段标记为废弃, 保留用作兼容----------------------------------- */
@@ -164,7 +166,7 @@ export interface SessionData {
   /**
    * @deprecated 请使用 CurrencyCountRecord 替代
    */
-  denominationBreakdown?: Map<string, DenominationDetail>; // 面额分布 Ex. {"CNY": {denomination: 100, count: 5, amount: 500}}
+  denominationBreakdown?: Map<number, DenominationDetail>; // 面额分布
 }
 
 // 面额详细信息

@@ -1,42 +1,10 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import "./SessionDetailDrawer.css";
 import { debugLog } from "../protocols";
 import ExportPanel from "./ExportPanel";
 import { formatCurrency, formatDenomination } from "../common/common";
-
-interface CounterData {
-  id: number;
-  no: number;
-  timestamp: string;
-  currencyCode: string;
-  denomination: number;
-  status: "counting" | "completed" | "error" | "paused";
-  errorCode?: string;
-  serialNumber?: string;
-}
-
-interface DenominationDetail {
-  denomination: number;
-  count: number;
-  amount: number;
-}
-
-interface SessionData {
-  id: number;
-  no: number;
-  timestamp: string;
-  startTime: string;
-  endTime?: string;
-  machineMode?: string;
-  totalCount: number;
-  totalAmount: number;
-  errorCount: number;
-  status: "counting" | "completed" | "error" | "paused";
-  errorCode?: string;
-  denominationBreakdown: Map<number, DenominationDetail>;
-  details?: CounterData[];
-}
+import { SessionData } from "../common/types";
 
 interface SessionDetailDrawerProps {
   isOpen: boolean;
@@ -52,6 +20,7 @@ export const SessionDetailDrawer: React.FC<SessionDetailDrawerProps> = ({
   const { t } = useTranslation();
   const [showDetailedBreakdown, setShowDetailedBreakdown] = useState(false);
   const [showExportPanel, setShowExportPanel] = useState(false);
+  const [selectedCurrencyTab, setSelectedCurrencyTab] = useState<string>('');
 
   const getStatusIcon = (status: string) => {
     switch (status) {
@@ -96,11 +65,10 @@ export const SessionDetailDrawer: React.FC<SessionDetailDrawerProps> = ({
       default:
         return "#6c757d";
     }
-  };  const onExport = async (_sessionData: SessionData) => {
+  };  const onExport = async () => {
     // 显示导出面板
     setShowExportPanel(true);
   };
-
   const handleExportComplete = (result: { success: boolean; filePath?: string; error?: string }) => {
     debugLog("Export completed:", result);
     // 可以在这里添加成功/失败的提示
@@ -110,16 +78,77 @@ export const SessionDetailDrawer: React.FC<SessionDetailDrawerProps> = ({
       console.error(`❌ 导出失败: ${result.error}`);
     }
   };
+  // 获取可用的货币代码列表
+  const getAvailableCurrencies = useCallback((): string[] => {
+    if (!sessionData) return [];
+    if (sessionData.currencyCountRecords) {
+      return Array.from(sessionData.currencyCountRecords.keys()).sort();
+    }
+    return [];
+  }, [sessionData]);
+
+  // 检查是否有多种货币
+  const hasMultipleCurrencies = (): boolean => {
+    return getAvailableCurrencies().length > 1;
+  };  // 获取当前选中Tab的面额数据
+  const getCurrentTabDenominationData = () => {
+    if (!sessionData) return { details: [], totalCount: 0, totalAmount: 0 };
+
+    if (sessionData.currencyCountRecords && sessionData.currencyCountRecords.size > 0) {
+      // 使用新的货币记录结构
+      const record = sessionData.currencyCountRecords.get(selectedCurrencyTab);
+      if (record) {
+        const details = Array.from(record.denominationBreakdown.entries())
+          .map(([, detail]) => detail) // DenominationDetail 已经包含 denomination 字段
+          .sort((a, b) => b.denomination - a.denomination);
+        return {
+          details,
+          totalCount: record.totalCount,
+          totalAmount: record.totalAmount
+        };
+      }
+    } else if (sessionData.denominationBreakdown) {
+      // 兼容旧数据结构（单一货币）
+      const details = Array.from(sessionData.denominationBreakdown.entries())
+        .map(([, detail]) => detail)
+        .sort((a, b) => b.denomination - a.denomination);
+      return {
+        details,
+        totalCount: sessionData.totalCount,
+        totalAmount: sessionData.totalAmount || 0
+      };
+    }
+    
+    return { details: [], totalCount: 0, totalAmount: 0 };
+  };
+
+  // 获取指定货币的总张数
+  const getTotalCountByCurrency = (currencyCode: string): number => {
+    if (!sessionData?.currencyCountRecords) return 0;
+    const record = sessionData.currencyCountRecords.get(currencyCode);
+    return record ? record.totalCount : 0;
+  };  // 自动选择Tab
+  useEffect(() => {
+    if (!sessionData) return;
+    
+    const availableCurrencies = getAvailableCurrencies();
+    if (availableCurrencies.length > 0) {
+      // 如果当前选中的货币不存在，切换到第一个可用货币
+      if (!availableCurrencies.includes(selectedCurrencyTab)) {
+        setSelectedCurrencyTab(availableCurrencies[0]);
+      }
+    } else {
+      // 如果没有货币数据，重置为空
+      setSelectedCurrencyTab('');
+    }
+  }, [sessionData, selectedCurrencyTab, getAvailableCurrencies]);
 
   if (!isOpen || !sessionData) {
     return null;
   }
-  const denominationArray = Array.from(
-    sessionData.denominationBreakdown.values()
-  ).sort((a, b) => b.denomination - a.denomination);
-  // 计算总数和总金额，用于计算占比
-  const totalAmount = denominationArray.reduce((sum, d) => sum + d.amount, 0);
-  const totalCount = denominationArray.reduce((sum, d) => sum + d.count, 0);
+
+  // 获取当前Tab的面额数据
+  const { details: denominationArray, totalCount, totalAmount } = getCurrentTabDenominationData();
 
   return (
     <>
@@ -142,28 +171,20 @@ export const SessionDetailDrawer: React.FC<SessionDetailDrawerProps> = ({
         </div>
 
         {/* 抽屉内容 */}
-        <div className="drawer-content">
-          {/* Session基本信息 */}
+        <div className="drawer-content">          {/* Session基本信息 */}
           <div className="detail-section">
             <h4 className="section-title">
               <span className="section-icon">ℹ️</span>
               {t("counter.sessionDetail.basicInfo")}
             </h4>
             <div className="info-grid">
+              {/* 总体统计 */}
               <div className="info-item">
                 <span className="info-label">
                   {t("counter.session.count")}:
                 </span>
                 <span className="info-value highlight">
                   {sessionData.totalCount.toLocaleString()}
-                </span>
-              </div>
-              <div className="info-item">
-                <span className="info-label">
-                  {t("counter.session.amount")}:
-                </span>
-                <span className="info-value highlight">
-                  {formatCurrency(sessionData.totalAmount)}
                 </span>
               </div>
               <div className="info-item">
@@ -192,7 +213,84 @@ export const SessionDetailDrawer: React.FC<SessionDetailDrawerProps> = ({
                 </span>
                 <span className="info-value">{sessionData.startTime}</span>
               </div>
-            </div>
+            </div>            {/* 各国货币统计 */}
+            {sessionData.currencyCountRecords && sessionData.currencyCountRecords.size > 0 && (
+              <div className="currency-breakdown">
+                <h5 className="currency-breakdown-title">
+                  <span className="section-icon">💱</span>
+                  {t("counter.sessionDetail.currencyBreakdown", "货币统计")}
+                </h5>
+                {sessionData.currencyCountRecords.size <= 2 ? (
+                  // 货币数量≤2时，使用卡片网格布局
+                  <div className="currency-stats-grid">
+                    {Array.from(sessionData.currencyCountRecords.entries()).map(([currencyCode, record]) => (
+                      <div key={currencyCode} className="currency-stat-item">
+                        <div className="currency-header">
+                          <span className="currency-code">{currencyCode}</span>
+                          <span className="currency-flag">
+                            {currencyCode === 'CNY' ? '🇨🇳' : 
+                             currencyCode === 'USD' ? '🇺🇸' : 
+                             currencyCode === 'EUR' ? '🇪🇺' : 
+                             currencyCode === 'JPY' ? '🇯🇵' : 
+                             currencyCode === 'GBP' ? '🇬🇧' : '💰'}
+                          </span>
+                        </div>
+                        <div className="currency-stats">
+                          <div className="currency-stat">
+                            <span className="stat-label">{t("counter.session.count")}</span>
+                            <span className="stat-value">{record.totalCount.toLocaleString()}</span>
+                          </div>
+                          <div className="currency-stat">
+                            <span className="stat-label">{t("counter.session.amount")}</span>
+                            <span className="stat-value">{formatCurrency(record.totalAmount)}</span>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  // 货币数量>2时，使用紧凑列表布局
+                  <div className="currency-stats-list">
+                    {Array.from(sessionData.currencyCountRecords.entries()).map(([currencyCode, record]) => (
+                      <div key={currencyCode} className="currency-stat-row">
+                        <div className="currency-info">
+                          <span className="currency-flag">
+                            {currencyCode === 'CNY' ? '🇨🇳' : 
+                             currencyCode === 'USD' ? '🇺🇸' : 
+                             currencyCode === 'EUR' ? '🇪🇺' : 
+                             currencyCode === 'JPY' ? '🇯🇵' : 
+                             currencyCode === 'GBP' ? '🇬🇧' : '💰'}
+                          </span>
+                          <span className="currency-code">{currencyCode}</span>
+                        </div>
+                        <div className="currency-values">
+                          <span className="stat-item">
+                            <span className="stat-label">{t("counter.session.count")}:</span>
+                            <span className="stat-value">{record.totalCount.toLocaleString()}</span>
+                          </span>
+                          <span className="stat-item">
+                            <span className="stat-label">{t("counter.session.amount")}:</span>
+                            <span className="stat-value">{formatCurrency(record.totalAmount)}</span>
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* 单一货币情况的兼容处理 */}
+            {(!sessionData.currencyCountRecords || sessionData.currencyCountRecords.size === 0) && (
+              <div className="info-item">
+                <span className="info-label">
+                  {t("counter.session.amount")}:
+                </span>
+                <span className="info-value highlight">
+                  {formatCurrency(sessionData.totalAmount || 0)}
+                </span>
+              </div>
+            )}
           </div>{" "}
           {/* 面额分布 */}
           <div className="detail-section">
@@ -209,7 +307,23 @@ export const SessionDetailDrawer: React.FC<SessionDetailDrawerProps> = ({
                   ? t("counter.sessionDetail.hideDetails", "隐藏详情")
                   : t("counter.sessionDetail.showDetails", "显示详情")}
               </button>
-            </h4>
+            </h4>            {/* 多货币Tab切换 */}
+            {hasMultipleCurrencies() && (
+              <div className="currency-tabs">
+                {getAvailableCurrencies().map(currencyCode => (
+                  <button
+                    key={currencyCode}
+                    className={`currency-tab ${selectedCurrencyTab === currencyCode ? 'active' : ''}`}
+                    onClick={() => setSelectedCurrencyTab(currencyCode)}
+                  >
+                    <span className="tab-icon">💱</span>
+                    <span className="tab-label">{currencyCode}</span>
+                    <span className="tab-count">{getTotalCountByCurrency(currencyCode)}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+
             <div className="denomination-breakdown">
               {denominationArray.length === 0 ? (
                 <div className="no-data-message">
@@ -387,7 +501,7 @@ export const SessionDetailDrawer: React.FC<SessionDetailDrawerProps> = ({
           </button>
           <button
             className="action-btn primary"
-            onClick={() => onExport(sessionData)}
+            onClick={() => onExport()}
           >
             {t("counter.sessionDetail.exportSession")}
           </button>
