@@ -143,7 +143,7 @@ export const SessionDetailDrawer: React.FC<SessionDetailDrawerProps> = ({
     }
   }, [sessionData, selectedCurrencyTab, getAvailableCurrencies]);
 
-  if (!isOpen || !sessionData) {
+  if (!sessionData) {
     return null;
   }
 
@@ -153,10 +153,10 @@ export const SessionDetailDrawer: React.FC<SessionDetailDrawerProps> = ({
   return (
     <>
       {/* 背景遮罩 */}
-      <div className="drawer-overlay" onClick={onClose} />
+      <div className={`drawer-overlay ${isOpen ? "open" : "close"}`} onClick={onClose} />
 
       {/* 抽屉主体 */}
-      <div className={`session-detail-drawer ${isOpen ? "open" : ""}`}>
+      <div className={`session-detail-drawer ${isOpen ? "open" : "close"}`}>
         {/* 抽屉头部 */}
         <div className="drawer-header">
           <div className="drawer-title">
@@ -316,7 +316,6 @@ export const SessionDetailDrawer: React.FC<SessionDetailDrawerProps> = ({
                     className={`currency-tab ${selectedCurrencyTab === currencyCode ? 'active' : ''}`}
                     onClick={() => setSelectedCurrencyTab(currencyCode)}
                   >
-                    <span className="tab-icon">💱</span>
                     <span className="tab-label">{currencyCode}</span>
                     <span className="tab-count">{getTotalCountByCurrency(currencyCode)}</span>
                   </button>

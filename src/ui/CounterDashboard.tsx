@@ -564,7 +564,7 @@ export const CounterDashboard: React.FC<CounterDashboardProps> = ({
 
   const handleCloseDrawer = () => {
     setIsDetailDrawerOpen(false);
-    setSelectedSessionId(null);
+    // setSelectedSessionId(null);
   };
   const handleExportPanelOpen = () => {
     setIsExportPanelOpen(true);

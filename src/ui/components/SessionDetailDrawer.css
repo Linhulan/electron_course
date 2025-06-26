@@ -10,6 +10,34 @@
   backdrop-filter: blur(2px);
 }
 
+@keyframes drawerFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+  
+}
+
+@keyframes drawerFadeOut {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+.drawer-overlay.close {
+  z-index: -1000;
+  animation: drawerFadeOut 0.25s ease-in-out forwards;
+}
+
+.drawer-overlay.open {
+  animation: drawerFadeIn 0.25s ease-in-out forwards;
+}
+
 .session-detail-drawer {
   position: fixed;
   top: 0;
@@ -20,15 +48,41 @@
   border-left: 1px solid #404040;
   box-shadow: -4px 0 20px rgba(0, 0, 0, 0.3);
   z-index: 1001;
-  transition: right 0.3s ease-in-out;
   display: flex;
   flex-direction: column;
   color: #ffffff;
 }
 
+@keyframes rightSlideIn {
+  from {
+    right: -40%;
+  }
+  to {
+    right: 0;
+  }
+}
+
+@keyframes rightSlideOut {
+  from {
+    right: 0;
+  }
+  to {
+    right: -40%;
+  }
+}
+
+.session-detail-drawer.close {
+  right: -40%;
+  animation: rightSlideOut 0.25s ease-in-out forwards;
+}
+
 .session-detail-drawer.open {
   right: 0;
+  animation-delay: 200ms;
+  animation: rightSlideIn 0.25s ease-in-out forwards;
 }
+
+
 
 /* 抽屉头部 */
 .drawer-header {
@@ -164,6 +218,7 @@
   display: grid;
   grid-template-columns: 1fr 1fr 1fr 1fr;
   gap: 1rem;
+  margin-top: 0.5rem;
 }
 
 .info-item {
