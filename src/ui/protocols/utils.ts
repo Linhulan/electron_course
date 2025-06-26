@@ -179,8 +179,12 @@ export function calculateChecksum(
  * @returns 生成一个唯一的雪花ID
  * 该ID基于当前时间戳和随机数生成，确保在同一毫秒内生成的ID是唯一的
  */
+let snowflakeIdCounter = 0;
+
 export function generateSnowflakeId(): number {
-  return Date.now() * 1000 + Math.floor(Math.random() * 1000);
+  snowflakeIdCounter = (snowflakeIdCounter + 1) & 0xfff; // 最多支持 4096 个/毫秒
+  // 使用当前时间戳和计数器生成一个唯一的ID
+  return Date.now() * 1000 + snowflakeIdCounter;
 }
 
 

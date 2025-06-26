@@ -227,13 +227,6 @@ export const SessionDetailDrawer: React.FC<SessionDetailDrawerProps> = ({
                       <div key={currencyCode} className="currency-stat-item">
                         <div className="currency-header">
                           <span className="currency-code">{currencyCode}</span>
-                          <span className="currency-flag">
-                            {currencyCode === 'CNY' ? '🇨🇳' : 
-                             currencyCode === 'USD' ? '🇺🇸' : 
-                             currencyCode === 'EUR' ? '🇪🇺' : 
-                             currencyCode === 'JPY' ? '🇯🇵' : 
-                             currencyCode === 'GBP' ? '🇬🇧' : '💰'}
-                          </span>
                         </div>
                         <div className="currency-stats">
                           <div className="currency-stat">
@@ -254,13 +247,6 @@ export const SessionDetailDrawer: React.FC<SessionDetailDrawerProps> = ({
                     {Array.from(sessionData.currencyCountRecords.entries()).map(([currencyCode, record]) => (
                       <div key={currencyCode} className="currency-stat-row">
                         <div className="currency-info">
-                          <span className="currency-flag">
-                            {currencyCode === 'CNY' ? '🇨🇳' : 
-                             currencyCode === 'USD' ? '🇺🇸' : 
-                             currencyCode === 'EUR' ? '🇪🇺' : 
-                             currencyCode === 'JPY' ? '🇯🇵' : 
-                             currencyCode === 'GBP' ? '🇬🇧' : '💰'}
-                          </span>
                           <span className="currency-code">{currencyCode}</span>
                         </div>
                         <div className="currency-values">
@@ -471,13 +457,13 @@ export const SessionDetailDrawer: React.FC<SessionDetailDrawerProps> = ({
                     </div>
                   </div>{" "}
                   <div className="transaction-body">
-                    {" "}
                     {sessionData.details.map((detail) => (
                       <div key={detail.id} className="transaction-row">
                         <div className="transaction-col-no">{detail.no}</div>
                         <div className="transaction-col-serial">
                           {detail.serialNumber || "-"}
-                        </div>                        <div className="transaction-col-denomination">
+                        </div>                        
+                        <div className="transaction-col-denomination">
                           {formatDenomination(detail.denomination)}
                         </div>
                         <div className="transaction-col-currency">

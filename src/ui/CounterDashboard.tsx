@@ -9,6 +9,7 @@ import {
   isSessionEnd,
   isSessionUpdate,
   generateSnowflakeId,
+  debugLog,
 } from "./protocols";
 import { initializeProtocols } from "./protocols/init";
 import { SessionDetailDrawer } from "./components/SessionDetailDrawer";
@@ -822,10 +823,11 @@ export const CounterDashboard: React.FC<CounterDashboardProps> = ({
       };
 
       testSessions.push(testSession);
+      debugLog(`Generated test session ${i + 1}:`, testSession);
     } // 添加到会话数据中
     setSessionData((prev) => [...testSessions, ...prev].slice(0, 50));
 
-    console.log(
+    debugLog(
       `✅ Generated ${testSessions.length} test sessions with total data`
     );
   };
