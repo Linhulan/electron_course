@@ -21,6 +21,63 @@ import {
   CurrencyCountRecord,
 } from "./common/types";
 
+// 货币代码到国旗emoji的映射
+const getCurrencyFlag = (currencyCode: string): string => {
+  const flagMapping: Record<string, string> = {
+    USD: "🇺🇸", // 美元 - 美国
+    EUR: "🇪🇺", // 欧元 - 欧盟
+    JPY: "🇯🇵", // 日元 - 日本
+    GBP: "🇬🇧", // 英镑 - 英国
+    CNY: "🇨🇳", // 人民币 - 中国
+    CHF: "🇨🇭", // 瑞士法郎 - 瑞士
+    CAD: "🇨🇦", // 加拿大元 - 加拿大
+    AUD: "🇦🇺", // 澳元 - 澳大利亚
+    KRW: "🇰🇷", // 韩元 - 韩国
+    HKD: "🇭🇰", // 港币 - 香港
+    SGD: "🇸🇬", // 新加坡元 - 新加坡
+    TWD: "🇹🇼", // 新台币 - 台湾
+    THB: "🇹🇭", // 泰铢 - 泰国
+    MYR: "🇲🇾", // 马来西亚林吉特 - 马来西亚
+    IDR: "🇮🇩", // 印尼盾 - 印度尼西亚
+    VND: "🇻🇳", // 越南盾 - 越南
+    PHP: "🇵🇭", // 菲律宾比索 - 菲律宾
+    INR: "🇮🇳", // 印度卢比 - 印度
+    PKR: "🇵🇰", // 巴基斯坦卢比 - 巴基斯坦
+    BDT: "🇧🇩", // 孟加拉塔卡 - 孟加拉国
+    LKR: "🇱🇰", // 斯里兰卡卢比 - 斯里兰卡
+    NPR: "🇳🇵", // 尼泊尔卢比 - 尼泊尔
+    RUB: "🇷🇺", // 俄罗斯卢布 - 俄罗斯
+    BRL: "🇧🇷", // 巴西雷亚尔 - 巴西
+    MXN: "🇲🇽", // 墨西哥比索 - 墨西哥
+    ARS: "🇦🇷", // 阿根廷比索 - 阿根廷
+    CLP: "🇨🇱", // 智利比索 - 智利
+    COP: "🇨🇴", // 哥伦比亚比索 - 哥伦比亚
+    PEN: "🇵🇪", // 秘鲁索尔 - 秘鲁
+    ZAR: "🇿🇦", // 南非兰特 - 南非
+    EGP: "🇪🇬", // 埃及镑 - 埃及
+    SAR: "🇸🇦", // 沙特里亚尔 - 沙特阿拉伯
+    AED: "🇦🇪", // 阿联酋迪拉姆 - 阿联酋
+    QAR: "🇶🇦", // 卡塔尔里亚尔 - 卡塔尔
+    KWD: "🇰🇼", // 科威特第纳尔 - 科威特
+    BHD: "🇧🇭", // 巴林第纳尔 - 巴林
+    OMR: "🇴🇲", // 阿曼里亚尔 - 阿曼
+    ILS: "🇮🇱", // 以色列新谢克尔 - 以色列
+    TRY: "🇹🇷", // 土耳其里拉 - 土耳其
+    NOK: "🇳🇴", // 挪威克朗 - 挪威
+    SEK: "🇸🇪", // 瑞典克朗 - 瑞典
+    DKK: "🇩🇰", // 丹麦克朗 - 丹麦
+    PLN: "🇵🇱", // 波兰兹罗提 - 波兰
+    CZK: "🇨🇿", // 捷克克朗 - 捷克
+    HUF: "🇭🇺", // 匈牙利福林 - 匈牙利
+    RON: "🇷🇴", // 罗马尼亚列伊 - 罗马尼亚
+    BGN: "🇧🇬", // 保加利亚列弗 - 保加利亚
+    HRK: "🇭🇷", // 克罗地亚库纳 - 克罗地亚
+    UAH: "🇺🇦", // 乌克兰格里夫纳 - 乌克兰
+  };
+
+  return flagMapping[currencyCode] || "💰"; // 默认显示钱袋图标
+};
+
 interface CounterStats {
   totalRecords: Map<string, CurrencyCountRecord>; // 改为必需字段，包含所有货币的统计信息
   totalSessions: number;
@@ -246,9 +303,48 @@ export const CounterDashboard: React.FC<CounterDashboardProps> = ({
   const [isExportPanelOpen, setIsExportPanelOpen] = useState(false);
   // 面额显示Tab状态
   const [selectedCurrencyTab, setSelectedCurrencyTab] = useState<string>('');
+  
+  // 窗口宽度状态（用于响应式布局判断）
+  const [windowWidth, setWindowWidth] = useState(() => {
+    return typeof window !== 'undefined' ? window.innerWidth : 1200;
+  });
+  
+  // 默认显示的货币数量
+  const DEFAULT_CURRENCY_DISPLAY_COUNT = 3;
+  // 两列布局下的显示数量
+  const TWO_COLUMN_CURRENCY_DISPLAY_COUNT = 4;
+  
+  // 获取当前布局下的默认显示数量
+  const getCurrentLayoutDisplayCount = () => {
+    // 在宽屏幕下使用两列布局时，可以显示更多货币
+    if (windowWidth >= 1200) {
+      return TWO_COLUMN_CURRENCY_DISPLAY_COUNT;
+    }
+    return DEFAULT_CURRENCY_DISPLAY_COUNT;
+  };
+  
+  // 判断是否有隐藏的货币
+  const hasHiddenCurrencies = () => {
+    const totalCurrencies = getSortedCurrencyStats().length;
+    const visibleCount = getCurrentLayoutDisplayCount();
+    return totalCurrencies > visibleCount;
+  };
 
-  const dataDisplayRef = useRef<HTMLDivElement>(null); // 监听真实的串口连接状态
+  const dataDisplayRef = useRef<HTMLDivElement>(null);
 
+  // 监听窗口大小变化以支持响应式布局
+  useEffect(() => {
+    const handleResize = () => {
+      setWindowWidth(window.innerWidth);
+    };
+
+    if (typeof window !== 'undefined') {
+      window.addEventListener('resize', handleResize);
+      return () => window.removeEventListener('resize', handleResize);
+    }
+  }, []);
+
+  // 监听真实的串口连接状态
   useEffect(() => {
     // 检查初始连接状态
     const checkInitialStatus = async () => {
@@ -583,10 +679,9 @@ export const CounterDashboard: React.FC<CounterDashboardProps> = ({
       "HKD",
       "SGD",
     ];
-    let currencyCode = "CNY"; // 默认货币代码
 
-    // 生成5个测试会话
-    for (let i = 0; i < 5; i++) {
+    // 生成10个测试会话，确保有多货币数据
+    for (let i = 0; i < 10; i++) {
       const sessionTime = new Date(now.getTime() - i * 60 * 60 * 1000); // 每小时一个会话
       const denominationBreakdown = new Map<number, DenominationDetail>();
       const currencyCountRecords = new Map<string, CurrencyCountRecord>();
@@ -599,14 +694,20 @@ export const CounterDashboard: React.FC<CounterDashboardProps> = ({
       // 为每个会话生成随机数据
       const noteCount = Math.floor(Math.random() * 100) + 20; // 20-120张
 
-      // 每个会话生成随机的货币代码
-      currencyCode = currencyCodes[Math.floor(Math.random() * currencyCodes.length)];
+      // 决定这个会话是单货币还是多货币
+      const isMultiCurrency = i < 5; // 前5个会话使用多货币
+      const sessionCurrencies = isMultiCurrency 
+        ? currencyCodes.slice(0, Math.floor(Math.random() * 3) + 2) // 2-4种货币
+        : [currencyCodes[Math.floor(Math.random() * currencyCodes.length)]]; // 单一货币
 
       for (let j = 0; j < noteCount; j++) {
         const denominations = [1, 5, 10, 20, 50, 100];
         const denomination =
           denominations[Math.floor(Math.random() * denominations.length)];
         const hasError = Math.random() < 0.03; // 3% 错误率
+        
+        // 从当前会话的货币列表中随机选择一个货币
+        const currencyCode = sessionCurrencies[Math.floor(Math.random() * sessionCurrencies.length)];
 
         totalCount++;
         totalAmount += denomination;
@@ -694,7 +795,7 @@ export const CounterDashboard: React.FC<CounterDashboardProps> = ({
           sessionTime.getTime() + 5 * 60 * 1000
         ).toLocaleString(), // 5分钟后结束
         machineMode: i % 2 === 0 ? "AUTO" : "MANUAL",
-        currencyCode,
+        currencyCode: sessionCurrencies[0], // 主要货币代码
         currencyCountRecords,
         totalCount,
         totalAmount,
@@ -814,6 +915,24 @@ export const CounterDashboard: React.FC<CounterDashboardProps> = ({
       setSelectedCurrencyTab('');
     }
   }, [stats.totalRecords, selectedCurrencyTab]);
+
+  // 判断是否使用多货币布局
+  const shouldUseMultiCurrencyLayout = () => {
+    return getAvailableCurrencies().length > 1;
+  };
+
+  // 获取排序后的货币统计数据
+  const getSortedCurrencyStats = () => {
+    return Array.from(stats.totalRecords.entries())
+      .map(([code, record]) => ({
+        currencyCode: code,
+        amount: record.totalAmount,
+        noteCount: record.totalCount,
+        errorCount: record.errorCount,
+        percentage: (record.totalCount / getTotalCount()) * 100
+      }))
+      .sort((a, b) => b.noteCount - a.noteCount);
+  };
 
   // 根据金额大小动态调整字体大小
   const getAmountFontSize = (amount: number) => {
@@ -978,57 +1097,132 @@ export const CounterDashboard: React.FC<CounterDashboardProps> = ({
         </div>
       </div>
       {/* 统计卡片区 */}
-      <div className="stats-grid">
-        {" "}
-        <div className="stat-card">
-          <div className="stat-icon">📊</div>
-          <div className="stat-info">
-            <div className="stat-value">{stats.totalSessions}</div>
-            <div className="stat-label">{t("counter.stats.totalSessions")}</div>
-          </div>
-        </div>
-        <div className="stat-card">
-          {" "}
-          <div className="stat-icon">💴</div>
-          <div className="stat-info">
-            <div
-              className="stat-value"              style={{ fontSize: getAmountFontSize(stats.totalAmount || 0) }}
-            >
-              {formatCurrency(stats.totalAmount || 0)}
+      <div className={`stats-grid ${shouldUseMultiCurrencyLayout() ? 'multi-currency' : ''}`}>
+        {shouldUseMultiCurrencyLayout() ? (
+          // 多货币时使用垂直堆叠行式展示
+          <>
+            {/* Session统计行 */}
+            <div className="session-summary-row">
+              <div className="session-summary-item">
+                <span className="session-summary-icon">📊</span>
+                <span className="session-summary-value">{stats.totalSessions}</span>
+                <span className="session-summary-label">{t("counter.stats.totalSessions")}</span>
+              </div>
+              <div className="session-summary-item">
+                <span className="session-summary-icon">📄</span>
+                <span className="session-summary-value">{getTotalCount().toLocaleString()}</span>
+                <span className="session-summary-label">{t("counter.stats.totalNotes")}</span>
+              </div>
+              <div className="session-summary-item">
+                <span className="session-summary-icon">⚠️</span>
+                <span className="session-summary-value">{(stats.errorPcs || 0).toLocaleString()}</span>
+                <span className="session-summary-label">{t("counter.stats.errorPcs")}</span>
+              </div>
             </div>
-            <div className="stat-label">{t("counter.stats.totalAmount")}</div>
-          </div>
-        </div>        <div className="stat-card">
-          <div className="stat-icon">📄</div>
-          <div className="stat-info">
-            <div className="stat-value">
-              {(() => {
-                const availableCurrencies = getAvailableCurrencies();
-                if (availableCurrencies.length > 1) {
-                  // 多货币时显示总数
-                  return getTotalCount().toLocaleString();
-                } else if (availableCurrencies.length === 1) {
-                  // 单一货币时显示当前Tab张数
-                  return getCurrentTabTotalCount().toLocaleString();
-                } else {
-                  // 无数据时显示0
-                  return "0";
-                }
-              })()}
+
+            {/* 货币统计行列表 - 支持层叠悬浮展开 */}
+            <div className={`currency-stats-container ${hasHiddenCurrencies() ? 'has-stacked' : ''}`}>
+              {getSortedCurrencyStats().map((currencyStats, index) => {
+                const visibleCount = getCurrentLayoutDisplayCount();
+                const isLastVisible = index === visibleCount - 1;
+                const isStacked = index >= visibleCount;
+                const stackedCount = getSortedCurrencyStats().length - visibleCount;
+                
+                return (
+                  <div 
+                    key={currencyStats.currencyCode} 
+                    className={`currency-stats-row ${isStacked ? 'stacked' : 'visible'} ${isLastVisible && hasHiddenCurrencies() ? 'last-visible' : ''}`}
+                    data-currency={currencyStats.currencyCode}
+                    data-stack-index={isStacked ? index - visibleCount + 1 : undefined}
+                    onClick={() => setSelectedCurrencyTab(currencyStats.currencyCode)}
+                    role="button"
+                    tabIndex={0}
+                    title={t("counter.clickToViewCurrencyDetails", "Click to view currency details")}
+                  >
+                    <div className="currency-info">
+                      <div className="currency-code">
+                        <span className="currency-flag">{getCurrencyFlag(currencyStats.currencyCode)}</span>
+                        <span className="currency-text">{currencyStats.currencyCode}</span>
+                      </div>
+                      <div className="currency-amount">
+                        {formatCurrency(currencyStats.amount)}
+                      </div>
+                      <div className="currency-notes">
+                        {currencyStats.noteCount.toLocaleString()} {t("counter.detailTable.pcs", "notes")}
+                      </div>
+                      {currencyStats.errorCount > 0 && (
+                        <div className="currency-errors">
+                          ⚠️ {currencyStats.errorCount.toLocaleString()}
+                        </div>
+                      )}
+                      <div className="currency-percentage">
+                        {currencyStats.percentage.toFixed(1)}%
+                      </div>
+                    </div>
+                    
+                    {/* 层叠角标 - 仅在最后一个可见卡片上显示 */}
+                    {isLastVisible && hasHiddenCurrencies() && (
+                      <div className="stacked-badge" title={t("counter.stackedCurrencies", `${stackedCount} more currencies`)}>
+                        <span className="stacked-count">+{stackedCount}</span>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
-            <div className="stat-label">{t("counter.stats.totalNotes")}</div>
-          </div>
-        </div>{" "}
-        <div className="stat-card">
-          <div className="stat-icon">⚠️</div>
-          <div className="stat-info">
-            <div className="stat-value error-stat">
-              {(stats.errorPcs || 0).toLocaleString()}
+          </>
+        ) : (
+          // 单货币时使用传统4卡片展示
+          <>
+            <div className="stat-card">
+              <div className="stat-icon">📊</div>
+              <div className="stat-info">
+                <div className="stat-value">{stats.totalSessions}</div>
+                <div className="stat-label">{t("counter.stats.totalSessions")}</div>
+              </div>
             </div>
-            <div className="stat-label">{t("counter.stats.errorPcs")}</div>
-          </div>
-        </div>{" "}
-      </div>{" "}
+            <div className="stat-card">
+              <div className="stat-icon">💴</div>
+              <div className="stat-info">
+                <div
+                  className="stat-value"
+                  style={{ fontSize: getAmountFontSize(stats.totalAmount || 0) }}
+                >
+                  {formatCurrency(stats.totalAmount || 0)}
+                </div>
+                <div className="stat-label">{t("counter.stats.totalAmount")}</div>
+              </div>
+            </div>
+            <div className="stat-card">
+              <div className="stat-icon">📄</div>
+              <div className="stat-info">
+                <div className="stat-value">
+                  {(() => {
+                    const availableCurrencies = getAvailableCurrencies();
+                    if (availableCurrencies.length === 1) {
+                      // 单一货币时显示当前Tab张数
+                      return getCurrentTabTotalCount().toLocaleString();
+                    } else {
+                      // 无数据时显示0
+                      return "0";
+                    }
+                  })()}
+                </div>
+                <div className="stat-label">{t("counter.stats.totalNotes")}</div>
+              </div>
+            </div>
+            <div className="stat-card">
+              <div className="stat-icon">⚠️</div>
+              <div className="stat-info">
+                <div className="stat-value error-stat">
+                  {(stats.errorPcs || 0).toLocaleString()}
+                </div>
+                <div className="stat-label">{t("counter.stats.errorPcs")}</div>
+              </div>
+            </div>
+          </>
+        )}
+      </div>
       {/* 当前会话显示 - 常驻显示 */}
       <div className="current-session">
         <div className="session-header">
