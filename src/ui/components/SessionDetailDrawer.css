@@ -787,13 +787,6 @@
   border: 1px solid #404040;
   border-radius: 6px;
   padding: 0.75rem;
-  transition: all 0.2s ease;
-}
-
-.currency-stat-item:hover {
-  border-color: #555;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
 
 .currency-header {
@@ -851,17 +844,10 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0.75rem 1rem;
+  padding: 0rem 1rem;
   background: #1a1a1a;
   border: 1px solid #404040;
   border-radius: 6px;
-  transition: all 0.2s ease;
-}
-
-.currency-stat-row:hover {
-  border-color: #555;
-  background: #222;
-  transform: translateX(2px);
 }
 
 .currency-info {
@@ -884,7 +870,7 @@
 
 .currency-values {
   display: flex;
-  gap: 1.5rem;
+  gap: 1rem;
   align-items: center;
 }
 
