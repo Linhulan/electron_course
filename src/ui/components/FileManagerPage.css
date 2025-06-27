@@ -5,6 +5,10 @@
   margin: 0 auto;
   background: #121212;
   min-height: 100vh;
+  max-height: 100vh; /* 限制最大高度为视口高度 */
+  width: 100%;
+  box-sizing: border-box;
+  overflow-y: auto; /* 允许页面滚动 */
 }
 
 .file-manager-header {
@@ -43,6 +47,8 @@
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
   overflow: hidden;
   border: 1px solid #333;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .section-header {
@@ -74,6 +80,7 @@
 .history-section .file-history-panel {
   box-shadow: none;
   border-radius: 0;
+  max-height: 40vh; /* 为历史区域设置更合适的高度 */
 }
 
 .history-section .panel-header {
@@ -84,6 +91,7 @@
 @media (max-width: 768px) {
   .file-manager-page {
     padding: 16px;
+    max-height: 100vh;
   }
   
   .file-manager-header,
@@ -105,12 +113,18 @@
     flex-direction: column;
     align-items: stretch;
   }
-    .directory-path {
+  
+  .directory-path {
     text-align: center;
     padding: 8px;
     background: #1e1e1e;
     border-radius: 4px;
     border: 1px solid #555;
+  }
+  
+  /* 移动端调整历史面板高度 */
+  .history-section .file-history-panel {
+    max-height: 400px;
   }
 }
 

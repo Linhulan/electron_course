@@ -12,13 +12,6 @@ export const FileManagerPage: React.FC<FileManagerPageProps> = ({ className }) =
 
   return (
     <div className={`file-manager-page ${className || ''}`}>
-      <div className="file-manager-header">
-        <h2>{t('fileManager.title')}</h2>
-        <p className="page-description">
-          {t('sidebar.fileManagerDesc')}
-        </p>
-      </div>
-
       <div className="file-manager-content">
         {/* 设置区域 */}
         <div className="settings-section">
