@@ -425,17 +425,11 @@ export class FileManager {
     workbook.lastModifiedBy = 'System';
     workbook.created = new Date();
     workbook.modified = new Date();
-
-    // 创建各个工作表
+    
     await this.createBanknoteDetailsSheet(workbook, sessionDataList);
     
     // 创建统一的面额统计工作表（包含所有货币的独立表格）
     await this.createUnifiedDenominationSheet(workbook, sessionDataList);
-    
-    if (sessionDataList.length > 1) {
-      await this.createSummarySheet(workbook, sessionDataList);
-      await this.createDetailSheet(workbook, sessionDataList);
-    }
 
     return await workbook.xlsx.writeBuffer() as unknown as Buffer;
   }
@@ -809,36 +803,188 @@ export class FileManager {
   // ==================== Excel 生成辅助方法 ====================
 
   /**
-   * 创建摘要工作表
+   * 创建摘要工作表 - 美化版本，与PDF样式保持一致
    */
   private async createSummarySheet(workbook: any, sessionDataList: SessionData[]): Promise<void> {
-    const worksheet = workbook.addWorksheet('Summary');
+    const worksheet = workbook.addWorksheet('📊 Summary Statistics');
 
-    worksheet.columns = [
-      { header: 'Item', key: 'item', width: 20 },
-      { header: 'Value', key: 'value', width: 15 },
-      { header: 'Unit', key: 'unit', width: 10 },
-    ];
-
+    // 计算统计数据
     const totalSessions = sessionDataList.length;
     const totalCount = sessionDataList.reduce((sum, session) => sum + session.totalCount, 0);
-    const totalAmount = sessionDataList.reduce((sum, session) => sum + (session.totalAmount || 0), 0);
     const completedSessions = sessionDataList.filter(s => s.status === 'completed').length;
     const errorSessions = sessionDataList.filter(s => s.status === 'error').length;
+    const successRate = totalSessions > 0 ? (completedSessions / totalSessions) * 100 : 0;
+    
+    // 计算总金额（支持多货币）
+    let primaryCurrency = 'CNY';
+    const currencyStats = this.getCurrencyStats(sessionDataList);
+    if (currencyStats.length > 0) {
+      primaryCurrency = currencyStats[0].currencyCode; // 使用金额最大的货币作为主货币
+    }
+    
+    // 获取货币信息
+    const currencies = getCountries(sessionDataList);
+    const currencyCount = countCountries(sessionDataList);
+    const currencyDisplay = currencyCount > 1 ? `${currencies.join(', ')} (${currencyCount} types)` : currencies[0] || primaryCurrency;
 
-    const summaryData = [
-      { item: 'Total Sessions', value: totalSessions, unit: '' },
-      { item: 'Total Count', value: totalCount, unit: 'notes' },
-      { item: 'Total Amount', value: totalAmount.toFixed(2), unit: 'CNY' },
-      { item: 'Completed Sessions', value: completedSessions, unit: '' },
-      { item: 'Error Sessions', value: errorSessions, unit: '' },
-      { item: 'Success Rate', value: ((completedSessions / totalSessions) * 100).toFixed(2), unit: '%' },
-      { item: 'Average Amount Per Session', value: (totalAmount / totalSessions).toFixed(2), unit: 'CNY' },
+    // 设置主标题区域
+    let currentRow = 1;
+    
+    // 主标题
+    const titleCell = worksheet.getCell(currentRow, 1);
+    titleCell.value = 'Summary Statistics';
+    titleCell.font = { 
+      bold: true, 
+      size: 18, 
+      color: { argb: 'FFFFFFFF' },
+      name: 'Calibri'
+    };
+    titleCell.fill = { 
+      type: 'gradient', 
+      gradient: 'angle', 
+      degree: 90,
+      stops: [
+        { position: 0, color: { argb: 'FF2C82C9' } }, // RGB(44,130,201)
+        { position: 1, color: { argb: 'FF3498DB' } }
+      ]
+    };
+    titleCell.alignment = { 
+      vertical: 'middle', 
+      horizontal: 'center',
+      wrapText: false
+    };
+    titleCell.border = {
+      top: { style: 'medium', color: { argb: 'FF2C82C9' } },
+      left: { style: 'medium', color: { argb: 'FF2C82C9' } },
+      bottom: { style: 'medium', color: { argb: 'FF2C82C9' } },
+      right: { style: 'medium', color: { argb: 'FF2C82C9' } }
+    };
+    worksheet.mergeCells(currentRow, 1, currentRow, 3);
+    worksheet.getRow(currentRow).height = 35;
+    currentRow += 2; // 留出间距
+
+    // 设置列定义
+    worksheet.columns = [
+      { header: '📋 Item', key: 'item', width: 25 },
+      { header: '📈 Value', key: 'value', width: 25 },
     ];
 
-    worksheet.addRows(summaryData);
-    worksheet.getRow(1).font = { bold: true };
-    worksheet.getRow(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE0E0E0' } };
+    // 表头行
+    const headerRow = worksheet.getRow(currentRow);
+    headerRow.values = ['📋 Item', '📈 Value'];
+    headerRow.font = { 
+      bold: true, 
+      color: { argb: 'FFFFFFFF' },
+      size: 12,
+      name: 'Calibri'
+    };
+    headerRow.height = 28;
+    
+    // 设置表头样式
+    headerRow.eachCell((cell: any, colNumber: number) => {
+      if (colNumber <= 3) {
+        cell.fill = { 
+          type: 'gradient', 
+          gradient: 'angle', 
+          degree: 90,
+          stops: [
+            { position: 0, color: { argb: 'FF2C82C9' } },
+            { position: 1, color: { argb: 'FF3498DB' } }
+          ]
+        };
+        cell.border = {
+          top: { style: 'medium', color: { argb: 'FF2C82C9' } },
+          left: { style: 'thin', color: { argb: 'FF85C1E9' } },
+          bottom: { style: 'medium', color: { argb: 'FF2C82C9' } },
+          right: { style: 'thin', color: { argb: 'FF85C1E9' } }
+        };
+        cell.alignment = { 
+          vertical: 'middle', 
+          horizontal: 'center',
+          wrapText: false
+        };
+      }
+    });
+    currentRow++;
+
+    // 准备数据
+    const summaryData = [
+      { item: '📊 Total Sessions', value: totalSessions,},
+      { item: '📝 Total Notes', value: totalCount},
+      { item: '🌍 Total Currency', value: currencyDisplay},
+    ];
+
+    // 添加数据行
+    summaryData.forEach((data, index) => {
+      const dataRow = worksheet.getRow(currentRow);
+      dataRow.values = [data.item, data.value, data.unit];
+      dataRow.height = 24;
+      
+      const isEvenRow = index % 2 === 0;
+      
+      dataRow.eachCell((cell: any, colNumber: number) => {
+        if (colNumber <= 3) {
+          // 交替行颜色 - 与PDF的alternateRowStyles保持一致
+          cell.fill = { 
+            type: 'pattern', 
+            pattern: 'solid', 
+            fgColor: { argb: isEvenRow ? 'FFE6F5FF' : 'FFFFFFFF' } // 浅蓝色交替
+          };
+          
+          // 精细边框
+          cell.border = {
+            top: { style: 'thin', color: { argb: 'FFD0D0D0' } },
+            left: { style: 'thin', color: { argb: 'FFD0D0D0' } },
+            bottom: { style: 'thin', color: { argb: 'FFD0D0D0' } },
+            right: { style: 'thin', color: { argb: 'FFD0D0D0' } }
+          };
+          
+          // 字体设置
+          cell.font = { 
+            name: 'Calibri', 
+            size: 11,
+            color: { argb: 'FF3C3C3C' } // 与PDF的textColor: 60保持一致
+          };
+          
+          // 根据列内容设置对齐方式
+          if (colNumber === 1) { // Item
+            cell.alignment = { vertical: 'middle', horizontal: 'left', indent: 1 };
+            cell.font = { ...cell.font, bold: true };
+          } else if (colNumber === 2) { // Value
+            cell.alignment = { vertical: 'middle', horizontal: 'center' };
+            cell.font = { ...cell.font, bold: true };
+          } else { // Unit
+            cell.alignment = { vertical: 'middle', horizontal: 'center' };
+          }
+        }
+      });
+      currentRow++;
+    });
+
+    // 工作表设置
+    worksheet.views = [{
+      state: 'frozen',
+      xSplit: 0,
+      ySplit: currentRow - summaryData.length - 1, // 冻结表头
+      topLeftCell: 'A1',
+      activeCell: 'A1'
+    }];
+
+    // 设置打印属性
+    worksheet.pageSetup = {
+      paperSize: 9, // A4
+      orientation: 'portrait',
+      horizontalCentered: true,
+      verticalCentered: true,
+      margins: {
+        left: 0.7,
+        right: 0.7,
+        top: 0.75,
+        bottom: 0.75,
+        header: 0.3,
+        footer: 0.3
+      }
+    };
   }
 
   /**
