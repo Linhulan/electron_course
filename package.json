@@ -24,6 +24,7 @@
   "dependencies": {
     "@serialport/parser-readline": "^13.0.0",
     "@types/protobufjs": "^6.0.0",
+    "currency-symbol-map": "^5.1.0",
     "exceljs": "^4.4.0",
     "i18next": "^25.2.1",
     "i18next-browser-languagedetector": "^8.2.0",

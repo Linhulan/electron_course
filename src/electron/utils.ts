@@ -1,6 +1,7 @@
 import { ipcMain, WebContents, WebFrameMain } from "electron";
 import { pathToFileURL } from "url";
 import { getUIPath } from "./pathResolver.js";
+import getSymbolFromCurrency from 'currency-symbol-map';
 
 export function isDev(): boolean {
   return process.env.NODE_ENV === "development";
@@ -8,7 +9,9 @@ export function isDev(): boolean {
 
 export function ipcMainHandle<Key extends keyof EventPayloadMapping>(
   key: Key,
-  handler: (...args: unknown[]) => EventPayloadMapping[Key] | Promise<EventPayloadMapping[Key]>
+  handler: (
+    ...args: unknown[]
+  ) => EventPayloadMapping[Key] | Promise<EventPayloadMapping[Key]>
 ) {
   ipcMain.handle(key, (event, ...args) => {
     validateEventFrame(event.senderFrame);
@@ -40,42 +43,44 @@ export function validateEventFrame(frame: WebFrameMain | null) {
   }
 
   console.log("Frame URL:", frame.url);
-  
+
   // 开发环境：允许localhost
   if (isDev() && new URL(frame.url).host === "localhost:5123") {
     return;
   }
-  
+
   // 生产环境：更灵活的文件URL验证
   if (!isDev()) {
     const frameUrl = new URL(frame.url);
-    
+
     // 必须是file协议
     if (frameUrl.protocol !== "file:") {
       throw new Error("Malicious event: Invalid protocol");
     }
-    
+
     // 检查路径是否包含预期的文件名
-    if (frameUrl.pathname.endsWith("/index.html") || frameUrl.pathname.endsWith("/dist-react/index.html")) {
+    if (
+      frameUrl.pathname.endsWith("/index.html") ||
+      frameUrl.pathname.endsWith("/dist-react/index.html")
+    ) {
       return;
     }
-    
+
     // 如果URL完全匹配预期路径也允许
     const expectedUrl = pathToFileURL(getUIPath()).toString();
     console.log("Expected URL:", expectedUrl);
     if (frame.url === expectedUrl) {
       return;
     }
-    
+
     throw new Error("Malicious event: Invalid frame URL");
   }
-  
+
   // 开发环境的严格检查
   if (frame.url !== pathToFileURL(getUIPath()).toString()) {
     throw new Error("Malicious event");
   }
 }
-
 
 /* 货币格式化接口函数---------------------------------------------------------------- */
 
@@ -102,7 +107,7 @@ export interface CurrencyFormatOptions {
  * @param amount 金额数值
  * @param options 格式化选项
  * @returns 格式化后的货币字符串
- * 
+ *
  * @example
  * formatCurrency(1234.56) // "¥1,234.56"
  * formatCurrency(100, { isDenomination: true }) // "¥100"
@@ -110,39 +115,49 @@ export interface CurrencyFormatOptions {
  * formatCurrency(1234, { showCurrencySymbol: false }) // "1,234.00"
  */
 export const formatCurrency = (
-  amount: number, 
+  amount: number,
   options: CurrencyFormatOptions = {}
 ): string => {
   const {
-    currency = 'USD',
-    locale = 'zh-CN',
+    currency = "USD",
+    locale = "zh-CN",
     minimumFractionDigits = 2,
     maximumFractionDigits = 2,
     showCurrencySymbol = true,
-    isDenomination = false
+    isDenomination = false,
   } = options;
 
-  // 面额格式：整数显示，无小数点
-  if (isDenomination) {
+  try {
     const formatted = new Intl.NumberFormat(locale, {
-      style: showCurrencySymbol ? 'currency' : 'decimal',
+      style: showCurrencySymbol ? "currency" : "decimal",
       currency: showCurrencySymbol ? currency : undefined,
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
+      minimumFractionDigits: isDenomination ? 0 : minimumFractionDigits,
+      maximumFractionDigits: isDenomination ? 0 : maximumFractionDigits,
     }).format(amount);
-    
+
+    // 某些货币 Intl 可能会格式成 "XXX 123"（不是真正的符号），我们手动处理 fallback
+    if (
+      showCurrencySymbol &&
+      (formatted.includes(currency) || formatted === `${amount}`) // 判断是否没有真实货币符号
+    ) {
+      const symbol = getSymbolFromCurrency(currency) || currency;
+      console.log("Currency symbol:", symbol);
+      return `${symbol}${
+        isDenomination
+          ? amount.toFixed(0)
+          : amount.toFixed(maximumFractionDigits)
+      }`;
+    }
+
     return formatted;
+
+  } catch (err) {
+    // Intl 格式失败时 fallback
+    const symbol = getSymbolFromCurrency(currency) || currency;
+    return `${symbol}${
+      isDenomination ? amount.toFixed(0) : amount.toFixed(maximumFractionDigits)
+    }`;
   }
-
-  // 普通金额格式
-  const formatted = new Intl.NumberFormat(locale, {
-    style: showCurrencySymbol ? 'currency' : 'decimal',
-    currency: showCurrencySymbol ? currency : undefined,
-    minimumFractionDigits,
-    maximumFractionDigits,
-  }).format(amount);
-
-  return formatted;
 };
 
 /**
@@ -150,8 +165,11 @@ export const formatCurrency = (
  * @param denomination 面额数值
  * @returns 格式化后的面额字符串，如 "¥100"
  */
-export const formatDenomination = (denomination: number): string => {
-  return formatCurrency(denomination, { isDenomination: true });
+export const formatDenomination = (
+  denomination: number,
+  options: CurrencyFormatOptions = {}
+): string => {
+  return formatCurrency(denomination, { isDenomination: true, ...options });
 };
 
 /**
@@ -160,11 +178,17 @@ export const formatDenomination = (denomination: number): string => {
  * @param fractionDigits 小数位数，默认 2
  * @returns 格式化后的金额字符串，如 "¥1,234.56"
  */
-export const formatAmount = (amount: number, fractionDigits: number = 2): string => {
-  return formatCurrency(amount, {
-    minimumFractionDigits: fractionDigits,
-    maximumFractionDigits: fractionDigits
-  });
+export const formatAmount = (
+  amount: number,
+  options: CurrencyFormatOptions = {}
+): string => {
+  const fractionDigits = 2; // 默认小数位数为2
+  options = {
+    ...options,
+    minimumFractionDigits: options.minimumFractionDigits ?? fractionDigits,
+    maximumFractionDigits: options.maximumFractionDigits ?? fractionDigits,
+  };
+  return formatCurrency(amount, { ...options });
 };
 
 /**
@@ -173,10 +197,13 @@ export const formatAmount = (amount: number, fractionDigits: number = 2): string
  * @param fractionDigits 小数位数，默认 2
  * @returns 格式化后的数字字符串，如 "1,234.56"
  */
-export const formatNumber = (amount: number, fractionDigits: number = 2): string => {
+export const formatNumber = (
+  amount: number,
+  fractionDigits: number = 2
+): string => {
   return formatCurrency(amount, {
     showCurrencySymbol: false,
     minimumFractionDigits: fractionDigits,
-    maximumFractionDigits: fractionDigits
+    maximumFractionDigits: fractionDigits,
   });
 };

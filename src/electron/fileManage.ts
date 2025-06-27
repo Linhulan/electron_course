@@ -1,9 +1,9 @@
-import { app, dialog, shell } from 'electron';
+import { dialog, shell } from 'electron';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import jsPDF from 'jspdf';
 import ExcelJS from 'exceljs';
-import { formatCurrency, formatDenomination } from './utils.js';
+import { formatAmount, formatCurrency, formatDenomination } from './utils.js';
 
 
 declare module 'jspdf' {
@@ -15,28 +15,65 @@ declare module 'jspdf' {
   }
 }
 
-// 使用类型定义而不是导入，避免模块导入问题
+/**
+ * 点钞机数据接口 - 用于记录每次点钞的详细信息
+ */
+interface CounterData {
+  id: number;
+  no: number; // 记录编号
+  timestamp: string;
+  currencyCode: string; // 货币代码 (例如: "CNY")
+  denomination: number; // 面额
+  status: "counting" | "completed" | "error" | "paused"; // 计数状态
+  errorCode?: string;
+  serialNumber?: string; // 纸币序列号
+}
+
+/**
+ * 记录不同货币的点钞信息
+ */
+interface CurrencyCountRecord {
+  currencyCode: string; // 货币代码 (例如: "CNY")
+  totalCount: number; // 总张数
+  totalAmount: number; // 总金额
+  errorCount: number; // 错误张数
+  denominationBreakdown: Map<number, DenominationDetail>; // 面额分布 Ex. {"CNY": {denomination: 100, count: 5, amount: 500}}
+}
+
+// Session数据结构 - 用于记录完整的点钞会话
 interface SessionData {
   id: number;
   no: number;
+  user?: string; // 用户名 (如果有)
+  machineId?: string; // 机器ID (如果有)
+  timestamp: string;
   startTime: string;
   endTime?: string;
-  status: 'counting' | 'completed' | 'error' | 'paused';
+  machineMode?: string; // 机器模式 (如果有)
+  currencyCode?: string; // 货币代码 (例如: "CNY") 用于判断 MIX 模式
+  currencyCountRecords?: Map<string, CurrencyCountRecord>; // 记录不同货币的点钞信息, 主要为了兼容MIX模式点钞
+  details?: CounterData[]; // 每张点钞记录的详细信息
+  status: "counting" | "completed" | "error" | "paused";
   totalCount: number;
-  totalAmount: number;
-  errorCount: number;
-  machineMode?: string;
-  currencyCode?: string;
-  denominationBreakdown: Map<number, { count: number; amount: number }>;
-  details?: Array<{
-    no: number;
-    timestamp: string;
-    denomination: number;
-    currencyCode?: string;
-    serialNumber?: string;
-    errorCode?: string;
-    status: string;
-  }>;
+  errorCount: number; // 错误张数
+  errorCode?: string;
+
+  /* 以下字段标记为废弃, 保留用作兼容----------------------------------- */
+  /**
+   * @deprecated 请使用 CurrencyCountRecord 替代
+   */
+  totalAmount?: number;
+  /**
+   * @deprecated 请使用 CurrencyCountRecord 替代
+   */
+  denominationBreakdown?: Map<number, DenominationDetail>; // 面额分布
+}
+
+// 面额详细信息
+interface DenominationDetail {
+  denomination: number; // 面额 (例如: 1, 5, 10, 20, 50, 100)
+  count: number; // 张数
+  amount: number; // 小计金额
 }
 
 // 文件管理相关类型定义
@@ -69,6 +106,29 @@ export interface ExportResult {
   filePath?: string;
   fileInfo?: ExportFileInfo;
   error?: string;
+}
+
+/**
+ * 获取seesionData中的国家列表
+ */
+export function getCountries(sessionDataList: SessionData[]): string[] {
+  const countrySet = new Set<string>();
+  sessionDataList.forEach(session => {
+    if (session.currencyCode) {
+      countrySet.add(session.currencyCode);
+    }
+  });
+  return Array.from(countrySet);
+}
+
+
+/**
+ * 计算不同国家的数量
+ * @param sessionDataList - 会话数据列表
+ * @returns 国家数量
+ */
+export function countCountries(sessionDataList: SessionData[]): number {
+  return getCountries(sessionDataList).length;
 }
 
 /**
@@ -368,7 +428,10 @@ export class FileManager {
 
     // 创建各个工作表
     await this.createBanknoteDetailsSheet(workbook, sessionDataList);
-    await this.createDenominationSheet(workbook, sessionDataList);
+    
+    // 创建统一的面额统计工作表（包含所有货币的独立表格）
+    await this.createUnifiedDenominationSheet(workbook, sessionDataList);
+    
     if (sessionDataList.length > 1) {
       await this.createSummarySheet(workbook, sessionDataList);
       await this.createDetailSheet(workbook, sessionDataList);
@@ -393,7 +456,7 @@ export class FileManager {
     const filename = this.generateFilename('pdf').replace('.pdf', '');
 
     // 封面页
-    let coverY = 32;
+    const coverY = 32;
     pdf.setFont('helvetica', 'bold');
     pdf.setFontSize(22);
     pdf.setTextColor(40, 64, 134);
@@ -421,7 +484,6 @@ export class FileManager {
 
     const totalSessions = sessionDataList.length;
     const totalCount = sessionDataList.reduce((sum, session) => sum + session.totalCount, 0);
-    const totalAmount = sessionDataList.reduce((sum, session) => sum + session.totalAmount, 0);
     const completedSessions = sessionDataList.filter(s => s.status === 'completed').length;
     const errorSessions = sessionDataList.filter(s => s.status === 'error').length;
 
@@ -431,11 +493,9 @@ export class FileManager {
       body: [
         ['Total Sessions', totalSessions, ''],
         ['Total Notes', totalCount, 'notes'],
-        ['Total Amount', formatCurrency(totalAmount), ''],
+        ['Total Currency', getCountries(sessionDataList).join(', '), countCountries(sessionDataList)],
         ['Completed Sessions', completedSessions, ''],
         ['Error Sessions', errorSessions, ''],
-        ['Success Rate', ((completedSessions / totalSessions) * 100).toFixed(2), '%'],
-        ['Avg. Session Amount', formatCurrency(totalAmount / totalSessions), ''],
       ],
       margin: { left: 15, right: 15 },
       theme: 'grid',
@@ -445,28 +505,106 @@ export class FileManager {
     });
     currentY = (pdf as any).lastAutoTable.finalY + 10;
 
-    // 面额统计
-    pdf.setFont('helvetica', 'bold');
-    pdf.setFontSize(15);
-    pdf.setTextColor(44, 130, 201);
-    pdf.text('Denomination Statistics', 15, currentY);
+    // 货币统计 (如果有多种货币)
+    const currencyStats = this.getCurrencyStats(sessionDataList);
+    if (currencyStats.length > 1) {
+      pdf.setFont('helvetica', 'bold');
+      pdf.setFontSize(15);
+      pdf.setTextColor(44, 130, 201);
+      pdf.text('Currency Distribution', 15, currentY);
 
-    const denominationStats = this.calculateDenominationStats(sessionDataList);
+      pdf.autoTable({
+        startY: currentY + 5,
+        head: [['Currency', 'Notes', 'Amount', 'Error Count', 'Percentage']],
+        body: currencyStats.map(stat => [
+          stat.currencyCode,
+          stat.totalCount,
+          formatCurrency(stat.totalAmount, { currency: stat.currencyCode }),
+          stat.errorCount,
+          `${stat.percentage.toFixed(2)}%`
+        ]),
+        theme: 'striped',
+        margin: { left: 15, right: 15 },
+        styles: { font: 'helvetica', fontSize: 10, cellPadding: 2 },
+        headStyles: { fillColor: [44, 130, 201], textColor: 255, fontStyle: 'bold' },
+        alternateRowStyles: { fillColor: [245, 250, 255] }
+      });
+      currentY = (pdf as any).lastAutoTable.finalY + 10;
+    }
 
-    pdf.autoTable({
-      startY: currentY + 5,
-      head: [['Denomination', 'Count', 'Amount', 'Percentage']],      
-      body: denominationStats.map(stat => [
-        formatDenomination(stat.denomination),
-        stat.count,
-        formatCurrency(stat.amount),
-        `${stat.percentage.toFixed(2)}%`
-      ]),
-      theme: 'striped',
-      margin: { left: 15, right: 15 },
-      styles: { font: 'helvetica', fontSize: 10, cellPadding: 2 },
-      headStyles: { fillColor: [44, 130, 201], textColor: 255, fontStyle: 'bold' },
-      alternateRowStyles: { fillColor: [245, 250, 255] }
+    // 面额统计 (每个货币单独表格)
+    const multiCurrencyDenominationStats = this.calculateMultiCurrencyDenominationStats(sessionDataList);
+    
+    // 按货币分组
+    const currencyGroups = new Map<string, Array<{
+      currencyCode: string;
+      denomination: number;
+      count: number;
+      amount: number;
+      percentage: number;
+    }>>();
+    
+    multiCurrencyDenominationStats.forEach(stat => {
+      if (!currencyGroups.has(stat.currencyCode)) {
+        currencyGroups.set(stat.currencyCode, []);
+      }
+      currencyGroups.get(stat.currencyCode)!.push(stat);
+    });
+
+    // 为每个货币创建单独的表格
+    currencyGroups.forEach((stats, currencyCode) => {
+      // 检查是否需要新页面（调整为更小的阈值，因为表格更紧凑）
+      if (currentY > 220) {
+        pdf.addPage();
+        currentY = 20;
+      }
+
+      pdf.setFont('helvetica', 'bold');
+      pdf.setFontSize(13);
+      pdf.setTextColor(44, 130, 201);
+      pdf.text(`${currencyCode} Currency Statistics`, 15, currentY);
+
+      // 计算合计
+      const totalCount = stats.reduce((sum, stat) => sum + stat.count, 0);
+      const totalAmount = stats.reduce((sum, stat) => sum + stat.amount, 0);
+
+      // 准备表格数据（包含合计行）
+      const tableBody = [
+        ...stats.map(stat => [
+          formatDenomination(stat.denomination, { currency: stat.currencyCode }),
+          stat.count,
+          formatAmount(stat.amount, { currency: stat.currencyCode }),
+          `${stat.percentage.toFixed(2)}%`
+        ]),
+        // 合计行
+        [
+          'Total',
+          totalCount,
+          formatAmount(totalAmount, { currency: currencyCode }),
+          '100.00%'
+        ]
+      ];
+
+      pdf.autoTable({
+        startY: currentY + 5,
+        head: [['Denomination', 'Count', 'Amount', 'Percentage']],
+        body: tableBody,
+        theme: 'striped',
+        margin: { left: 20, right: 20 },
+        styles: { font: 'helvetica', fontSize: 9, cellPadding: 1.5 },
+        headStyles: { fillColor: [44, 130, 201], textColor: 255, fontStyle: 'bold' },
+        alternateRowStyles: { fillColor: [245, 250, 255] },
+        didParseCell: function (data: any) {
+          // 合计行样式
+          if (data.row.section === 'body' && data.row.index === tableBody.length - 1) {
+            data.cell.styles.fillColor = [220, 235, 255];
+            data.cell.styles.fontStyle = 'bold';
+            data.cell.styles.textColor = [44, 130, 201];
+          }
+        }
+      });
+      
+      currentY = (pdf as any).lastAutoTable.finalY + 15;
     });
 
     // 会话概览
@@ -488,7 +626,7 @@ export class FileManager {
           session.no,
           new Date(session.startTime).toLocaleString(),
           session.totalCount,
-          formatCurrency(session.totalAmount),
+          formatCurrency(session.totalAmount || 0),
           session.errorCount || 0,
           duration > 0 ? `${duration} min` : '-'
         ];
@@ -501,7 +639,7 @@ export class FileManager {
     });
 
     // 详细会话信息
-    let sessionPageNumbers: number[] = [];
+    const sessionPageNumbers: number[] = [];
     sessionDataList.forEach((session, idx) => {
       if (currentY > 210 || idx === 0) {
         pdf.addPage();
@@ -518,7 +656,7 @@ export class FileManager {
       pdf.setFontSize(10);
       pdf.setTextColor(60, 60, 60);
       pdf.text(
-        `Start: ${session.startTime}   |   Notes: ${session.totalCount}   |   Amount: ${formatCurrency(session.totalAmount)}   ${session.errorCount ? `|   Errors: ${session.errorCount}` : ''}`,
+        `Start: ${session.startTime}   |   Notes: ${session.totalCount}   |   Amount: ${formatCurrency(session.totalAmount || 0)}   ${session.errorCount ? `|   Errors: ${session.errorCount}` : ''}`,
         12,
         currentY + 7
       );
@@ -562,8 +700,23 @@ export class FileManager {
 
       // Session stats row
       const okCount = session.details!.filter(d => d.status !== 'error' && (!d.errorCode || d.errorCode === 'E0')).length;
-      const errCount = session.details!.filter(d => d.status === 'error' || (d.errorCode && d.errorCode !== 'E0')).length;      const breakdown = Array.from(session.denominationBreakdown.entries())
-        .map(([denom, detail]) => `${formatDenomination(denom)}×${detail.count}`).join(', ');
+      const errCount = session.details!.filter(d => d.status === 'error' || (d.errorCode && d.errorCode !== 'E0')).length;
+      
+      // 安全地处理 denominationBreakdown
+      let breakdown = 'N/A';
+      if (session.denominationBreakdown) {
+        breakdown = Array.from(session.denominationBreakdown.entries())
+          .map(([denom, detail]) => `${formatDenomination(denom)}×${detail.count}`).join(', ');
+      } else if (session.currencyCountRecords) {
+        const allBreakdowns: string[] = [];
+        session.currencyCountRecords.forEach((record, currencyCode) => {
+          const currencyBreakdown = Array.from(record.denominationBreakdown.entries())
+            .map(([denom, detail]) => `${currencyCode}:${formatDenomination(denom)}×${detail.count}`);
+          allBreakdowns.push(...currencyBreakdown);
+        });
+        breakdown = allBreakdowns.join(', ');
+      }
+      
       pdf.setFontSize(9);
       pdf.setTextColor(110, 110, 110);
       pdf.text(
@@ -669,7 +822,7 @@ export class FileManager {
 
     const totalSessions = sessionDataList.length;
     const totalCount = sessionDataList.reduce((sum, session) => sum + session.totalCount, 0);
-    const totalAmount = sessionDataList.reduce((sum, session) => sum + session.totalAmount, 0);
+    const totalAmount = sessionDataList.reduce((sum, session) => sum + (session.totalAmount || 0), 0);
     const completedSessions = sessionDataList.filter(s => s.status === 'completed').length;
     const errorSessions = sessionDataList.filter(s => s.status === 'error').length;
 
@@ -714,7 +867,7 @@ export class FileManager {
         endTime: session.endTime || '-',
         status: this.getStatusText(session.status),
         totalCount: session.totalCount,
-        totalAmount: session.totalAmount.toFixed(2),
+        totalAmount: (session.totalAmount || 0).toFixed(2),
         errorCount: session.errorCount,
         machineMode: session.machineMode || '-'
       });
@@ -737,48 +890,271 @@ export class FileManager {
   }
 
   /**
-   * 创建面额统计工作表
+   * 创建统一的面额统计工作表（所有货币在一个Sheet中，每个货币独立表格）
    */
-  private async createDenominationSheet(workbook: any, sessionDataList: SessionData[]): Promise<void> {
-    const worksheet = workbook.addWorksheet('Denomination');
-    const denominationStats = this.calculateDenominationStats(sessionDataList);
-
-    worksheet.columns = [
-      { header: 'Denomination', key: 'denomination', width: 10 },
-      { header: 'Count', key: 'count', width: 12 },
-      { header: 'Amount', key: 'amount', width: 12 },
-      { header: 'Percentage', key: 'percentage', width: 10 },
-    ];    denominationStats.forEach(stat => {
-      worksheet.addRow({
-        denomination: formatDenomination(stat.denomination),
-        count: stat.count,
-        amount: stat.amount.toFixed(2),
-        percentage: `${stat.percentage.toFixed(2)}%`
-      });
+  private async createUnifiedDenominationSheet(workbook: any, sessionDataList: SessionData[]): Promise<void> {
+    const worksheet = workbook.addWorksheet('Denomination Statistics');
+    const multiCurrencyDenominationStats = this.calculateMultiCurrencyDenominationStats(sessionDataList);
+    
+    // 按货币分组
+    const currencyGroups = new Map<string, Array<{
+      currencyCode: string;
+      denomination: number;
+      count: number;
+      amount: number;
+      percentage: number;
+    }>>();
+    
+    multiCurrencyDenominationStats.forEach(stat => {
+      if (!currencyGroups.has(stat.currencyCode)) {
+        currencyGroups.set(stat.currencyCode, []);
+      }
+      currencyGroups.get(stat.currencyCode)!.push(stat);
     });
 
-    worksheet.getRow(1).font = { bold: true };
-    worksheet.getRow(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE0E0E0' } };
+    let currentRow = 1;
+
+    // 为每个货币创建独立的表格区域
+    currencyGroups.forEach((stats, currencyCode) => {
+      // 添加额外间距（除了第一个表格）
+      if (currentRow > 1) {
+        currentRow += 1;
+      }
+
+      // 主标题 - 更加醒目的设计
+      const titleCell = worksheet.getCell(currentRow, 1);
+      titleCell.value = `💰 ${currencyCode} Currency Statistics`;
+      titleCell.font = { 
+        bold: true, 
+        size: 16, 
+        color: { argb: 'FFFFFFFF' },
+        name: 'Calibri'
+      };
+      titleCell.fill = { 
+        type: 'gradient', 
+        gradient: 'angle', 
+        degree: 90,
+        stops: [
+          { position: 0, color: { argb: 'FF1B4F72' } },
+          { position: 1, color: { argb: 'FF2874A6' } }
+        ]
+      };
+      titleCell.alignment = { 
+        vertical: 'middle', 
+        horizontal: 'center',
+        wrapText: false
+      };
+      titleCell.border = {
+        top: { style: 'medium', color: { argb: 'FF1B4F72' } },
+        left: { style: 'medium', color: { argb: 'FF1B4F72' } },
+        bottom: { style: 'medium', color: { argb: 'FF1B4F72' } },
+        right: { style: 'medium', color: { argb: 'FF1B4F72' } }
+      };
+      worksheet.mergeCells(currentRow, 1, currentRow, 4);
+      worksheet.getRow(currentRow).height = 30;
+      currentRow += 1;
+
+      // 表头 - 专业的渐变设计
+      const headerRow = worksheet.getRow(currentRow);
+      headerRow.values = ['💸 Denomination', '📊 Count', '💵 Amount', '📈 Percentage'];
+      headerRow.font = { 
+        bold: true, 
+        color: { argb: 'FFFFFFFF' },
+        size: 11,
+        name: 'Calibri'
+      };
+      headerRow.height = 25;
+      
+      // 设置表头样式
+      headerRow.eachCell((cell: any, colNumber: number) => {
+        if (colNumber <= 4) {
+          cell.fill = { 
+            type: 'gradient', 
+            gradient: 'angle', 
+            degree: 90,
+            stops: [
+              { position: 0, color: { argb: 'FF1B4F72' } },
+              { position: 1, color: { argb: 'FF3498DB' } }
+            ]
+          };
+          cell.border = {
+            top: { style: 'medium', color: { argb: 'FF1B4F72' } },
+            left: { style: 'thin', color: { argb: 'FF85C1E9' } },
+            bottom: { style: 'medium', color: { argb: 'FF1B4F72' } },
+            right: { style: 'thin', color: { argb: 'FF85C1E9' } }
+          };
+          cell.alignment = { 
+            vertical: 'middle', 
+            horizontal: 'center',
+            wrapText: false
+          };
+        }
+      });
+      currentRow++;
+
+      // 添加面额数据 - 交替行颜色和精美样式
+      stats.forEach((stat, statIndex) => {
+        const dataRow = worksheet.getRow(currentRow);
+        dataRow.values = [
+          formatDenomination(stat.denomination, { currency: stat.currencyCode }),
+          stat.count,
+          formatCurrency(stat.amount, { currency: stat.currencyCode }),
+          `${stat.percentage.toFixed(2)}%`
+        ];
+        dataRow.height = 22;
+        
+        // 设置数据行样式 - 交替背景色
+        const isEvenRow = statIndex % 2 === 0;
+        dataRow.eachCell((cell: any, colNumber: number) => {
+          if (colNumber <= 4) {
+            // 交替行颜色
+            cell.fill = { 
+              type: 'pattern', 
+              pattern: 'solid', 
+              fgColor: { argb: isEvenRow ? 'FFFBFCFD' : 'FFF8F9FA' }
+            };
+            
+            // 精细边框
+            cell.border = {
+              top: { style: 'thin', color: { argb: 'FFE5E8EC' } },
+              left: { style: 'thin', color: { argb: 'FFE5E8EC' } },
+              bottom: { style: 'thin', color: { argb: 'FFE5E8EC' } },
+              right: { style: 'thin', color: { argb: 'FFE5E8EC' } }
+            };
+            
+            // 字体和对齐
+            cell.font = { 
+              name: 'Calibri', 
+              size: 10,
+              color: { argb: 'FF2C3E50' }
+            };
+            
+            // 根据列内容设置对齐方式
+            if (colNumber === 1) { // Denomination
+              cell.alignment = { vertical: 'middle', horizontal: 'left', indent: 1 };
+              cell.font = { ...cell.font, bold: true };
+            } else if (colNumber === 2 || colNumber === 4) { // Count, Percentage
+              cell.alignment = { vertical: 'middle', horizontal: 'center' };
+            } else { // Amount
+              cell.alignment = { vertical: 'middle', horizontal: 'right', indent: 1 };
+            }
+          }
+        });
+        currentRow++;
+      });
+
+      // 计算合计
+      const totalCount = stats.reduce((sum, stat) => sum + stat.count, 0);
+      const totalAmount = stats.reduce((sum, stat) => sum + stat.amount, 0);
+
+      // 添加合计行 - 特殊的高亮设计
+      const totalRow = worksheet.getRow(currentRow);
+      totalRow.values = [
+        '🎯 Total',
+        totalCount,
+        formatCurrency(totalAmount, { currency: currencyCode }),
+        '100.00%'
+      ];
+      totalRow.height = 28;
+      
+      // 设置合计行样式 - 渐变和特殊效果
+      totalRow.eachCell((cell: any, colNumber: number) => {
+        if (colNumber <= 4) {
+          cell.fill = { 
+            type: 'gradient', 
+            gradient: 'angle', 
+            degree: 90,
+            stops: [
+              { position: 0, color: { argb: 'FFE8F4FD' } },
+              { position: 1, color: { argb: 'FFDBEAFE' } }
+            ]
+          };
+          cell.font = { 
+            bold: true, 
+            color: { argb: 'FF1B4F72' },
+            size: 11,
+            name: 'Calibri'
+          };
+          cell.border = {
+            top: { style: 'medium', color: { argb: 'FF2874A6' } },
+            left: { style: 'thin', color: { argb: 'FF2874A6' } },
+            bottom: { style: 'medium', color: { argb: 'FF2874A6' } },
+            right: { style: 'thin', color: { argb: 'FF2874A6' } }
+          };
+          
+          // 根据列内容设置对齐方式
+          if (colNumber === 1) { // Total label
+            cell.alignment = { vertical: 'middle', horizontal: 'left', indent: 1 };
+          } else if (colNumber === 2 || colNumber === 4) { // Count, Percentage
+            cell.alignment = { vertical: 'middle', horizontal: 'center' };
+          } else { // Amount
+            cell.alignment = { vertical: 'middle', horizontal: 'right', indent: 1 };
+          }
+        }
+      });
+      currentRow += 2; // 在表格之间留出更多空隙
+    });
+
+    // 设置列宽 - 优化的比例和宽度
+    worksheet.getColumn(1).width = 18; // Denomination - 更宽以容纳图标和货币符号
+    worksheet.getColumn(2).width = 12; // Count - 适中宽度
+    worksheet.getColumn(3).width = 20; // Amount - 更宽以显示完整金额
+    worksheet.getColumn(4).width = 14; // Percentage - 适中宽度
+
+    // 添加工作表级别的格式设置
+    worksheet.views = [{
+      state: 'frozen',
+      xSplit: 0,
+      ySplit: 0,
+      topLeftCell: 'A1',
+      activeCell: 'A1'
+    }];
+
+    // 设置打印属性
+    worksheet.pageSetup = {
+      paperSize: 9, // A4
+      orientation: 'portrait',
+      horizontalCentered: true,
+      verticalCentered: false,
+      margins: {
+        left: 0.7,
+        right: 0.7,
+        top: 0.75,
+        bottom: 0.75,
+        header: 0.3,
+        footer: 0.3
+      }
+    };
   }
 
   /**
-   * 创建纸币详细信息工作表
+   * 创建纸币详细信息工作表 - 美化版本
    */
   private async createBanknoteDetailsSheet(workbook: any, sessionDataList: SessionData[]): Promise<void> {
-    const worksheet = workbook.addWorksheet('Banknote Details');
+    const worksheet = workbook.addWorksheet('💵 Banknote Details');
 
+    // 设置列定义
     worksheet.columns = [
-      { header: 'Session No.', key: 'sessionNo', width: 12 },
-      { header: 'Note No.', key: 'noteNo', width: 8 },
-      { header: 'Timestamp', key: 'timestamp', width: 20 },
-      { header: 'Denomination', key: 'denomination', width: 12 },
-      { header: 'Currency Code', key: 'currencyCode', width: 12 },
-      { header: 'Serial Number', key: 'serialNumber', width: 20 },
-      { header: 'Error Code', key: 'errorCode', width: 10 },
-      { header: 'Status', key: 'status', width: 10 },
+      { header: '🔢 Session No.', key: 'sessionNo', width: 12 },
+      { header: '📝 Note No.', key: 'noteNo', width: 8 },
+      { header: '⏰ Timestamp', key: 'timestamp', width: 18 },
+      { header: '💸 Denomination', key: 'denomination', width: 12 },
+      { header: '🌍 Currency', key: 'currencyCode', width: 10 },
+      { header: '🔍 Serial Number', key: 'serialNumber', width: 22 },
+      { header: '⚠️ Error Code', key: 'errorCode', width: 10 },
+      { header: '✅ Status', key: 'status', width: 8 },
     ];
 
-    const allBanknoteDetails: any[] = [];
+    const allBanknoteDetails: Array<{
+      sessionNo: number;
+      noteNo: number;
+      timestamp: string;
+      denomination: string;
+      currencyCode: string;
+      serialNumber: string;
+      errorCode: string;
+      status: string;
+    }> = [];
 
     sessionDataList.forEach(session => {
       if (session.details && session.details.length > 0) {
@@ -787,7 +1163,7 @@ export class FileManager {
             sessionNo: session.no,
             noteNo: detail.no,
             timestamp: detail.timestamp,
-            denomination: formatDenomination(detail.denomination),
+            denomination: formatDenomination(detail.denomination, { currency: detail.currencyCode }),
             currencyCode: detail.currencyCode || 'CNY',
             serialNumber: detail.serialNumber || '-',
             errorCode: detail.errorCode && detail.errorCode !== 'E0' ? detail.errorCode : '-',
@@ -799,48 +1175,194 @@ export class FileManager {
 
     worksheet.addRows(allBanknoteDetails);
 
-    // 自动调整列宽
-    worksheet.columns.forEach((column: any) => {
-      const maxLength = column.values.reduce((max: number, value: any) => {
-        return Math.max(max, String(value).length);
-      }, 0);
-      column.width = maxLength + 2; // 加一些额外的空间
-    });
+    // 设置默认行高
+    // 注意：ExcelJS中已明确设置每行高度的情况下，defaultRowHeight不会生效
 
-    // 都设置为左对齐，垂直居中
-    // worksheet.properties.defaultRowHeight = 20;
-    worksheet.eachRow((row: any) => {
-      // row.height = 20; // 设置行高
-      row.alignment = { vertical: 'middle', horizontal: 'left' }; // 垂直居中，水平左对齐
-    });
+    // 美化标题行 - 渐变蓝色主题
+    const headerRow = worksheet.getRow(1);
+    headerRow.height = 32;
+    headerRow.font = { 
+      bold: true, 
+      color: { argb: 'FFFFFFFF' },
+      size: 11,
+      name: 'Calibri'
+    };
 
-    // 标题行样式到status列后结束
-    worksheet.getRow(1).eachCell((cell: any, colNumber: number) => {
+    headerRow.eachCell((cell: any, colNumber: number) => {
       if (colNumber <= 8) {
-        cell.alignment = { vertical: 'middle', horizontal: 'left' };
-        cell.font = { bold: true };
-        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF4A90E2' } };
-        cell.font = { ...cell.font, color: { argb: 'FFFFFFFF' } };
+        cell.fill = { 
+          type: 'gradient', 
+          gradient: 'angle', 
+          degree: 90,
+          stops: [
+            { position: 0, color: { argb: 'FF1B4F72' } },
+            { position: 1, color: { argb: 'FF3498DB' } }
+          ]
+        };
+        cell.border = {
+          top: { style: 'medium', color: { argb: 'FF1B4F72' } },
+          left: { style: 'thin', color: { argb: 'FF85C1E9' } },
+          bottom: { style: 'medium', color: { argb: 'FF1B4F72' } },
+          right: { style: 'thin', color: { argb: 'FF85C1E9' } }
+        };
+        cell.alignment = { 
+          vertical: 'middle', 
+          horizontal: 'center',
+          wrapText: false
+        };
       }
     });
 
-    // 状态列条件格式
+    // 美化数据行 - 交替背景色和精细样式
+    allBanknoteDetails.forEach((_, index) => {
+      const rowNumber = index + 2; // 从第2行开始（第1行是表头）
+      const dataRow = worksheet.getRow(rowNumber);
+      const isEvenRow = index % 2 === 0;
+      
+      // 设置行高
+      dataRow.height = 22;
+      
+      dataRow.eachCell((cell: any, colNumber: number) => {
+        if (colNumber <= 8) {
+          // 交替行颜色
+          cell.fill = { 
+            type: 'pattern', 
+            pattern: 'solid', 
+            fgColor: { argb: isEvenRow ? 'FFFBFCFD' : 'FFF8F9FA' }
+          };
+          
+          // 精细边框
+          cell.border = {
+            top: { style: 'thin', color: { argb: 'FFE5E8EC' } },
+            left: { style: 'thin', color: { argb: 'FFE5E8EC' } },
+            bottom: { style: 'thin', color: { argb: 'FFE5E8EC' } },
+            right: { style: 'thin', color: { argb: 'FFE5E8EC' } }
+          };
+          
+          // 字体设置
+          cell.font = { 
+            name: 'Calibri', 
+            size: 10,
+            color: { argb: 'FF2C3E50' }
+          };
+          
+          // 根据列内容设置对齐方式和特殊样式
+          if (colNumber === 1 || colNumber === 2) { // Session No, Note No
+            cell.alignment = { vertical: 'middle', horizontal: 'center' };
+            cell.font = { ...cell.font, bold: true };
+          } else if (colNumber === 3) { // Timestamp
+            cell.alignment = { vertical: 'middle', horizontal: 'left', indent: 1 };
+            cell.font = { ...cell.font, size: 9 };
+          } else if (colNumber === 4 || colNumber === 5) { // Denomination, Currency
+            cell.alignment = { vertical: 'middle', horizontal: 'left' };
+            cell.font = { ...cell.font, bold: true };
+          } else if (colNumber === 6) { // Serial Number - 简单优化：等宽字体和加粗
+            cell.alignment = { vertical: 'middle', horizontal: 'left', indent: 1 };
+            cell.font = { 
+              name: 'Consolas', // 等宽字体便于读取冠字号
+              size: 10, 
+              bold: true, 
+              color: { argb: 'FF2C3E50' } 
+            };
+          } else if (colNumber === 7) { // Error Code
+            cell.alignment = { vertical: 'middle', horizontal: 'center' };
+            // 错误代码特殊颜色
+            if (cell.value && cell.value !== '-') {
+              cell.font = { ...cell.font, bold: true, color: { argb: 'FFDC3545' } };
+              cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFF5F5' } };
+            }
+          } else if (colNumber === 8) { // Status
+            cell.alignment = { vertical: 'middle', horizontal: 'center' };
+            cell.font = { ...cell.font, bold: true };
+          }
+        }
+      });
+    });
+
+    // 状态列特殊条件格式 - 增强版
     worksheet.getColumn('status').eachCell((cell: any, rowNumber: number) => {
       if (rowNumber > 1) {
         const status = cell.value as string;
         if (status === 'OK') {
-          cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE6FFE6' } };
-          cell.font = { color: { argb: 'FF006600' } };
+          cell.fill = { 
+            type: 'gradient', 
+            gradient: 'angle', 
+            degree: 90,
+            stops: [
+              { position: 0, color: { argb: 'FFE8F5E8' } },
+              { position: 1, color: { argb: 'FFD4F3D4' } }
+            ]
+          };
+          cell.font = { 
+            bold: true,
+            color: { argb: 'FF28A745' },
+            name: 'Calibri',
+            size: 10
+          };
+          cell.border = {
+            ...cell.border,
+            top: { style: 'thin', color: { argb: 'FF28A745' } },
+            bottom: { style: 'thin', color: { argb: 'FF28A745' } }
+          };
         } else if (status === 'Error') {
-          cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFE6E6' } };
-          cell.font = { color: { argb: 'FFCC0000' }, bold: true };
+          cell.fill = { 
+            type: 'gradient', 
+            gradient: 'angle', 
+            degree: 90,
+            stops: [
+              { position: 0, color: { argb: 'FFFEF2F2' } },
+              { position: 1, color: { argb: 'FFFECACA' } }
+            ]
+          };
+          cell.font = { 
+            bold: true,
+            color: { argb: 'FFDC3545' },
+            name: 'Calibri',
+            size: 10
+          };
+          cell.border = {
+            ...cell.border,
+            top: { style: 'thin', color: { argb: 'FFDC3545' } },
+            bottom: { style: 'thin', color: { argb: 'FFDC3545' } }
+          };
         }
       }
     });
+
+    // 启用自动筛选和高级功能
+    worksheet.autoFilter = {
+      from: { row: 1, column: 1 },
+      to: { row: allBanknoteDetails.length + 1, column: 8 }
+    };
+    
+    // 冻结首行（表头）
+    worksheet.views = [
+      { state: 'frozen', xSplit: 0, ySplit: 1 }
+    ];
+    
+    // 设置打印选项
+    worksheet.pageSetup = {
+      paperSize: 9, // A4
+      orientation: 'landscape', // 横向打印
+      fitToPage: true,
+      fitToWidth: 1,
+      fitToHeight: 0,
+      margins: {
+        left: 0.5,
+        right: 0.5,
+        top: 0.75,
+        bottom: 0.75,
+        header: 0.3,
+        footer: 0.3
+      }
+    };
+    
+    // 设置打印标题（每页都显示表头）
+    worksheet.pageSetup.printTitlesRow = '1:1';
   }
 
   /**
-   * 计算面额统计
+   * 计算面额统计 - 兼容旧版本数据结构
    */
   private calculateDenominationStats(sessionDataList: SessionData[]): Array<{
     denomination: number;
@@ -851,13 +1373,27 @@ export class FileManager {
     const denominationMap = new Map<number, { count: number; amount: number }>();
 
     sessionDataList.forEach(session => {
-      session.denominationBreakdown.forEach((detail, denomination) => {
-        const existing = denominationMap.get(denomination) || { count: 0, amount: 0 };
-        denominationMap.set(denomination, {
-          count: existing.count + detail.count,
-          amount: existing.amount + detail.amount
+      // 兼容旧版本：优先使用 denominationBreakdown
+      if (session.denominationBreakdown) {
+        session.denominationBreakdown.forEach((detail, denomination) => {
+          const existing = denominationMap.get(denomination) || { count: 0, amount: 0 };
+          denominationMap.set(denomination, {
+            count: existing.count + detail.count,
+            amount: existing.amount + detail.amount
+          });
         });
-      });
+      } else if (session.currencyCountRecords) {
+        // 新版本：从 currencyCountRecords 中提取
+        session.currencyCountRecords.forEach((record) => {
+          record.denominationBreakdown.forEach((detail, denomination) => {
+            const existing = denominationMap.get(denomination) || { count: 0, amount: 0 };
+            denominationMap.set(denomination, {
+              count: existing.count + detail.count,
+              amount: existing.amount + detail.amount
+            });
+          });
+        });
+      }
     });
 
     const totalAmount = Array.from(denominationMap.values()).reduce((sum, item) => sum + item.amount, 0);
@@ -873,6 +1409,124 @@ export class FileManager {
   }
 
   /**
+   * 计算多货币面额统计
+   */
+  private calculateMultiCurrencyDenominationStats(sessionDataList: SessionData[]): Array<{
+    currencyCode: string;
+    denomination: number;
+    count: number;
+    amount: number;
+    percentage: number;
+  }> {
+    const denominationMap = new Map<string, { count: number; amount: number }>();
+    const currencyTotals = new Map<string, number>();
+
+    sessionDataList.forEach(session => {
+      // 优先使用新的 currencyCountRecords 结构
+      if (session.currencyCountRecords && session.currencyCountRecords.size > 0) {
+        session.currencyCountRecords.forEach((record, currencyCode) => {
+          record.denominationBreakdown.forEach((detail, denomination) => {
+            const key = `${currencyCode}-${denomination}`;
+            const existing = denominationMap.get(key) || { count: 0, amount: 0 };
+            denominationMap.set(key, {
+              count: existing.count + detail.count,
+              amount: existing.amount + detail.amount
+            });
+            
+            // 累计每种货币的总金额
+            const currencyTotal = currencyTotals.get(currencyCode) || 0;
+            currencyTotals.set(currencyCode, currencyTotal + detail.amount);
+          });
+        });
+      } else {
+        // 兼容旧版本数据结构
+        const currencyCode = session.currencyCode || 'CNY';
+        if (session.denominationBreakdown) {
+          session.denominationBreakdown.forEach((detail, denomination) => {
+            const key = `${currencyCode}-${denomination}`;
+            const existing = denominationMap.get(key) || { count: 0, amount: 0 };
+            denominationMap.set(key, {
+              count: existing.count + detail.count,
+              amount: existing.amount + detail.amount
+            });
+            
+            // 累计每种货币的总金额
+            const currencyTotal = currencyTotals.get(currencyCode) || 0;
+            currencyTotals.set(currencyCode, currencyTotal + detail.amount);
+          });
+        }
+      }
+    });
+
+    return Array.from(denominationMap.entries())
+      .map(([key, data]) => {
+        const [currencyCode, denominationStr] = key.split('-');
+        const denomination = parseInt(denominationStr);
+        const currencyTotal = currencyTotals.get(currencyCode) || 0;
+        return {
+          currencyCode,
+          denomination,
+          count: data.count,
+          amount: data.amount,
+          percentage: currencyTotal > 0 ? (data.amount / currencyTotal) * 100 : 0
+        };
+      })
+      .sort((a, b) => {
+        // 先按货币代码排序，再按面额降序排序
+        if (a.currencyCode !== b.currencyCode) {
+          return a.currencyCode.localeCompare(b.currencyCode);
+        }
+        return b.denomination - a.denomination;
+      });
+  }
+
+  /**
+   * 获取货币统计信息
+   */
+  private getCurrencyStats(sessionDataList: SessionData[]): Array<{
+    currencyCode: string;
+    totalCount: number;
+    totalAmount: number;
+    errorCount: number;
+    percentage: number;
+  }> {
+    const currencyMap = new Map<string, { count: number; amount: number; errorCount: number }>();
+    
+    sessionDataList.forEach(session => {
+      // 优先使用新的 currencyCountRecords 结构
+      if (session.currencyCountRecords && session.currencyCountRecords.size > 0) {
+        session.currencyCountRecords.forEach((record, currencyCode) => {
+          const existing = currencyMap.get(currencyCode) || { count: 0, amount: 0, errorCount: 0 };
+          currencyMap.set(currencyCode, {
+            count: existing.count + record.totalCount,
+            amount: existing.amount + record.totalAmount,
+            errorCount: existing.errorCount + record.errorCount
+          });
+        });
+      } else {
+        // 兼容旧版本数据结构
+        const currencyCode = session.currencyCode || 'CNY';
+        const existing = currencyMap.get(currencyCode) || { count: 0, amount: 0, errorCount: 0 };
+        currencyMap.set(currencyCode, {
+          count: existing.count + session.totalCount,
+          amount: existing.amount + (session.totalAmount || 0),
+          errorCount: existing.errorCount + (session.errorCount || 0)
+        });
+      }
+    });
+
+    const totalAmount = Array.from(currencyMap.values()).reduce((sum, item) => sum + item.amount, 0);
+    
+    return Array.from(currencyMap.entries()).map(([currencyCode, data]) => ({
+      currencyCode,
+      totalCount: data.count,
+      totalAmount: data.amount,
+      errorCount: data.errorCount,
+      percentage: totalAmount > 0 ? (data.amount / totalAmount) * 100 : 0
+    })).sort((a, b) => b.totalAmount - a.totalAmount);
+  }
+
+  /**
    * 获取状态文本
    */
   private getStatusText(status: string): string {
@@ -884,6 +1538,8 @@ export class FileManager {
     };
     return statusMap[status] || status;
   }
+
+
 }
 
 // 导出单例实例
