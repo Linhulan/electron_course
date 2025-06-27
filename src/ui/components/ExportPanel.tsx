@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { SessionData } from '../utils/serialization';
 import './ExportPanel.css';
 
@@ -31,6 +32,7 @@ const ExportPanel: React.FC<ExportPanelProps> = ({
   onExportComplete,
   onClose 
 }) => {
+  const { t } = useTranslation();
   const [isExporting, setIsExporting] = useState(false);
   const [exportStatus, setExportStatus] = useState<string>('');
   const [filename, setFilename] = useState(`session_report_${new Date().toISOString().split('T')[0]}`);
@@ -61,12 +63,12 @@ const ExportPanel: React.FC<ExportPanelProps> = ({
    */
   const handleExportExcel = async () => {
     if (sessionData.length === 0) {
-      setExportStatus('❌ 没有可导出的数据');
+      setExportStatus(`❌ ${t('exportPanel.noDataToExport')}`);
       return;
     }
 
     setIsExporting(true);
-    setExportStatus('📊 正在生成Excel文件...');
+    setExportStatus(`📊 ${t('exportPanel.generatingExcel')}`);
 
     try {
       const result = await window.electron.exportExcel(sessionData, {
@@ -76,14 +78,14 @@ const ExportPanel: React.FC<ExportPanelProps> = ({
       });
       
       if (result.success) {
-        setExportStatus(`✅ Excel导出成功！文件已保存到: ${result.filePath}`);
+        setExportStatus(`✅ ${t('exportPanel.exportSuccessExcel')} ${result.filePath}`);
         onExportComplete?.(result);
       } else {
-        setExportStatus(`❌ Excel导出失败: ${result.error}`);
+        setExportStatus(`❌ ${t('exportPanel.exportFailedExcel')} ${result.error}`);
       }
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : '未知错误';
-      setExportStatus(`❌ Excel导出异常: ${errorMessage}`);
+      setExportStatus(`❌ ${t('exportPanel.exportErrorExcel')} ${errorMessage}`);
     } finally {
       setIsExporting(false);
     }
@@ -93,12 +95,12 @@ const ExportPanel: React.FC<ExportPanelProps> = ({
    */
   const handleExportPDF = async () => {
     if (sessionData.length === 0) {
-      setExportStatus('❌ 没有可导出的数据');
+      setExportStatus(`❌ ${t('exportPanel.noDataToExport')}`);
       return;
     }
 
     setIsExporting(true);
-    setExportStatus('📄 正在生成PDF文件...');
+    setExportStatus(`📄 ${t('exportPanel.generatingPDF')}`);
 
     try {
       const result = await window.electron.exportPDF(sessionData, {
@@ -108,14 +110,14 @@ const ExportPanel: React.FC<ExportPanelProps> = ({
       });
       
       if (result.success) {
-        setExportStatus(`✅ PDF导出成功！文件已保存到: ${result.filePath}`);
+        setExportStatus(`✅ ${t('exportPanel.exportSuccessPDF')} ${result.filePath}`);
         onExportComplete?.(result);
       } else {
-        setExportStatus(`❌ PDF导出失败: ${result.error}`);
+        setExportStatus(`❌ ${t('exportPanel.exportFailedPDF')} ${result.error}`);
       }
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : '未知错误';
-      setExportStatus(`❌ PDF导出异常: ${errorMessage}`);
+      setExportStatus(`❌ ${t('exportPanel.exportErrorPDF')} ${errorMessage}`);
     } finally {
       setIsExporting(false);
     }
@@ -125,12 +127,12 @@ const ExportPanel: React.FC<ExportPanelProps> = ({
    */
   const handleBatchExport = async () => {
     if (sessionData.length === 0) {
-      setExportStatus('❌ 没有可导出的数据');
+      setExportStatus(`❌ ${t('exportPanel.noDataToExport')}`);
       return;
     }
 
     setIsExporting(true);
-    setExportStatus('🚀 正在批量导出Excel和PDF...');
+    setExportStatus(`🚀 ${t('exportPanel.batchExporting')}`);
 
     try {
       const [excelResult, pdfResult] = await Promise.all([
@@ -149,7 +151,7 @@ const ExportPanel: React.FC<ExportPanelProps> = ({
       const excelStatus = excelResult.success ? '✅' : '❌';
       const pdfStatus = pdfResult.success ? '✅' : '❌';
       
-      setExportStatus(`批量导出完成: Excel ${excelStatus} PDF ${pdfStatus}`);
+      setExportStatus(`${t('exportPanel.batchCompleted')} ${excelStatus} PDF ${pdfStatus}`);
       
       if (excelResult.success) {
         onExportComplete?.(excelResult);
@@ -159,7 +161,7 @@ const ExportPanel: React.FC<ExportPanelProps> = ({
       }
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : '未知错误';
-      setExportStatus(`❌ 批量导出异常: ${errorMessage}`);
+      setExportStatus(`❌ ${t('exportPanel.exportErrorBatch')} ${errorMessage}`);
     } finally {
       setIsExporting(false);
     }
@@ -205,10 +207,10 @@ const ExportPanel: React.FC<ExportPanelProps> = ({
       <div className={`export-panel-modal ${isOpen ? 'open' : ''}`}>
         <div className="export-panel">
           <div className="export-panel-header">
-            <h3>📊 数据导出</h3>
+            <h3>📊 {t('exportPanel.title')}</h3>
             <div className="header-right">
               <span className="data-count">
-                {sessionData.length} 条会话数据
+                {sessionData.length} {t('exportPanel.sessionCount')}
               </span>
               {onClose && (
                 <button 
@@ -223,13 +225,13 @@ const ExportPanel: React.FC<ExportPanelProps> = ({
 
       <div className="export-options">
         <div className="option-group">
-          <label htmlFor="filename">文件名:</label>
+          <label htmlFor="filename">{t('exportPanel.filename')}:</label>
           <input
             id="filename"
             type="text"
             value={filename}
             onChange={(e) => setFilename(e.target.value)}
-            placeholder="请输入文件名"
+            placeholder={t('exportPanel.filenamePlaceholder')}
             disabled={isExporting}
           />
         </div>
@@ -242,7 +244,7 @@ const ExportPanel: React.FC<ExportPanelProps> = ({
               onChange={(e) => setIncludeCharts(e.target.checked)}
               disabled={isExporting}
             />
-            包含图表 (PDF)
+            {t('exportPanel.includeCharts')}
           </label>
         </div>
       </div>
@@ -253,7 +255,7 @@ const ExportPanel: React.FC<ExportPanelProps> = ({
           onClick={handleExportExcel}
           disabled={isExporting || sessionData.length === 0}
         >
-          {isExporting ? '导出中...' : '📊 导出Excel'}
+          {isExporting ? t('exportPanel.exporting') : `📊 ${t('exportPanel.exportExcel')}`}
         </button>
 
         <button
@@ -261,7 +263,7 @@ const ExportPanel: React.FC<ExportPanelProps> = ({
           onClick={handleExportPDF}
           disabled={isExporting || sessionData.length === 0}
         >
-          {isExporting ? '导出中...' : '📄 导出PDF'}
+          {isExporting ? t('exportPanel.exporting') : `📄 ${t('exportPanel.exportPDF')}`}
         </button>
 
         <button
@@ -269,7 +271,7 @@ const ExportPanel: React.FC<ExportPanelProps> = ({
           onClick={handleBatchExport}
           disabled={isExporting || sessionData.length === 0}
         >
-          {isExporting ? '导出中...' : '🚀 批量导出'}
+          {isExporting ? t('exportPanel.exporting') : `🚀 ${t('exportPanel.batchExport')}`}
         </button>
       </div>
 
@@ -286,12 +288,12 @@ const ExportPanel: React.FC<ExportPanelProps> = ({
           </button>
         </div>
       )}      <div className="export-info">
-        <h4>📋 导出说明</h4>
+        <h4>📋 {t('exportPanel.exportInfo')}</h4>
         <ul>
-          <li><strong>Excel导出:</strong> 包含概览统计、详细数据、面额统计和纸币详情四个工作表</li>
-          <li><strong>PDF导出:</strong> 生成格式化的专业报告，包含统计表格和会话详情</li>
-          <li><strong>批量导出:</strong> 同时生成Excel和PDF两种格式</li>
-          <li><strong>文件位置:</strong> 自动保存到项目的Data目录，可在文件管理器中查看历史记录</li>
+          <li><strong>{t('exportPanel.exportExcel')}:</strong> {t('exportPanel.excelDescription')}</li>
+          <li><strong>{t('exportPanel.exportPDF')}:</strong> {t('exportPanel.pdfDescription')}</li>
+          <li><strong>{t('exportPanel.batchExport')}:</strong> {t('exportPanel.batchDescription')}</li>
+          <li><strong>{t('fileManager.defaultDirectory')}:</strong> {t('exportPanel.fileLocationDescription')}</li>
         </ul>
       </div>
         </div>

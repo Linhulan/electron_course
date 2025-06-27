@@ -193,7 +193,7 @@ export function generateSnowflakeId(): number {
  */
 export function debugLog(message: string, ...optionalParams: any[]): void {
   if (import.meta.env.DEV) {
-    console.debug(`[DEBUG] ${message}`, ...optionalParams);
+    console.log(`[DEBUG] ${message}`, ...optionalParams);
   }
 }
 
