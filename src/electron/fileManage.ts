@@ -611,18 +611,17 @@ export class FileManager {
 
     pdf.autoTable({
       startY: currentY + 5,
-      head: [['No.', 'Start Time', 'Note Count', 'Amount', 'Error Count', 'Duration']],
+      head: [['No.', 'Start Time', 'Currency', 'Note Count', 'Amount', 'Error Count']],
       body: sessionDataList.map(session => {
-        const duration = session.endTime && session.startTime
-          ? Math.round((new Date(session.endTime).getTime() - new Date(session.startTime).getTime()) / 1000 / 60)
-          : 0;
+        const currencyKeys = Array.from(session.currencyCountRecords?.keys() || []);
+        const currencyLen = currencyKeys.length;
         return [
           session.no,
           new Date(session.startTime).toLocaleString(),
+          currencyKeys.join(', '),
           session.totalCount,
-          formatCurrency(session.totalAmount || 0),
-          session.errorCount || 0,
-          duration > 0 ? `${duration} min` : '-'
+          currencyLen > 1 ? '-' : formatAmount(session.totalAmount || 0, { currency: session.currencyCode}),
+          session.errorCount || 0
         ];
       }),
       theme: 'striped',
@@ -639,6 +638,7 @@ export class FileManager {
         pdf.addPage();
         currentY = 20;
       }
+      const currency_cnt = session.currencyCountRecords ? session.currencyCountRecords.size : 0;
       sessionPageNumbers.push(pdf.getNumberOfPages());
 
       pdf.setFont('helvetica', 'bold');
@@ -650,11 +650,93 @@ export class FileManager {
       pdf.setFontSize(10);
       pdf.setTextColor(60, 60, 60);
       pdf.text(
-        `Start: ${session.startTime}   |   Notes: ${session.totalCount}   |   Amount: ${formatCurrency(session.totalAmount || 0)}   ${session.errorCount ? `|   Errors: ${session.errorCount}` : ''}`,
+        `Start: ${session.startTime}   |   Notes: ${session.totalCount}   |   Amount: ${currency_cnt>1 ? '-' : formatAmount(session.totalAmount || 0, { currency: session.currencyCode })}   ${session.errorCount ? `|   Errors: ${session.errorCount}` : ''}`,
         12,
         currentY + 7
       );
       currentY += 15;
+
+      // 如果当前Session包含多种货币，在明细表格前添加面额详情展示
+      const hasMultipleCurrencies = session.currencyCountRecords && session.currencyCountRecords.size > 1;
+      const hasRichCurrencyData = session.currencyCountRecords && session.currencyCountRecords.size >= 1;
+      
+      if (hasMultipleCurrencies || (hasRichCurrencyData && session.currencyCountRecords!.size === 1 && session.totalCount > 20)) {
+        // 检查是否需要新页面
+        if (currentY > 160) {
+          pdf.addPage();
+          currentY = 20;
+        }
+
+        // 为每种货币创建面额详情表格
+        session.currencyCountRecords!.forEach((record, currencyCode) => {
+          // 检查页面空间
+          if (currentY > 200) {
+            pdf.addPage();
+            currentY = 20;
+          }
+
+          pdf.setFont('helvetica', 'bold');
+          pdf.setFontSize(10);
+          pdf.setTextColor(52, 73, 94);
+          pdf.text(`${currencyCode} Currency Details`, 15, currentY);
+          currentY += 3;
+
+          // 准备面额数据
+          const denominationData: Array<[string, number, string, string]> = [];
+          let totalCount = 0;
+          let totalAmount = 0;
+
+          record.denominationBreakdown.forEach((detail, denomination) => {
+            const percentage = record.totalAmount > 0 ? (detail.amount / record.totalAmount) * 100 : 0;
+            denominationData.push([
+              formatDenomination(denomination, { currency: currencyCode }),
+              detail.count,
+              formatAmount(detail.amount, { currency: currencyCode }),
+              `${percentage.toFixed(1)}%`
+            ]);
+            totalCount += detail.count;
+            totalAmount += detail.amount;
+          });
+
+          // 按面额降序排序
+          denominationData.sort((a, b) => {
+            const denomA = parseFloat(a[0].replace(/[^0-9.-]/g, ''));
+            const denomB = parseFloat(b[0].replace(/[^0-9.-]/g, ''));
+            return denomB - denomA;
+          });
+
+          // 添加合计行
+          denominationData.push([
+            'Total',
+            totalCount,
+            formatAmount(totalAmount, { currency: currencyCode }),
+            '100.0%'
+          ]);
+
+          pdf.autoTable({
+            startY: currentY,
+            head: [['Denomination', 'Count', 'Amount', 'Percentage']],
+            body: denominationData,
+            theme: 'striped',
+            margin: { left: 20, right: 20 },
+            styles: { font: 'helvetica', fontSize: 8, cellPadding: 1 },
+            headStyles: { fillColor: [52, 73, 94], textColor: 255, fontStyle: 'bold' },
+            alternateRowStyles: { fillColor: [248, 249, 250] },
+            didParseCell: function (data: any) {
+              // 合计行样式
+              if (data.row.section === 'body' && data.row.index === denominationData.length - 1) {
+                data.cell.styles.fillColor = [220, 235, 255];
+                data.cell.styles.fontStyle = 'bold';
+                data.cell.styles.textColor = [52, 73, 94];
+              }
+            }
+          });
+          
+          currentY = (pdf as any).lastAutoTable.finalY + 7;
+        });
+
+        currentY += 3; // 在面额详情后留出额外空间，然后显示明细表格
+      }
 
       if (session.details && session.details.length > 0) {
         pdf.autoTable({
@@ -662,7 +744,7 @@ export class FileManager {
           head: [['No.', 'Timestamp', 'Denomination', 'Currency', 'Serial No.', 'Error Code', 'Status']],          body: session.details.map(detail => [
             detail.no,
             detail.timestamp,
-            formatDenomination(detail.denomination),
+            formatDenomination(detail.denomination, { currency: detail.currencyCode }),
             detail.currencyCode || 'CNY',
             detail.serialNumber || '-',
             detail.errorCode && detail.errorCode !== 'E0' ? detail.errorCode : '-',
@@ -692,33 +774,6 @@ export class FileManager {
       }
       currentY = (pdf as any).lastAutoTable.finalY + 8;
 
-      // Session stats row
-      const okCount = session.details!.filter(d => d.status !== 'error' && (!d.errorCode || d.errorCode === 'E0')).length;
-      const errCount = session.details!.filter(d => d.status === 'error' || (d.errorCode && d.errorCode !== 'E0')).length;
-      
-      // 安全地处理 denominationBreakdown
-      let breakdown = 'N/A';
-      if (session.denominationBreakdown) {
-        breakdown = Array.from(session.denominationBreakdown.entries())
-          .map(([denom, detail]) => `${formatDenomination(denom)}×${detail.count}`).join(', ');
-      } else if (session.currencyCountRecords) {
-        const allBreakdowns: string[] = [];
-        session.currencyCountRecords.forEach((record, currencyCode) => {
-          const currencyBreakdown = Array.from(record.denominationBreakdown.entries())
-            .map(([denom, detail]) => `${currencyCode}:${formatDenomination(denom)}×${detail.count}`);
-          allBreakdowns.push(...currencyBreakdown);
-        });
-        breakdown = allBreakdowns.join(', ');
-      }
-      
-      pdf.setFontSize(9);
-      pdf.setTextColor(110, 110, 110);
-      pdf.text(
-        `Summary: OK: ${okCount}   |   Abnormal: ${errCount}   |   Denomination Distribution: ${breakdown}`,
-        12,
-        currentY
-      );
-      currentY += 10;
       if (currentY > 210 && idx < sessionDataList.length - 1) {
         pdf.addPage();
         currentY = 20;
@@ -811,9 +866,6 @@ export class FileManager {
     // 计算统计数据
     const totalSessions = sessionDataList.length;
     const totalCount = sessionDataList.reduce((sum, session) => sum + session.totalCount, 0);
-    const completedSessions = sessionDataList.filter(s => s.status === 'completed').length;
-    const errorSessions = sessionDataList.filter(s => s.status === 'error').length;
-    const successRate = totalSessions > 0 ? (completedSessions / totalSessions) * 100 : 0;
     
     // 计算总金额（支持多货币）
     let primaryCurrency = 'CNY';
@@ -917,7 +969,7 @@ export class FileManager {
     // 添加数据行
     summaryData.forEach((data, index) => {
       const dataRow = worksheet.getRow(currentRow);
-      dataRow.values = [data.item, data.value, data.unit];
+      dataRow.values = [data.item, data.value];
       dataRow.height = 24;
       
       const isEvenRow = index % 2 === 0;

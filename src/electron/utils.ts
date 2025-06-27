@@ -141,7 +141,6 @@ export const formatCurrency = (
       (formatted.includes(currency) || formatted === `${amount}`) // 判断是否没有真实货币符号
     ) {
       const symbol = getSymbolFromCurrency(currency) || currency;
-      console.log("Currency symbol:", symbol);
       return `${symbol}${
         isDenomination
           ? amount.toFixed(0)
