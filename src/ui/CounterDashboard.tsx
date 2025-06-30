@@ -21,63 +21,7 @@ import {
   CounterData,
   CurrencyCountRecord,
 } from "./common/types";
-
-// 货币代码到国旗emoji的映射
-const getCurrencyFlag = (currencyCode: string): string => {
-  const flagMapping: Record<string, string> = {
-    USD: "🇺🇸", // 美元 - 美国
-    EUR: "🇪🇺", // 欧元 - 欧盟
-    JPY: "🇯🇵", // 日元 - 日本
-    GBP: "🇬🇧", // 英镑 - 英国
-    CNY: "🇨🇳", // 人民币 - 中国
-    CHF: "🇨🇭", // 瑞士法郎 - 瑞士
-    CAD: "🇨🇦", // 加拿大元 - 加拿大
-    AUD: "🇦🇺", // 澳元 - 澳大利亚
-    KRW: "🇰🇷", // 韩元 - 韩国
-    HKD: "🇭🇰", // 港币 - 香港
-    SGD: "🇸🇬", // 新加坡元 - 新加坡
-    TWD: "🇹🇼", // 新台币 - 台湾
-    THB: "🇹🇭", // 泰铢 - 泰国
-    MYR: "🇲🇾", // 马来西亚林吉特 - 马来西亚
-    IDR: "🇮🇩", // 印尼盾 - 印度尼西亚
-    VND: "🇻🇳", // 越南盾 - 越南
-    PHP: "🇵🇭", // 菲律宾比索 - 菲律宾
-    INR: "🇮🇳", // 印度卢比 - 印度
-    PKR: "🇵🇰", // 巴基斯坦卢比 - 巴基斯坦
-    BDT: "🇧🇩", // 孟加拉塔卡 - 孟加拉国
-    LKR: "🇱🇰", // 斯里兰卡卢比 - 斯里兰卡
-    NPR: "🇳🇵", // 尼泊尔卢比 - 尼泊尔
-    RUB: "🇷🇺", // 俄罗斯卢布 - 俄罗斯
-    BRL: "🇧🇷", // 巴西雷亚尔 - 巴西
-    MXN: "🇲🇽", // 墨西哥比索 - 墨西哥
-    ARS: "🇦🇷", // 阿根廷比索 - 阿根廷
-    CLP: "🇨🇱", // 智利比索 - 智利
-    COP: "🇨🇴", // 哥伦比亚比索 - 哥伦比亚
-    PEN: "🇵🇪", // 秘鲁索尔 - 秘鲁
-    ZAR: "🇿🇦", // 南非兰特 - 南非
-    EGP: "🇪🇬", // 埃及镑 - 埃及
-    SAR: "🇸🇦", // 沙特里亚尔 - 沙特阿拉伯
-    AED: "🇦🇪", // 阿联酋迪拉姆 - 阿联酋
-    QAR: "🇶🇦", // 卡塔尔里亚尔 - 卡塔尔
-    KWD: "🇰🇼", // 科威特第纳尔 - 科威特
-    BHD: "🇧🇭", // 巴林第纳尔 - 巴林
-    OMR: "🇴🇲", // 阿曼里亚尔 - 阿曼
-    ILS: "🇮🇱", // 以色列新谢克尔 - 以色列
-    TRY: "🇹🇷", // 土耳其里拉 - 土耳其
-    NOK: "🇳🇴", // 挪威克朗 - 挪威
-    SEK: "🇸🇪", // 瑞典克朗 - 瑞典
-    DKK: "🇩🇰", // 丹麦克朗 - 丹麦
-    PLN: "🇵🇱", // 波兰兹罗提 - 波兰
-    CZK: "🇨🇿", // 捷克克朗 - 捷克
-    HUF: "🇭🇺", // 匈牙利福林 - 匈牙利
-    RON: "🇷🇴", // 罗马尼亚列伊 - 罗马尼亚
-    BGN: "🇧🇬", // 保加利亚列弗 - 保加利亚
-    HRK: "🇭🇷", // 克罗地亚库纳 - 克罗地亚
-    UAH: "🇺🇦", // 乌克兰格里夫纳 - 乌克兰
-  };
-
-  return flagMapping[currencyCode] || "💰"; // 默认显示钱袋图标
-};
+import { useAppConfigStore } from "./contexts/store";
 
 interface CounterStats {
   totalRecords: Map<string, CurrencyCountRecord>; // 改为必需字段，包含所有货币的统计信息
@@ -100,6 +44,7 @@ interface CounterDashboardProps {
 const handleSessionUpdate = (
   protocolData: CountingProtocolData,
   currentSession: SessionData | null,
+  autoSave: boolean = true,
   setCurrentSession: (session: SessionData | null) => void,
   setSessionData: (updater: (prev: SessionData[]) => SessionData[]) => void
 ): SessionData => {
@@ -143,7 +88,7 @@ const handleSessionUpdate = (
   if (!currentSession) {
     const tempSession: SessionData = {
       id: generateSnowflakeId(),
-      no: 1,
+      no: 999,
       timestamp: now.toLocaleTimeString(),
       startTime: now.toLocaleString(),
       totalCount: isSessionUpdate(protocolData.status)
@@ -260,10 +205,23 @@ const handleSessionUpdate = (
     updatedSession.endTime = now.toLocaleString();
     setSessionData((prev) => [updatedSession, ...prev].slice(0, 50));
     setCurrentSession(null);
+    if (autoSave) {
+      autoSaveHandler(updatedSession); // 自动保存当前Session
+    }
   } else {
     setCurrentSession(updatedSession);
   }
   return updatedSession;
+};
+
+const autoSaveHandler = (session: SessionData) => {
+  const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
+  window.electron.exportExcel(session ? [session] : [], {
+    useDefaultDir: true,
+    openAfterExport: false,
+    customDir: undefined,
+    filename: `CounterSession_#${session.no}_${timestamp}.xlsx`,
+  });
 };
 
 export const CounterDashboard: React.FC<CounterDashboardProps> = ({
@@ -287,6 +245,8 @@ export const CounterDashboard: React.FC<CounterDashboardProps> = ({
     averageSpeed: 0,
     errorPcs: 0,
   });
+  const autoSave = useAppConfigStore((state) => state.autoSave);
+
   const [isConnected, setIsConnected] = useState(false);
   const [isSimulationMode, setIsSimulationMode] = useState(false);
   const [simulationInterval, setSimulationInterval] = useState<number | null>(
@@ -388,6 +348,7 @@ export const CounterDashboard: React.FC<CounterDashboardProps> = ({
                 const updatedSession = handleSessionUpdate(
                   protocolData,
                   currentSession,
+                  autoSave,
                   setCurrentSession,
                   setSessionData
                 );
@@ -593,7 +554,7 @@ export const CounterDashboard: React.FC<CounterDashboardProps> = ({
     const hasError = Math.random() < 0.05; // 5% 错误率
     return {
       timestamp: new Date().toLocaleString(),
-      protocolType: "counting",
+      protocolType: "simulation",
       rawData: "simulation_data",
       status: 0x02, // 刷新中状态
       totalCount: (simulationSession?.totalCount || 0) + 1,
@@ -626,6 +587,7 @@ export const CounterDashboard: React.FC<CounterDashboardProps> = ({
       errorCount: 0,
       currencyCode: currencyCode,
       status: "counting",
+      currencyCountRecords: new Map<string, CurrencyCountRecord>(),
       denominationBreakdown: new Map(),
       details: [],
     };
@@ -639,6 +601,7 @@ export const CounterDashboard: React.FC<CounterDashboardProps> = ({
       const updatedSession = handleSessionUpdate(
         simulationData,
         simulationSession,
+        autoSave,
         setSimulationSession,
         setSessionData
       );

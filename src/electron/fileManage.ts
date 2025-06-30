@@ -98,6 +98,7 @@ export interface ExportOptions {
   format?: 'excel' | 'pdf';
   filename?: string;
   useDefaultDir?: boolean;
+  customDir?: string; // 自定义目录路径
   openAfterExport?: boolean;
 }
 
@@ -189,7 +190,7 @@ export class FileManager {
   ): Promise<ExportResult> {
     try {
       const filename = options.filename || this.generateFilename('excel');
-      const filePath = await this.getExportPath(filename, 'excel', options.useDefaultDir);
+      const filePath = await this.getExportPath(filename, 'excel', options);
 
       if (!filePath) {
         return { success: false, error: 'User cancelled export' };
@@ -239,7 +240,7 @@ export class FileManager {
   ): Promise<ExportResult> {
     try {
       const filename = options.filename || this.generateFilename('pdf');
-      const filePath = await this.getExportPath(filename, 'pdf', options.useDefaultDir);
+      const filePath = await this.getExportPath(filename, 'pdf', options);
 
       if (!filePath) {
         return { success: false, error: 'User cancelled export' };
@@ -369,26 +370,37 @@ export class FileManager {
   /**
    * 获取导出路径
    */
-  private async getExportPath(
+  private getExportPath(
     filename: string,
     format: 'excel' | 'pdf',
-    useDefaultDir = true
-  ): Promise<string | null> {
+    options: { useDefaultDir?: boolean; customDir?: string }
+  ): string {
+
+    const { useDefaultDir = true, customDir } = options;
+
     if (useDefaultDir) {
       return path.join(this.config.defaultExportDir, filename);
     }
 
-    // 显示保存对话框
-    const result = await dialog.showSaveDialog({
-      defaultPath: path.join(this.config.defaultExportDir, filename),
-      filters: [
-        format === 'excel'
-          ? { name: 'Excel Files', extensions: ['xlsx'] }
-          : { name: 'PDF Files', extensions: ['pdf'] }
-      ]
-    });
+    // 如果不使用默认目录，使用自定义目录
+    if (customDir) {
+      return path.join(customDir, filename);
+    }
 
-    return result.canceled ? null : result.filePath || null;
+    // 如果既不使用默认目录也没有自定义目录，则使用默认目录作为后备
+    return path.join(this.config.defaultExportDir, filename);
+
+    // 显示保存对话框
+    // const result = await dialog.showSaveDialog({
+    //   defaultPath: path.join(this.config.defaultExportDir, filename),
+    //   filters: [
+    //     format === 'excel'
+    //       ? { name: 'Excel Files', extensions: ['xlsx'] }
+    //       : { name: 'PDF Files', extensions: ['pdf'] }
+    //   ]
+    // });
+
+    // return result.canceled ? null : result.filePath || null;
   }
 
   private addPageFooter(pdf: jsPDF, pageNumber: number, totalSessions: number, filename: string) {

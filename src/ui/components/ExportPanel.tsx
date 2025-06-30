@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { SessionData } from '../utils/serialization';
 import './ExportPanel.css';
+import { useAppConfigStore } from '../contexts/store';
 
 // 使用 Electron 的导出结果类型
 interface ElectronExportResult {
@@ -37,6 +38,8 @@ const ExportPanel: React.FC<ExportPanelProps> = ({
   const [exportStatus, setExportStatus] = useState<string>('');
   const [filename, setFilename] = useState(`session_report_${new Date().toISOString().split('T')[0]}`);
   const [includeCharts, setIncludeCharts] = useState(true);
+  const setAutoSave = useAppConfigStore((state) => state.setAutoSave);
+  const autoSave = useAppConfigStore((state) => state.autoSave);
 
   // 添加ESC键关闭功能
   useEffect(() => {
@@ -240,11 +243,11 @@ const ExportPanel: React.FC<ExportPanelProps> = ({
           <label>
             <input
               type="checkbox"
-              checked={includeCharts}
-              onChange={(e) => setIncludeCharts(e.target.checked)}
+              checked={autoSave}
+              onChange={(e) => setAutoSave(e.target.checked)}
               disabled={isExporting}
             />
-            {t('exportPanel.includeCharts')}
+            {t('exportPanel.autoSave')}
           </label>
         </div>
       </div>

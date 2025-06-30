@@ -143,6 +143,7 @@ type ExportOptions = {
   format?: 'excel' | 'pdf';
   filename?: string;
   useDefaultDir?: boolean;
+  customDir?: string;
   openAfterExport?: boolean;
 };
 
