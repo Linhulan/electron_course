@@ -14,7 +14,7 @@ import {
 import { initializeProtocols } from "./protocols/init";
 import { SessionDetailDrawer } from "./components/SessionDetailDrawer";
 import ExportPanel from "./components/ExportPanel";
-import { formatCurrency, formatDenomination } from "./common/common";
+import { formatAmount, formatCurrency, formatDenomination } from "./common/common";
 import {
   SessionData,
   DenominationDetail,
@@ -1035,6 +1035,20 @@ export const CounterDashboard: React.FC<CounterDashboardProps> = ({
     return session.currencyCode || "CNY";
   };
 
+  const getAmountDisplay = (session: SessionData): string => {
+    if (session.currencyCountRecords && session.currencyCountRecords.size > 0) {
+      const currencies = Array.from(session.currencyCountRecords.keys());
+      if (currencies.length === 1) {
+        return formatAmount(session.currencyCountRecords.get(currencies[0])?.totalAmount || 0);
+      } else if (currencies.length > 1) {
+        return currencies.length + " Currencies";
+      }
+    }
+
+    const totalAmount = session.totalAmount || 0;
+    return formatCurrency(totalAmount);
+  };
+
   return (
     <div className={`counter-dashboard ${className || ""}`}>
       {" "}
@@ -1581,7 +1595,7 @@ export const CounterDashboard: React.FC<CounterDashboardProps> = ({
                         </div>{" "}
                         <div className="col-amount">
                           <div className="amount-value">
-                            {formatCurrency(item.totalAmount || 0)}
+                            {getAmountDisplay(item)}
                           </div>
                         </div>{" "}
                         <div className="col-currency">
