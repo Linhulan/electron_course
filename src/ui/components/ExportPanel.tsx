@@ -36,8 +36,7 @@ const ExportPanel: React.FC<ExportPanelProps> = ({
   const { t } = useTranslation();
   const [isExporting, setIsExporting] = useState(false);
   const [exportStatus, setExportStatus] = useState<string>('');
-  const [filename, setFilename] = useState(`session_report_${new Date().toISOString().split('T')[0]}`);
-  const [includeCharts, setIncludeCharts] = useState(true);
+  const [filename, setFilename] = useState(`session_report_${new Date().toISOString()}`);
   const setAutoSave = useAppConfigStore((state) => state.setAutoSave);
   const autoSave = useAppConfigStore((state) => state.autoSave);
 
@@ -54,6 +53,16 @@ const ExportPanel: React.FC<ExportPanelProps> = ({
       document.addEventListener('keydown', handleEscKey);
       // 防止背景滚动
       document.body.style.overflow = 'hidden';
+      console.log('Export panel opened, ESC key listener added');
+
+      const len = sessionData.length;
+      // 如果有数据，设置默认文件名
+      if (len > 1) {
+        setFilename(`CounterReport_#${sessionData[0].no}_#${sessionData[len - 1].no}_${new Date().toISOString()}`);
+      }
+      else if (len === 1) {
+        setFilename(`CounterReport_#${sessionData[0].no}_${new Date().toISOString()}`);
+      }
     }
 
     return () => {
