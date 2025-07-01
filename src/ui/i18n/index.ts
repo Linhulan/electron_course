@@ -78,6 +78,8 @@ const zhCN = {
       sendMode: "发送模式",
       textMode: "文本模式",
       hexMode: "HEX模式",
+      hexModeHint: "（原始模式-适用HEX数据）",
+      textModeHint: "（行模式-适用文本数据）",
       send: "发送",
       sendHex: "发送HEX",
 
@@ -361,6 +363,8 @@ const enUS = {
       sendMode: "Send Mode",
       textMode: "Text Mode",
       hexMode: "HEX Mode",
+      hexModeHint: "（Raw Mode - Suitable for HEX data）",
+      textModeHint: "（Line Mode - Suitable for Text data）",
       send: "Send",
       sendHex: "Send HEX",
 
