@@ -805,11 +805,11 @@ export const CounterDashboard: React.FC<CounterDashboardProps> = ({
     console.log("Exporting session data...");
 
     // 检查是否有数据可以导出
-    if (sessionData.length === 0) {
-      console.warn("No session data to export");
-      // 可以在这里显示一个提示消息
-      return;
-    }
+    // if (sessionData.length === 0) {
+    //   console.warn("No session data to export");
+    //   // 可以在这里显示一个提示消息
+    //   return;
+    // }
 
     // 打开导出面板
     handleExportPanelOpen();
@@ -1087,10 +1087,7 @@ export const CounterDashboard: React.FC<CounterDashboardProps> = ({
           </button>
           <button
             onClick={exportData}
-            className={`control-btn export ${
-              sessionData.length === 0 ? "disabled" : ""
-            }`}
-            disabled={sessionData.length === 0}
+            className={`control-btn export`}
             title={
               sessionData.length === 0
                 ? t("counter.noDataToExport", "No data to export")
