@@ -41,7 +41,7 @@
 .session-detail-drawer {
   position: fixed;
   top: 0;
-  right: -40%;
+  right: 0;
   width: 40%;
   height: 100vh;
   background: #1a1a1a;
@@ -51,33 +51,36 @@
   display: flex;
   flex-direction: column;
   color: #ffffff;
+  /* 使用 transform 和 transition 实现响应式动画 */
+  transform: translateX(100%);
+  transition: transform 0.3s ease-in-out;
 }
 
 @keyframes rightSlideIn {
   from {
-    right: -40%;
+    transform: translateX(100%);
   }
   to {
-    right: 0;
+    transform: translateX(0);
   }
 }
 
 @keyframes rightSlideOut {
   from {
-    right: 0;
+    transform: translateX(0);
   }
   to {
-    right: -40%;
+    transform: translateX(100%);
   }
 }
 
 .session-detail-drawer.close {
-  right: -40%;
+  transform: translateX(100%);
   animation: rightSlideOut 0.25s ease-in-out forwards;
 }
 
 .session-detail-drawer.open {
-  right: 0;
+  transform: translateX(0);
   animation-delay: 200ms;
   animation: rightSlideIn 0.25s ease-in-out forwards;
 }
@@ -967,14 +970,12 @@
 @media (max-width: 1200px) {
   .session-detail-drawer {
     width: 50%;
-    right: -50%;
   }
 }
 
 @media (max-width: 768px) {
   .session-detail-drawer {
     width: 80%;
-    right: -80%;
   }
   
   .info-grid {
@@ -995,7 +996,6 @@
 @media (max-width: 480px) {
   .session-detail-drawer {
     width: 100%;
-    right: -100%;
   }
   
   .info-grid {
