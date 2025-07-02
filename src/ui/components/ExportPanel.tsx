@@ -36,9 +36,31 @@ const ExportPanel: React.FC<ExportPanelProps> = ({
   const { t } = useTranslation();
   const [isExporting, setIsExporting] = useState(false);
   const [exportStatus, setExportStatus] = useState<string>('');
-  const [filename, setFilename] = useState(`session_report_${new Date().toISOString()}`);
+  const [filename, setFilename] = useState(() => {
+    // 生成适合文件名的时间戳（去除冒号等非法字符）
+    const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
+    return `session_report_${timestamp}`;
+  });
   const setAutoSave = useAppConfigStore((state) => state.setAutoSave);
   const autoSave = useAppConfigStore((state) => state.autoSave);
+
+  // 当面板打开或sessionData变化时，更新文件名
+  useEffect(() => {
+    if (isOpen && sessionData.length > 0) {
+      const len = sessionData.length;
+      // 生成适合文件名的时间戳（去除非法字符）
+      const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
+      
+      // 如果有数据，设置默认文件名
+      if (len > 1) {
+        setFilename(`CounterReport_#${sessionData[0].no}_#${sessionData[len - 1].no}_${timestamp}`);
+      }
+      else if (len === 1) {
+        setFilename(`CounterReport_#${sessionData[0].no}_${timestamp}`);
+      }
+      console.log('Filename updated for session data:', { len, firstNo: sessionData[0]?.no, lastNo: sessionData[len - 1]?.no });
+    }
+  }, [isOpen, sessionData]);
 
   // 添加ESC键关闭功能
   useEffect(() => {
@@ -54,15 +76,6 @@ const ExportPanel: React.FC<ExportPanelProps> = ({
       // 防止背景滚动
       document.body.style.overflow = 'hidden';
       console.log('Export panel opened, ESC key listener added');
-
-      const len = sessionData.length;
-      // 如果有数据，设置默认文件名
-      if (len > 1) {
-        setFilename(`CounterReport_#${sessionData[0].no}_#${sessionData[len - 1].no}_${new Date().toISOString()}`);
-      }
-      else if (len === 1) {
-        setFilename(`CounterReport_#${sessionData[0].no}_${new Date().toISOString()}`);
-      }
     }
 
     return () => {
