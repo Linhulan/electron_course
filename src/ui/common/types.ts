@@ -117,6 +117,10 @@ export enum CDMStatus {
   OFFLINE = 0x04         // 离线
 }
 
+export enum ZMCommandCode {
+  COUNT_RESULT = 0x01, // 点钞结果
+}
+
 
 export interface CounterData {
   id: number;

@@ -1,5 +1,6 @@
 import { protocolManager } from './manager';
 import { CDMProtocolParser } from './cdmProtocol';
+import { ZMProtocolParser } from './zmProtocol';
 
 /**
  * 初始化所有协议解析器
@@ -15,7 +16,10 @@ export function initializeProtocols(): void {
   // 注册CDM协议解析器
   const cdmParser = new CDMProtocolParser();
   protocolManager.registerParser(cdmParser);
-  
+
+  const zmParser = new ZMProtocolParser();
+  protocolManager.registerParser(zmParser);
+
   console.log(`Initialized ${protocolManager.getParserCount()} protocol parsers`);
   console.log('Supported protocols:', protocolManager.getSupportedProtocols());
 }

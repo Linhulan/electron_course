@@ -146,9 +146,9 @@ const handleSessionUpdate = (
       // record.totalCount = protocolData.totalCount;
       // record.totalAmount = protocolData.totalAmount;
 
-      record.totalCount += 1;
-      record.totalAmount = protocolData.denomination;
-      record.errorCount += protocolData.errorCode !== 0 ? 1 : 0;
+      record.totalCount  += 1;
+      record.totalAmount += protocolData.denomination;
+      record.errorCount  += protocolData.errorCode !== 0 ? 1 : 0;
 
       record.denominationBreakdown.set(protocolData.denomination, {
         denomination: protocolData.denomination,
