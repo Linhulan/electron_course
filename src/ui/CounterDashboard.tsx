@@ -86,33 +86,32 @@ const handleSessionUpdate = (
 
   // 如果没有当前Session但不是开始状态，说明有问题，创建一个临时Session
   if (!currentSession) {
-    return null;
-    // const tempSession: SessionData = {
-    //   id: generateSnowflakeId(),
-    //   no: 999,
-    //   timestamp: now.toLocaleTimeString(),
-    //   startTime: now.toLocaleString(),
-    //   totalCount: isSessionUpdate(protocolData.status)
-    //     ? protocolData.totalCount
-    //     : 0,
-    //   totalAmount: isSessionUpdate(protocolData.status)
-    //     ? protocolData.totalAmount
-    //     : 0,
-    //   errorCount: 0, // 临时Session错误张数初始化为0
-    //   status: status,
-    //   errorCode:
-    //     protocolData.errorCode !== 0
-    //       ? `E${protocolData.errorCode
-    //           .toString(16)
-    //           .padStart(3, "0")
-    //           .toUpperCase()}`
-    //       : undefined,
-    //   denominationBreakdown: new Map(),
-    //   currencyCountRecords: new Map<string, CurrencyCountRecord>(),
-    // };
+    const tempSession: SessionData = {
+      id: generateSnowflakeId(),
+      no: 999,
+      timestamp: now.toLocaleTimeString(),
+      startTime: now.toLocaleString(),
+      totalCount: isSessionUpdate(protocolData.status)
+        ? protocolData.totalCount
+        : 0,
+      totalAmount: isSessionUpdate(protocolData.status)
+        ? protocolData.totalAmount
+        : 0,
+      errorCount: 0, // 临时Session错误张数初始化为0
+      status: status,
+      errorCode:
+        protocolData.errorCode !== 0
+          ? `E${protocolData.errorCode
+              .toString(16)
+              .padStart(3, "0")
+              .toUpperCase()}`
+          : undefined,
+      denominationBreakdown: new Map(),
+      currencyCountRecords: new Map<string, CurrencyCountRecord>(),
+    };
 
-    // setCurrentSession(tempSession);
-    // return tempSession;
+    setCurrentSession(tempSession);
+    return tempSession;
   }
 
   // 更新当前Session
@@ -199,6 +198,11 @@ const handleSessionUpdate = (
       errorCode: "E" + protocolData.errorCode.toString(10),
       serialNumber: protocolData.serialNumber || "",
     });
+    
+    // 限制单个session的details数组大小，防止内存过度使用
+    if (updatedSession.details && updatedSession.details.length > 2000) {
+      updatedSession.details = updatedSession.details.slice(-2000); // 只保留最新的2000条
+    }
   }
 
   // 如果Session完成，添加到历史记录但保留在当前Session显示 (结束协议不携带金额数据)
@@ -612,6 +616,9 @@ export const CounterDashboard: React.FC<CounterDashboardProps> = ({
   const clearData = () => {
     setSessionData([]);
     setCurrentSession(null);
+    setSelectedSessionId(null); // 清除选中的session引用
+    setSimulationSession(null); // 清除仿真session引用
+    setIsDetailDrawerOpen(false); // 关闭抽屉
     // 重置统计数据
     setStats({
       totalRecords: new Map<string, CurrencyCountRecord>(),
@@ -635,7 +642,7 @@ export const CounterDashboard: React.FC<CounterDashboardProps> = ({
 
   const handleCloseDrawer = useCallback(() => {
     setIsDetailDrawerOpen(false);
-    // setSelectedSessionId(null);
+    setSelectedSessionId(null); // 清除选中的session引用，确保GC
   }, []);
 
   const handleExportPanelOpen = useCallback(() => {
@@ -780,8 +787,8 @@ export const CounterDashboard: React.FC<CounterDashboardProps> = ({
       "SGD",
     ];
 
-    // 生成10个测试会话，确保有多货币数据
-    for (let i = 0; i < 10; i++) {
+    // 生成500个测试会话，确保有多货币数据
+    for (let i = 0; i < 500; i++) {
       const sessionTime = new Date(now.getTime() - i * 60 * 60 * 1000); // 每小时一个会话
       const denominationBreakdown = new Map<number, DenominationDetail>();
       const currencyCountRecords = new Map<string, CurrencyCountRecord>();
@@ -971,6 +978,19 @@ export const CounterDashboard: React.FC<CounterDashboardProps> = ({
       setSelectedCurrencyTab("");
     }
   }, [availableCurrencies, selectedCurrencyTab]);
+
+  // 自动清除对已丢弃session的引用，确保GC能回收内存
+  useEffect(() => {
+    if (selectedSessionId !== null) {
+      // 检查当前选中的session是否还存在于sessionData中
+      const sessionExists = sessionData.some(session => session.id === selectedSessionId);
+      if (!sessionExists) {
+        // 如果session不存在，清除引用
+        setSelectedSessionId(null);
+        setIsDetailDrawerOpen(false); // 同时关闭抽屉
+      }
+    }
+  }, [selectedSessionId, sessionData]);
 
   // 判断是否使用多货币布局
   const shouldUseMultiCurrencyLayout = () => {
