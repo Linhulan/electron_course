@@ -15,26 +15,26 @@
   align-items: center;
   gap: 0.5rem;
   font-size: 0.9rem;
-  color: rgba(255, 255, 255, 0.8);
+  color: var(--text-secondary);
   margin-bottom: 0.25rem;
-  transition: all 0.2s ease;
+  transition: var(--transition-colors);
   cursor: pointer;
   user-select: none;
   padding: 0.5rem 0.75rem;
   border-radius: 6px;
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: var(--bg-quaternary);
+  border: 1px solid var(--border-color);
 }
 
 .language-switcher-label:hover {
-  color: rgba(255, 255, 255, 0.95);
-  background: rgba(255, 255, 255, 0.12);
-  border-color: rgba(255, 255, 255, 0.2);
+  color: var(--text-primary);
+  background: var(--hover-bg);
+  border-color: var(--border-heavy);
 }
 
 .language-switcher-label:active {
   transform: scale(0.98);
-  background: rgba(255, 255, 255, 0.15);
+  background: var(--active-bg);
 }
 
 .language-switcher-label .expand-arrow {
@@ -57,10 +57,10 @@
   right: 0;
   margin-top: 0.5rem;
   min-width: 120px;
-  background: rgba(45, 55, 72, 0.95);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-color);
   border-radius: 6px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  box-shadow: var(--shadow-lg);
   z-index: 1000;
   backdrop-filter: blur(10px);
   animation: dropdownFadeIn 0.2s ease;
@@ -129,32 +129,29 @@
   gap: 0.5rem;
   padding: 0.5rem 0.75rem;
   cursor: pointer;
-  transition: all 0.2s ease;
-  color: rgba(255, 255, 255, 0.7);
+  transition: var(--transition-colors);
+  color: var(--text-secondary);
   font-size: 0.85rem;
   border-radius: 3px;
-  /* margin: 0.125rem 0.25rem; */
   position: relative;
   box-sizing: border-box;
 }
 
 .language-dropdown .language-option:hover {
-  background: rgba(255, 255, 255, 0.12);
-  color: rgba(255, 255, 255, 0.9);
+  background: var(--hover-bg);
+  color: var(--text-primary);
   padding-left: 0.9rem;
 }
 
 .language-dropdown .language-option.active {
-  background: linear-gradient(135deg, rgba(59, 130, 246, 0.25), rgba(37, 99, 235, 0.3));
-  color: #ffffff;
+  background: var(--selected-bg);
+  color: var(--primary-color);
   font-weight: 600;
   margin: 0;
-  /* box-sizing: border-box; */
-  /* position: relative; */
 }
 
 .language-dropdown .language-option.active:hover {
-  background: linear-gradient(135deg, rgba(59, 130, 246, 0.35), rgba(37, 99, 235, 0.4));
+  background: var(--selected-bg);
   padding-left: 0.9rem;
 }
 
@@ -162,7 +159,7 @@
   content: '✓';
   position: absolute;
   right: 0.5rem;
-  color: #3b82f6;
+  color: var(--primary-color);
   font-weight: bold;
   font-size: 0.9rem;
 }
@@ -183,31 +180,31 @@
 
 .language-switcher.compact .language-select {
   all: unset;
-  background: rgba(255, 255, 255, 0.1);
-  color: #ffffff;
+  background: var(--bg-quaternary);
+  color: var(--text-primary);
   padding: 0.25rem 0.5rem;
   border-radius: 4px;
   font-size: 0.8rem;
   cursor: pointer;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  transition: all 0.2s ease;
+  border: 1px solid var(--border-color);
+  transition: var(--transition-colors);
   min-width: 80px;
   text-align: center;
   -webkit-app-region: no-drag; /* 确保select可以点击 */
 }
 
 .language-switcher.compact .language-select:hover {
-  background: rgba(255, 255, 255, 0.15);
+  background: var(--hover-bg);
 }
 
 .language-switcher.compact .language-select:focus {
   outline: none;
-  border-color: rgba(255, 255, 255, 0.4);
+  border-color: var(--focus-color);
 }
 
 .language-switcher.compact .language-select option {
-  background: #2c3e50;
-  color: #ffffff;
+  background: var(--bg-elevated);
+  color: var(--text-primary);
   padding: 0.25rem;
 }
 
@@ -239,29 +236,29 @@
 }
 
 .header-language-switcher .language-select {
-  background: rgba(0, 0, 0, 0.1) !important;
-  color: #ffffff !important;
+  background: var(--bg-quaternary) !important;
+  color: var(--text-primary) !important;
   padding: 0.25rem 0.5rem !important;
   border-radius: 4px !important;
   font-size: 0.8rem !important;
   cursor: pointer !important;
-  border: 1px solid rgba(255, 255, 255, 0.2) !important;
-  transition: all 0.2s ease !important;
+  border: 1px solid var(--border-color) !important;
+  transition: var(--transition-colors) !important;
   min-width: 80px !important;
   -webkit-app-region: no-drag !important; /* 确保可以点击 */
 }
 
 .header-language-switcher .language-select:hover {
-  background: rgba(0, 0, 0, 0.2) !important;
+  background: var(--hover-bg) !important;
 }
 
 .header-language-switcher .language-select:focus {
   outline: none !important;
-  border-color: rgba(255, 255, 255, 0.4) !important;
+  border-color: var(--focus-color) !important;
 }
 
 .header-language-switcher .language-select option {
-  background: #181818 !important;
-  color: #ffffff !important;
+  background: var(--bg-elevated) !important;
+  color: var(--text-primary) !important;
   padding: 0.25rem !important;
 }

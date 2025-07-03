@@ -1,0 +1,229 @@
+/* =================================
+   🎨 THEME VARIABLES USAGE GUIDE
+   ================================= */
+
+/* 这个文件是主题变量的使用指南，帮助开发者正确使用CSS变量 */
+
+/* 📦 BACKGROUND COLORS 背景色
+   ================================= */
+.component {
+  background-color: var(--bg-primary);     /* 应用主背景 */
+  background-color: var(--bg-secondary);   /* Header、Sidebar */
+  background-color: var(--bg-tertiary);    /* 卡片、面板 */
+  background-color: var(--bg-quaternary);  /* 输入框、按钮 */
+  background-color: var(--bg-elevated);    /* 弹窗、抽屉 */
+}
+
+/* 🔤 TEXT COLORS 文本颜色
+   ================================= */
+.component {
+  color: var(--text-primary);     /* 主文字 */
+  color: var(--text-secondary);   /* 次级文字 */
+  color: var(--text-tertiary);    /* 占位符文字 */
+  color: var(--text-disabled);    /* 禁用文字 */
+  color: var(--text-inverse);     /* 反色文字 */
+}
+
+/* 🖼️ BORDERS & DIVIDERS 边框与分割线
+   ================================= */
+.component {
+  border: 1px solid var(--border-color);      /* 主边框 */
+  border: 1px solid var(--border-light);      /* 轻边框 */
+  border: 1px solid var(--border-heavy);      /* 重边框 */
+  border-top: 1px solid var(--divider-color); /* 分割线 */
+}
+
+/* 🎯 INTERACTIVE STATES 交互状态
+   ================================= */
+.button {
+  background-color: var(--bg-quaternary);
+  transition: var(--transition-colors);
+}
+
+.button:hover {
+  background-color: var(--hover-bg);
+}
+
+.button:active {
+  background-color: var(--active-bg);
+}
+
+.button:focus {
+  outline: none;
+  box-shadow: var(--focus-shadow);
+  border-color: var(--focus-color);
+}
+
+.selected {
+  background-color: var(--selected-bg);
+}
+
+/* 🌈 FUNCTIONAL COLORS 功能色彩
+   ================================= */
+.success {
+  color: var(--success-color);
+  background-color: var(--success-bg);
+}
+
+.warning {
+  color: var(--warning-color);
+  background-color: var(--warning-bg);
+}
+
+.error {
+  color: var(--error-color);
+  background-color: var(--error-bg);
+}
+
+.info {
+  color: var(--info-color);
+  background-color: var(--info-bg);
+}
+
+/* 🎨 BRAND COLORS 品牌色彩
+   ================================= */
+.primary-button {
+  background-color: var(--primary-color);
+  color: var(--text-inverse);
+  transition: var(--transition-colors);
+}
+
+.primary-button:hover {
+  background-color: var(--primary-hover);
+}
+
+.primary-button:active {
+  background-color: var(--primary-active);
+}
+
+.primary-subtle {
+  background-color: var(--primary-bg);
+  color: var(--primary-color);
+}
+
+/* 🌫️ SHADOWS 阴影系统
+   ================================= */
+.card {
+  box-shadow: var(--shadow-sm);    /* 小阴影 */
+  box-shadow: var(--shadow-md);    /* 中阴影 */
+  box-shadow: var(--shadow-lg);    /* 大阴影 */
+  box-shadow: var(--shadow-xl);    /* 特大阴影 */
+}
+
+/* ⚡ TRANSITIONS 过渡动画
+   ================================= */
+.component {
+  transition: var(--transition-fast);     /* 快速过渡 150ms */
+  transition: var(--transition-normal);   /* 普通过渡 200ms */
+  transition: var(--transition-slow);     /* 缓慢过渡 300ms */
+  transition: var(--transition-colors);   /* 颜色过渡 */
+}
+
+/* 🎛️ COMMON PATTERNS 常用模式
+   ================================= */
+
+/* 卡片样式 */
+.card {
+  background-color: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  box-shadow: var(--shadow-sm);
+  padding: 1rem;
+  transition: var(--transition-colors);
+}
+
+.card:hover {
+  box-shadow: var(--shadow-md);
+  border-color: var(--border-heavy);
+}
+
+/* 输入框样式 */
+.input {
+  background-color: var(--bg-quaternary);
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+  padding: 0.5rem;
+  border-radius: 4px;
+  transition: var(--transition-colors);
+}
+
+.input:focus {
+  outline: none;
+  border-color: var(--focus-color);
+  box-shadow: var(--focus-shadow);
+}
+
+.input::placeholder {
+  color: var(--text-tertiary);
+}
+
+/* 按钮样式 */
+.button {
+  background-color: var(--bg-quaternary);
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: var(--transition-colors);
+}
+
+.button:hover {
+  background-color: var(--hover-bg);
+  border-color: var(--border-heavy);
+}
+
+.button:active {
+  background-color: var(--active-bg);
+}
+
+.button:disabled {
+  color: var(--text-disabled);
+  background-color: var(--bg-quaternary);
+  border-color: var(--border-light);
+  cursor: not-allowed;
+}
+
+/* 链接样式 */
+.link {
+  color: var(--primary-color);
+  text-decoration: none;
+  transition: var(--transition-colors);
+}
+
+.link:hover {
+  color: var(--primary-hover);
+  text-decoration: underline;
+}
+
+.link:active {
+  color: var(--primary-active);
+}
+
+/* 分割线样式 */
+.divider {
+  border: none;
+  height: 1px;
+  background-color: var(--divider-color);
+  margin: 1rem 0;
+}
+
+/* 面板样式 */
+.panel {
+  background-color: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin-bottom: 1rem;
+}
+
+/* 工具提示样式 */
+.tooltip {
+  background-color: var(--bg-elevated);
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+  padding: 0.5rem;
+  border-radius: 4px;
+  box-shadow: var(--shadow-lg);
+  font-size: 0.875rem;
+}

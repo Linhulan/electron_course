@@ -1,14 +1,15 @@
 /* 应用根级样式 - 确保启动时的一致性 */
 #root {
-  background-color: #242424;
+  background-color: var(--bg-primary);
   min-height: 100vh;
-  color: rgba(255, 255, 255, 0.87);
+  color: var(--text-primary);
+  transition: var(--transition-colors);
 }
 
 /* 防止启动时的内容跳动 */
 .app-layout {
   opacity: 1;
-  transition: opacity 0.2s ease-in;
+  transition: opacity 0.2s ease-in, var(--transition-colors);
 }
 
 .app-layout.loading {
@@ -52,8 +53,10 @@ header {
   align-items: center;
   padding: 0.5rem;
   box-sizing: border-box;
-  background-color: #181818;
+  background-color: var(--bg-secondary);
+  color: var(--text-primary);
   -webkit-app-region: drag;
+  transition: var(--transition-colors);
 }
 
 .header-left,
@@ -64,45 +67,156 @@ header {
 }
 
 .header-right {
-  -webkit-app-region: no-drag; /* 确保右侧控件可以点击 */
+  display: flex;
+  align-items: center;
+  gap: 0;
+  -webkit-app-region: no-drag;
+  margin-left: auto;
 }
 
 header button {
   all: unset;
-  border-radius: 50%;
-  width: 1rem;
-  height: 1rem;
-  margin: 0.25rem;
+  width: 2rem;
+  height: 2rem;
+  margin: 0;
   -webkit-app-region: no-drag;
   cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: var(--transition-fast);
+  font-size: 0.75rem;
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  border: none;
+  background-color: transparent;
+  color: var(--text-secondary);
+  position: relative;
+  border-radius: 0;
 }
 
-.serial-port-toggle {
-  width: 2rem !important;
+/* Windows 风格的窗口控制按钮 - 简洁高级版 */
+#minimize {
+  background-color: transparent;
+}
+
+#minimize:hover {
+  background-color: var(--hover-bg);
+  color: var(--text-primary);
+}
+
+#minimize::before {
+  content: '';
+  width: 10px;
+  height: 1px;
+  background-color: currentColor;
+  display: block;
+}
+
+#maximize {
+  background-color: transparent;
+}
+
+#maximize:hover {
+  background-color: var(--hover-bg);
+  color: var(--text-primary);
+}
+
+#maximize::before {
+  content: '';
+  width: 10px;
+  height: 10px;
+  border: 1px solid currentColor;
+  border-top: 2px solid currentColor;
+  display: block;
+}
+
+#maximize.maximized::before {
+  content: '';
+  width: 8px;
+  height: 8px;
+  border: 1px solid currentColor;
+  border-top: 2px solid currentColor;
+  position: relative;
+  display: block;
+}
+
+#maximize.maximized::after {
+  content: '';
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  border: 1px solid currentColor;
+  border-top: 2px solid currentColor;
+  top: 50%;
+  left: 50%;
+  transform: translate(-40%, -60%);
+  background-color: var(--bg-secondary);
+}
+
+#close {
+  background-color: transparent;
+}
+
+#close:hover {
+  background-color: #e81123;
+  color: white;
+}
+
+#close::before {
+  content: '';
+  width: 10px;
+  height: 10px;
+  position: relative;
+  display: block;
+}
+
+#close::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 10px;
+  height: 1px;
+  background-color: currentColor;
+  transform: translate(-50%, -50%) rotate(45deg);
+}
+
+#close::before {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 10px;
+  height: 1px;
+  background-color: currentColor;
+  transform: translate(-50%, -50%) rotate(-45deg);
+}
+
+/* 主题切换按钮样式 - 与窗口控制按钮协调 */
+.theme-switcher {
+  width: 2.5rem !important;
   height: 2rem !important;
-  background-color: #333 !important;
-  border-radius: 0.25rem !important;
+  background-color: transparent !important;
+  border-radius: 6px !important;
   font-size: 1rem;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: background-color 0.2s;
+  margin-right: 0.75rem;
+  color: var(--text-secondary);
+  border: 1px solid transparent;
+  transition: var(--transition-fast), transform 0.1s;
 }
 
-.serial-port-toggle:hover {
-  background-color: #555 !important;
+.theme-switcher:hover {
+  background-color: var(--hover-bg) !important;
+  color: var(--text-primary);
+  border-color: var(--border-light);
+  transform: scale(1.02);
 }
 
-#close {
-  background-color: #f0565b;
-}
-
-#minimize {
-  background-color: #e6b445;
-}
-
-#maximize {
-  background-color: #0dbb51;
+.theme-switcher:active {
+  background-color: var(--active-bg) !important;
+  transform: scale(0.98);
 }
 
 /* 应用布局 */
@@ -115,8 +229,9 @@ header button {
 .main-content {
   flex: 1;
   overflow-y: auto;
-  background: #1a1a1a;
+  background: var(--bg-tertiary);
   position: relative;
+  transition: var(--transition-colors);
 }
 
 .main-content::-webkit-scrollbar {
@@ -179,9 +294,50 @@ header button {
 }
 
 .app-title {
-  color: #ffffff;
+  color: var(--text-primary);
   font-size: 1rem;
   font-weight: 600;
   -webkit-app-region: no-drag;
   margin-left: 0.5rem;
+  transition: var(--transition-colors);
+}
+
+/* 窗口控制按钮容器优化 */
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  -webkit-app-region: no-drag;
+  margin-left: auto;
+}
+
+/* 主题切换和语言切换器与窗口控制按钮的间距 */
+.theme-switcher,
+.header-language-switcher {
+  margin-right: 0.5rem;
+}
+
+/* 窗口控制按钮组的视觉分离 */
+#minimize,
+#maximize,
+#close {
+  border-left: 1px solid transparent;
+  transition: all 0.15s ease;
+}
+
+#minimize:hover,
+#maximize:hover {
+  border-left-color: var(--border-light);
+}
+
+#close:hover {
+  border-left-color: rgba(255, 255, 255, 0.1);
+}
+
+/* 为窗口控制按钮添加细微的激活效果 */
+#minimize:active,
+#maximize:active,
+#close:active {
+  transform: scale(0.95);
+  transition: transform 0.1s ease;
 }

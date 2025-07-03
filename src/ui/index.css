@@ -3,10 +3,6 @@
   line-height: 1.5;
   font-weight: 400;
 
-  color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
-
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
@@ -14,23 +10,152 @@
   
   /* 性能优化 */
   -webkit-tap-highlight-color: transparent;
+
+  /* =================================
+     🌙 DARK THEME VARIABLES (默认)
+     ================================= */
+  
+  /* 主要背景色 */
+  --bg-primary: #242424;          /* 应用主背景 */
+  --bg-secondary: #181818;        /* 次级背景（Header、Sidebar） */
+  --bg-tertiary: #1a1a1a;        /* 三级背景（卡片、面板） */
+  --bg-quaternary: #333333;      /* 四级背景（输入框、按钮） */
+  --bg-elevated: #2a2a2a;        /* 浮层背景（弹窗、抽屉） */
+
+  /* 文本颜色 */
+  --text-primary: rgba(255, 255, 255, 0.87);     /* 主文字 */
+  --text-secondary: rgba(255, 255, 255, 0.6);    /* 次级文字 */
+  --text-tertiary: rgba(255, 255, 255, 0.38);    /* 三级文字（占位符等） */
+  --text-disabled: rgba(255, 255, 255, 0.26);    /* 禁用文字 */
+  --text-inverse: #1a1a1a;                       /* 反色文字（用于亮色背景） */
+
+  /* 边框和分割线 */
+  --border-color: #555555;        /* 主边框色 */
+  --border-light: #404040;        /* 轻边框色 */
+  --border-heavy: #666666;        /* 重边框色 */
+  --divider-color: #333333;       /* 分割线颜色 */
+
+  /* 交互状态 */
+  --hover-bg: #404040;            /* 悬停背景 */
+  --active-bg: #4a4a4a;           /* 激活背景 */
+  --selected-bg: #2563eb20;       /* 选中背景 */
+  --focus-color: #2563eb;         /* 焦点颜色 */
+  --focus-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2); /* 焦点阴影 */
+
+  /* 功能色彩 */
+  --success-color: #22c55e;       /* 成功色 */
+  --success-bg: #22c55e20;        /* 成功背景 */
+  --warning-color: #f59e0b;       /* 警告色 */
+  --warning-bg: #f59e0b20;        /* 警告背景 */
+  --error-color: #ef4444;         /* 错误色 */
+  --error-bg: #ef444420;          /* 错误背景 */
+  --info-color: #3b82f6;          /* 信息色 */
+  --info-bg: #3b82f620;           /* 信息背景 */
+
+  /* 品牌色彩 */
+  --primary-color: #646cff;       /* 主品牌色 */
+  --primary-hover: #535bf2;       /* 主品牌色悬停 */
+  --primary-active: #4338ca;      /* 主品牌色激活 */
+  --primary-bg: #646cff20;        /* 主品牌背景 */
+
+  /* 阴影系统 */
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.3);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.3), 0 2px 4px -2px rgb(0 0 0 / 0.3);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.3), 0 4px 6px -4px rgb(0 0 0 / 0.3);
+  --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.3), 0 8px 10px -6px rgb(0 0 0 / 0.3);
+
+  /* 过渡动画 */
+  --transition-fast: 0.15s ease;
+  --transition-normal: 0.2s ease;
+  --transition-slow: 0.3s ease;
+  --transition-colors: color 0.2s ease, background-color 0.2s ease, border-color 0.2s ease;
+
+  /* 应用默认配色 */
+  color-scheme: dark;
+  color: var(--text-primary);
+  background-color: var(--bg-primary);
+}
+
+/* =================================
+   ☀️ LIGHT THEME VARIABLES
+   ================================= */
+:root[data-theme="light"] {
+  /* 主要背景色 */
+  --bg-primary: #ffffff;          /* 应用主背景 */
+  --bg-secondary: #f8fafc;        /* 次级背景（Header、Sidebar） */
+  --bg-tertiary: #f1f5f9;         /* 三级背景（卡片、面板） */
+  --bg-quaternary: #e2e8f0;       /* 四级背景（输入框、按钮） */
+  --bg-elevated: #ffffff;         /* 浮层背景（弹窗、抽屉） */
+
+  /* 文本颜色 */
+  --text-primary: #0f172a;                    /* 主文字 */
+  --text-secondary: #475569;                  /* 次级文字 */
+  --text-tertiary: #94a3b8;                   /* 三级文字（占位符等） */
+  --text-disabled: #cbd5e1;                   /* 禁用文字 */
+  --text-inverse: rgba(255, 255, 255, 0.87);  /* 反色文字（用于暗色背景） */
+
+  /* 边框和分割线 */
+  --border-color: #d1d5db;        /* 主边框色 */
+  --border-light: #e5e7eb;        /* 轻边框色 */
+  --border-heavy: #9ca3af;        /* 重边框色 */
+  --divider-color: #e5e7eb;       /* 分割线颜色 */
+
+  /* 交互状态 */
+  --hover-bg: #f3f4f6;            /* 悬停背景 */
+  --active-bg: #e5e7eb;           /* 激活背景 */
+  --selected-bg: #dbeafe;         /* 选中背景 */
+  --focus-color: #2563eb;         /* 焦点颜色 */
+  --focus-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2); /* 焦点阴影 */
+
+  /* 功能色彩保持不变 */
+  --success-color: #059669;       /* 成功色 */
+  --success-bg: #d1fae5;          /* 成功背景 */
+  --warning-color: #d97706;       /* 警告色 */
+  --warning-bg: #fef3c7;          /* 警告背景 */
+  --error-color: #dc2626;         /* 错误色 */
+  --error-bg: #fee2e2;            /* 错误背景 */
+  --info-color: #2563eb;          /* 信息色 */
+  --info-bg: #dbeafe;             /* 信息背景 */
+
+  /* 品牌色彩保持不变 */
+  --primary-color: #4f46e5;       /* 主品牌色 */
+  --primary-hover: #4338ca;       /* 主品牌色悬停 */
+  --primary-active: #3730a3;      /* 主品牌色激活 */
+  --primary-bg: #e0e7ff;          /* 主品牌背景 */
+
+  /* 阴影系统 */
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+
+  /* 应用配色 */
+  color-scheme: light;
+  color: var(--text-primary);
+  background-color: var(--bg-primary);
 }
 
 body {
   margin: 0;
-  background-color: #242424; /* 确保背景色一致 */
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
   overflow: hidden; /* 防止启动时的滚动条闪烁 */
   /* 启用硬件加速 */
   transform: translateZ(0);
   -webkit-backface-visibility: hidden;
   backface-visibility: hidden;
+  /* 主题过渡动画 */
+  transition: var(--transition-colors);
 }
 
 #root {
   min-height: 100vh;
-  background-color: #242424;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
   /* 减少重绘 */
   contain: layout style paint;
+  /* 主题过渡动画 */
+  transition: var(--transition-colors);
 }
 
 button {

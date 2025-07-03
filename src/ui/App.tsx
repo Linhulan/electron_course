@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useTranslation } from 'react-i18next';
 import { LanguageSwitcher } from './components/LanguageSwitcher';
+import { useAppConfigStore } from './contexts/store';
 import "./App.css";
 import { SerialPortPanel } from "./SerialPortPanel";
 import { CounterDashboard } from "./CounterDashboard";
@@ -14,6 +15,17 @@ interface AppProps {
 function App({ onAppReady }: AppProps) {
   const [currentPage, setCurrentPage] = useState<PageType>('serial-port');
   const { t, ready } = useTranslation();
+  const { theme } = useAppConfigStore();
+
+  // 应用主题到根元素
+  useEffect(() => {
+    const root = document.documentElement;
+    if (theme === 'light') {
+      root.setAttribute('data-theme', 'light');
+    } else {
+      root.removeAttribute('data-theme'); // dark 是默认主题
+    }
+  }, [theme]);
 
   // 当应用完全加载后通知隐藏加载屏幕
   useEffect(() => {
@@ -65,25 +77,51 @@ function App({ onAppReady }: AppProps) {
 }
 
 function Header({ title }: { title: string }) {
+  const { theme, setTheme } = useAppConfigStore();
+  const [isMaximized, setIsMaximized] = useState(false);
+
+  const toggleTheme = () => {
+    setTheme(theme === 'light' ? 'dark' : 'light');
+  };
+
+  const handleMaximize = () => {
+    window.electron.sendFrameAction("MAXIMIZE");
+    setIsMaximized(!isMaximized);
+  };
+
   return (
     <header>
       <div className="header-left">
         <span className="app-title">{title}</span>
       </div>
       <div className="header-right">
+        <button
+          className="theme-switcher"
+          onClick={toggleTheme}
+          title={`Switch to ${theme === 'light' ? 'dark' : 'light'} theme`}
+        >
+          {theme === 'light' ? '◐' : '◑'}
+        </button>
         <LanguageSwitcher compact className="header-language-switcher" />
         <button
           id="minimize"
           onClick={() => window.electron.sendFrameAction("MINIMIZE")}
-        ></button>
+          title="Minimize"
+        >
+        </button>
         <button
           id="maximize"
-          onClick={() => window.electron.sendFrameAction("MAXIMIZE")}
-        ></button>
+          onClick={handleMaximize}
+          title={isMaximized ? "Restore" : "Maximize"}
+          className={isMaximized ? "maximized" : ""}
+        >
+        </button>
         <button
           id="close"
           onClick={() => window.electron.sendFrameAction("CLOSE")}
-        ></button>
+          title="Close"
+        >
+        </button>
       </div>
     </header>
   );
