@@ -60,13 +60,13 @@ const handleSessionUpdate = (
     }
     const newSession: SessionData = {
       id: generateSnowflakeId(),
-      no: (currentSession ? currentSession.no + 1 : 1) || 1, // 新Session编号
+      no: 1,                                      //TODO: 这里需要根据实际情况生成会话编号
       timestamp: now.toLocaleTimeString(),
       startTime: now.toLocaleString(),
       currencyCode: protocolData.currencyCode || "",
-      totalCount: 0, // 开始时张数为0
-      totalAmount: 0, // 开始时金额为0
-      errorCount: 0, // 开始时错误张数为0
+      totalCount: 0,
+      totalAmount: 0,
+      errorCount: 0,
       status: status,
       errorCode:
         protocolData.errorCode !== 0
@@ -225,7 +225,7 @@ const autoSaveHandler = (session: SessionData) => {
     useDefaultDir: true,
     openAfterExport: false,
     customDir: undefined,
-    filename: `CounterSession_#${session.no}_${timestamp}.xlsx`,
+    filename: `CounterSession_#${session.id}_${timestamp}.xlsx`,
   });
 };
 

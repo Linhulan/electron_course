@@ -53,12 +53,12 @@ const ExportPanel: React.FC<ExportPanelProps> = ({
       
       // 如果有数据，设置默认文件名
       if (len > 1) {
-        setFilename(`CounterReport_#${sessionData[0].no}_#${sessionData[len - 1].no}_${timestamp}`);
+        setFilename(`CounterReport_#${sessionData[0].id}~${sessionData[len - 1].id}_${timestamp}`);
       }
       else if (len === 1) {
-        setFilename(`CounterReport_#${sessionData[0].no}_${timestamp}`);
+        setFilename(`CounterReport_#${sessionData[0].id}_${timestamp}`);
       }
-      console.log('Filename updated for session data:', { len, firstNo: sessionData[0]?.no, lastNo: sessionData[len - 1]?.no });
+      console.log('Filename updated for session data:', { len, firstNo: sessionData[0]?.id, lastNo: sessionData[len - 1]?.id });
     }
   }, [isOpen, sessionData]);
 
