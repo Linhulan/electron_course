@@ -44,11 +44,11 @@
 }
 
 .export-panel {
-  background: #ffffff;
-  border: 1px solid #e0e0e0;
+  background: #2d2d2d;
+  border: 1px solid #404040;
   border-radius: 8px;
   padding: 20px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   max-width: 600px;
   width: 90vw;
@@ -56,6 +56,7 @@
   overflow-y: auto;
   cursor: default;
   pointer-events: auto;
+  color: #ffffff;
 }
 
 .export-panel-header {
@@ -64,12 +65,12 @@
   align-items: center;
   margin-bottom: 20px;
   padding-bottom: 10px;
-  border-bottom: 2px solid #f0f0f0;
+  border-bottom: 2px solid #404040;
 }
 
 .export-panel-header h3 {
   margin: 0;
-  color: #333;
+  color: #ffffff;
   font-size: 1.2em;
   font-weight: 600;
 }
@@ -85,7 +86,7 @@
   border: none;
   font-size: 18px;
   cursor: pointer;
-  color: #666;
+  color: #888;
   width: 30px;
   height: 30px;
   display: flex;
@@ -96,13 +97,13 @@
 }
 
 .export-panel-close-btn:hover {
-  background: #f0f0f0;
-  color: #333;
+  background: #404040;
+  color: #ffffff;
 }
 
 .data-count {
-  background: #e3f2fd;
-  color: #1976d2;
+  background: #1a3a5c;
+  color: #64b5f6;
   padding: 4px 8px;
   border-radius: 12px;
   font-size: 0.9em;
@@ -121,16 +122,18 @@
   display: block;
   margin-bottom: 5px;
   font-weight: 500;
-  color: #555;
+  color: #cccccc;
 }
 
 .option-group input[type="text"] {
   width: 100%;
   padding: 8px 12px;
-  border: 1px solid #ddd;
+  border: 1px solid #555;
   border-radius: 4px;
   font-size: 14px;
   transition: border-color 0.3s ease;
+  background: #3a3a3a;
+  color: #ffffff;
 }
 
 .option-group input[type="text"]:focus {
@@ -140,13 +143,15 @@
 }
 
 .option-group input[type="text"]:disabled {
-  background: #f5f5f5;
+  background: #1a1a1a;
   cursor: not-allowed;
+  opacity: 0.6;
 }
 
 .option-group input[type="checkbox"] {
   margin-right: 8px;
   transform: scale(1.1);
+  accent-color: #007bff;
 }
 
 .export-buttons {
@@ -174,7 +179,7 @@
 
 .export-btn:hover:not(:disabled) {
   transform: translateY(-1px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
 }
 
 .export-btn:active:not(:disabled) {
@@ -219,8 +224,8 @@
   align-items: flex-start;
   gap: 10px;
   padding: 12px;
-  background: #f8f9fa;
-  border: 1px solid #dee2e6;
+  background: #1a1a1a;
+  border: 1px solid #404040;
   border-radius: 4px;
   margin-bottom: 20px;
   position: relative;
@@ -230,13 +235,13 @@
   flex: 1;
   font-size: 14px;
   line-height: 1.4;
-  color: #495057;
+  color: #cccccc;
 }
 
 .clear-status-btn {
   background: none;
   border: none;
-  color: #6c757d;
+  color: #888;
   cursor: pointer;
   font-size: 16px;
   padding: 0;
@@ -250,20 +255,20 @@
 }
 
 .clear-status-btn:hover {
-  background: #e9ecef;
-  color: #495057;
+  background: #404040;
+  color: #ffffff;
 }
 
 .export-info {
-  background: #f8f9fa;
-  border: 1px solid #e9ecef;
+  background: #1a1a1a;
+  border: 1px solid #404040;
   border-radius: 4px;
   padding: 15px;
 }
 
 .export-info h4 {
   margin: 0 0 10px 0;
-  color: #333;
+  color: #ffffff;
   font-size: 1em;
   font-weight: 600;
 }
@@ -275,13 +280,201 @@
 
 .export-info li {
   margin-bottom: 8px;
-  color: #555;
+  color: #cccccc;
   font-size: 14px;
   line-height: 1.4;
 }
 
 .export-info li strong {
-  color: #333;
+  color: #ffffff;
+}
+
+/* 成功状态样式 */
+.export-status .status-message:has-text("✅") {
+  color: #4ade80;
+  background: rgba(74, 222, 128, 0.2);
+  border-color: rgba(74, 222, 128, 0.3);
+}
+
+/* 错误状态样式 */
+.export-status .status-message:has-text("❌") {
+  color: #ef4444;
+  background: rgba(239, 68, 68, 0.2);
+  border-color: rgba(239, 68, 68, 0.3);
+}
+
+/* 加载动画 */
+.export-btn:disabled {
+  position: relative;
+}
+
+.export-btn:disabled::after {
+  content: '';
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  margin: auto;
+  border: 2px solid transparent;
+  border-top-color: #ffffff;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .export-panel {
+    margin: 0 10px;
+    padding: 15px;
+  }
+  
+  .export-panel-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+  
+  .export-buttons {
+    flex-direction: column;
+  }
+  
+  .export-btn {
+    min-width: auto;
+  }
+}
+
+/* ============================================
+   亮色主题样式 - ExportPanel
+   ============================================ */
+
+/* 模态框遮罩层 - 亮色主题 */
+[data-theme="light"] .export-panel-overlay {
+  background: rgba(0, 0, 0, 0.4);
+}
+
+/* 模态框容器 - 亮色主题 */
+[data-theme="light"] .export-panel {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  color: #1e293b;
+}
+
+/* 标题 - 亮色主题 */
+[data-theme="light"] .export-panel-header {
+  border-bottom: 2px solid #e2e8f0;
+}
+
+[data-theme="light"] .export-panel-header h3 {
+  color: #1e293b;
+}
+
+/* 关闭按钮 - 亮色主题 */
+[data-theme="light"] .export-panel-close-btn {
+  color: #6b7280;
+}
+
+[data-theme="light"] .export-panel-close-btn:hover {
+  background: #f3f4f6;
+  color: #1e293b;
+}
+
+/* 数据计数 - 亮色主题 */
+[data-theme="light"] .data-count {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+/* 表单标签 - 亮色主题 */
+[data-theme="light"] .option-group label {
+  color: #374151;
+}
+
+/* 输入框 - 亮色主题 */
+[data-theme="light"] .option-group input[type="text"] {
+  background: #ffffff;
+  border: 1px solid #d1d5db;
+  color: #1e293b;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+[data-theme="light"] .option-group input[type="text"]:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+[data-theme="light"] .option-group input[type="text"]:disabled {
+  background: #f3f4f6;
+  color: #9ca3af;
+  border-color: #e5e7eb;
+}
+
+[data-theme="light"] .option-group input[type="text"]::placeholder {
+  color: #9ca3af;
+}
+
+/* 复选框 - 亮色主题 */
+[data-theme="light"] .option-group input[type="checkbox"] {
+  accent-color: #3b82f6;
+}
+
+/* 按钮悬停效果 - 亮色主题 */
+[data-theme="light"] .export-btn:hover:not(:disabled) {
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+/* 状态区域 - 亮色主题 */
+[data-theme="light"] .export-status {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+}
+
+[data-theme="light"] .status-message {
+  color: #374151;
+}
+
+[data-theme="light"] .clear-status-btn {
+  color: #6b7280;
+}
+
+[data-theme="light"] .clear-status-btn:hover {
+  background: #f3f4f6;
+  color: #374151;
+}
+
+/* 信息区域 - 亮色主题 */
+[data-theme="light"] .export-info {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+}
+
+[data-theme="light"] .export-info h4 {
+  color: #1e293b;
+}
+
+[data-theme="light"] .export-info li {
+  color: #6b7280;
+}
+
+[data-theme="light"] .export-info li strong {
+  color: #1e293b;
+}
+
+/* 成功/错误状态 - 亮色主题 */
+[data-theme="light"] .export-status .status-message:has-text("✅") {
+  color: #166534;
+  background: #dcfce7;
+  border-color: #bbf7d0;
+}
+
+[data-theme="light"] .export-status .status-message:has-text("❌") {
+  color: #dc2626;
+  background: #fee2e2;
+  border-color: #fecaca;
 }
 
 /* 响应式设计 */

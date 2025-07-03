@@ -1002,3 +1002,707 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* ============================================
+   亮色主题样式 - SessionDetailDrawer
+   ============================================ */
+
+/* 抽屉遮罩 - 亮色主题 */
+[data-theme="light"] .drawer-overlay {
+  background: rgba(0, 0, 0, 0.3);
+}
+
+/* 抽屉容器 - 亮色主题 */
+[data-theme="light"] .session-detail-drawer {
+  background: #ffffff;
+  border-left: 1px solid #e2e8f0;
+  box-shadow: -4px 0 20px rgba(0, 0, 0, 0.1);
+  color: #1e293b;
+}
+
+/* 抽屉头部 - 亮色主题 */
+[data-theme="light"] .drawer-header {
+  background: #f8fafc;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+[data-theme="light"] .drawer-header h2 {
+  color: #1e293b;
+}
+
+/* 关闭按钮 - 亮色主题 */
+[data-theme="light"] .drawer-close {
+  background: #f3f4f6;
+  color: #6b7280;
+  border: 1px solid #d1d5db;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+[data-theme="light"] .drawer-close:hover {
+  background: #e5e7eb;
+  color: #374151;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* 抽屉内容 - 亮色主题 */
+[data-theme="light"] .drawer-content {
+  background: #ffffff;
+}
+
+/* 滚动条 - 亮色主题 */
+[data-theme="light"] .drawer-content::-webkit-scrollbar {
+  width: 8px;
+}
+
+[data-theme="light"] .drawer-content::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 4px;
+}
+
+[data-theme="light"] .drawer-content::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+
+[data-theme="light"] .drawer-content::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* 会话信息区域 - 亮色主题 */
+[data-theme="light"] .session-info {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+}
+
+/* 信息网格 - 亮色主题 */
+[data-theme="light"] .info-item {
+  background: #ffffff;
+}
+
+[data-theme="light"] .info-item .label {
+  color: #6b7280;
+}
+
+[data-theme="light"] .info-item .value {
+  color: #1e293b;
+}
+
+[data-theme="light"] .info-item .value.duration {
+  color: #059669;
+}
+
+[data-theme="light"] .info-item .value.error {
+  color: #dc2626;
+}
+
+[data-theme="light"] .info-item .value.status {
+  color: #3b82f6;
+}
+
+/* 统计卡片 - 亮色主题 */
+[data-theme="light"] .stats-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+[data-theme="light"] .stats-card:hover {
+  border-color: #3b82f6;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
+}
+
+[data-theme="light"] .stats-card .stat-value {
+  color: #1e293b;
+}
+
+[data-theme="light"] .stats-card .stat-label {
+  color: #6b7280;
+}
+
+[data-theme="light"] .stats-card .stat-icon {
+  color: #3b82f6;
+}
+
+/* 货币统计 - 亮色主题 */
+[data-theme="light"] .currency-stats-section {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+}
+
+[data-theme="light"] .currency-stats-section h3 {
+  color: #1e293b;
+}
+
+[data-theme="light"] .currency-stat-row {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+[data-theme="light"] .currency-stat-row:hover {
+  background: #f8fafc;
+  border-color: #3b82f6;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
+}
+
+[data-theme="light"] .currency-code {
+  color: #1e293b;
+}
+
+[data-theme="light"] .currency-values .value {
+  color: #1e293b;
+}
+
+[data-theme="light"] .currency-values .label {
+  color: #6b7280;
+}
+
+[data-theme="light"] .currency-values .amount {
+  color: #059669;
+}
+
+[data-theme="light"] .currency-values .error {
+  color: #dc2626;
+}
+
+/* 交易记录 - 亮色主题 */
+[data-theme="light"] .transactions-section {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+}
+
+[data-theme="light"] .transactions-section h3 {
+  color: #1e293b;
+}
+
+[data-theme="light"] .transaction-table {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+}
+
+[data-theme="light"] .transaction-header {
+  background: #f8fafc;
+  border-bottom: 1px solid #e2e8f0;
+  color: #374151;
+}
+
+[data-theme="light"] .transaction-row {
+  border-bottom: 1px solid #e2e8f0;
+  color: #1e293b;
+}
+
+[data-theme="light"] .transaction-row:hover {
+  background: #f8fafc;
+}
+
+[data-theme="light"] .transaction-row:nth-child(even) {
+  background: rgba(59, 130, 246, 0.02);
+}
+
+[data-theme="light"] .transaction-row:nth-child(even):hover {
+  background: #f8fafc;
+}
+
+/* 交易时间 - 亮色主题 */
+[data-theme="light"] .transaction-time {
+  color: #6b7280;
+}
+
+[data-theme="light"] .transaction-time .time-primary {
+  color: #3b82f6;
+}
+
+/* 交易类型 - 亮色主题 */
+[data-theme="light"] .transaction-type {
+  color: #6b7280;
+}
+
+[data-theme="light"] .transaction-type.counting {
+  color: #059669;
+}
+
+[data-theme="light"] .transaction-type.error {
+  color: #dc2626;
+}
+
+/* 交易金额 - 亮色主题 */
+[data-theme="light"] .transaction-amount {
+  color: #059669;
+}
+
+[data-theme="light"] .transaction-amount.error {
+  color: #dc2626;
+}
+
+/* 交易货币 - 亮色主题 */
+[data-theme="light"] .transaction-currency {
+  color: #1e293b;
+}
+
+[data-theme="light"] .transaction-currency.multi {
+  color: #3b82f6;
+}
+
+/* 交易状态 - 亮色主题 */
+[data-theme="light"] .transaction-status {
+  color: #6b7280;
+}
+
+[data-theme="light"] .transaction-status.success {
+  color: #059669;
+}
+
+[data-theme="light"] .transaction-status.error {
+  color: #dc2626;
+}
+
+/* 无数据状态 - 亮色主题 */
+[data-theme="light"] .no-data {
+  color: #6b7280;
+}
+
+[data-theme="light"] .no-data .icon {
+  color: #9ca3af;
+}
+
+[data-theme="light"] .no-data .message {
+  color: #6b7280;
+}
+
+/* 加载状态 - 亮色主题 */
+[data-theme="light"] .loading {
+  color: #6b7280;
+}
+
+[data-theme="light"] .loading .spinner {
+  border-color: #e2e8f0;
+  border-top-color: #3b82f6;
+}
+
+/* 错误状态 - 亮色主题 */
+[data-theme="light"] .error {
+  color: #dc2626;
+  background: #fee2e2;
+  border: 1px solid #fecaca;
+}
+
+/* 成功状态 - 亮色主题 */
+[data-theme="light"] .success {
+  color: #166534;
+  background: #dcfce7;
+  border: 1px solid #bbf7d0;
+}
+
+/* 动作按钮 - 亮色主题 */
+[data-theme="light"] .action-btn {
+  background: #3b82f6;
+  color: white;
+  border: none;
+  box-shadow: 0 2px 4px rgba(59, 130, 246, 0.2);
+}
+
+[data-theme="light"] .action-btn:hover:not(:disabled) {
+  background: #2563eb;
+  box-shadow: 0 4px 8px rgba(59, 130, 246, 0.3);
+}
+
+[data-theme="light"] .action-btn.secondary {
+  background: #f3f4f6;
+  color: #374151;
+  border: 1px solid #d1d5db;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+[data-theme="light"] .action-btn.secondary:hover:not(:disabled) {
+  background: #e5e7eb;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+[data-theme="light"] .action-btn.danger {
+  background: #ef4444;
+  color: white;
+  border: none;
+  box-shadow: 0 2px 4px rgba(239, 68, 68, 0.2);
+}
+
+[data-theme="light"] .action-btn.danger:hover:not(:disabled) {
+  background: #dc2626;
+  box-shadow: 0 4px 8px rgba(239, 68, 68, 0.3);
+}
+
+[data-theme="light"] .action-btn:disabled {
+  background: #f3f4f6;
+  color: #9ca3af;
+  border: 1px solid #e5e7eb;
+  box-shadow: none;
+}
+
+/* 抽屉头部组件 - 亮色主题 */
+[data-theme="light"] .drawer-title h3 {
+  color: #1e293b;
+}
+
+[data-theme="light"] .drawer-close-btn {
+  background: #f3f4f6;
+  color: #6b7280;
+  border: 1px solid #d1d5db;
+}
+
+[data-theme="light"] .drawer-close-btn:hover {
+  background: #e5e7eb;
+  color: #374151;
+}
+
+/* 详情区块 - 亮色主题 */
+[data-theme="light"] .detail-section {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+[data-theme="light"] .section-title {
+  color: #1e293b;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+[data-theme="light"] .toggle-detail-btn {
+  background: #f3f4f6;
+  color: #374151;
+  border: 1px solid #d1d5db;
+}
+
+[data-theme="light"] .toggle-detail-btn:hover {
+  background: #e5e7eb;
+}
+
+[data-theme="light"] .toggle-detail-btn.active {
+  background: #10b981;
+  color: white;
+}
+
+[data-theme="light"] .toggle-detail-btn.active:hover {
+  background: #059669;
+}
+
+[data-theme="light"] .detail-count {
+  color: #6b7280;
+}
+
+/* 基本信息网格 - 亮色主题 */
+[data-theme="light"] .info-label {
+  color: #6b7280;
+}
+
+[data-theme="light"] .info-value {
+  color: #1e293b;
+}
+
+[data-theme="light"] .info-value.highlight {
+  color: #10b981;
+}
+
+[data-theme="light"] .info-value.error-value {
+  color: #dc2626;
+}
+
+/* 面额分布 - 亮色主题 */
+[data-theme="light"] .denomination-item {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+[data-theme="light"] .denomination-item:hover {
+  background: #f1f5f9;
+  border-color: #3b82f6;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
+}
+
+[data-theme="light"] .denomination-item.total {
+  background: #dcfce7;
+  border-color: #10b981;
+  border-width: 2px;
+}
+
+[data-theme="light"] .denomination-item.total .denomination-value {
+  color: #1e293b;
+}
+
+[data-theme="light"] .denomination-item.total .denomination-amount {
+  color: #059669;
+}
+
+[data-theme="light"] .denomination-item.total .denomination-count {
+  background: rgba(16, 185, 129, 0.15);
+  color: #065f46;
+}
+
+[data-theme="light"] .denomination-item.compact.total .denomination-basic .denomination-value {
+  color: #1e293b;
+}
+
+[data-theme="light"] .denomination-item.compact.total .denomination-basic .denomination-amount {
+  color: #059669;
+}
+
+[data-theme="light"] .denomination-item.compact.total .denomination-basic .denomination-count {
+  background: rgba(16, 185, 129, 0.15);
+  color: #065f46;
+}
+
+[data-theme="light"] .denomination-value {
+  color: #1e293b;
+}
+
+[data-theme="light"] .denomination-amount {
+  color: #10b981;
+}
+
+[data-theme="light"] .denomination-count {
+  color: #6b7280;
+  background: rgba(59, 130, 246, 0.1);
+}
+
+[data-theme="light"] .count-percentage {
+  color: #10b981;
+}
+
+[data-theme="light"] .amount-percentage {
+  color: #f59e0b;
+}
+
+[data-theme="light"] .total-percentages .count-percentage,
+[data-theme="light"] .total-percentages .amount-percentage {
+  color: #1e293b;
+}
+
+/* 面额条形图 - 亮色主题 */
+[data-theme="light"] .bar-text {
+  color: #6b7280;
+}
+
+[data-theme="light"] .bar-percentage {
+  color: #1e293b;
+}
+
+[data-theme="light"] .denomination-bar {
+  background: #e2e8f0;
+}
+
+[data-theme="light"] .denomination-bar.count-bar {
+  background: rgba(16, 185, 129, 0.2);
+}
+
+[data-theme="light"] .denomination-bar.amount-bar {
+  background: rgba(245, 158, 11, 0.2);
+}
+
+[data-theme="light"] .denomination-fill.count-fill {
+  background: linear-gradient(90deg, #10b981, #34d399);
+}
+
+[data-theme="light"] .denomination-fill.amount-fill {
+  background: linear-gradient(90deg, #f59e0b, #fbbf24);
+}
+
+/* 紧凑面额项 - 亮色主题 */
+[data-theme="light"] .denomination-item.compact {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+}
+
+[data-theme="light"] .denomination-item.compact:hover {
+  background: #f1f5f9;
+  border-color: #3b82f6;
+}
+
+[data-theme="light"] .denomination-item.compact.total {
+  background: #dcfce7;
+  border-color: #10b981;
+}
+
+[data-theme="light"] .denomination-basic .denomination-value {
+  color: #1e293b;
+}
+
+[data-theme="light"] .denomination-basic .denomination-count {
+  color: #6b7280;
+  background: rgba(59, 130, 246, 0.1);
+}
+
+[data-theme="light"] .denomination-basic .denomination-amount {
+  color: #10b981;
+}
+
+[data-theme="light"] .count-percentage-inline {
+  color: #10b981;
+}
+
+[data-theme="light"] .amount-percentage-inline {
+  color: #f59e0b;
+}
+
+[data-theme="light"] .denomination-detailed {
+  border-top: 1px solid #e2e8f0;
+}
+
+/* 交易明细表格 - 亮色主题 */
+[data-theme="light"] .transaction-table {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+}
+
+[data-theme="light"] .transaction-header {
+  background: #f8fafc;
+  border-bottom: 1px solid #e2e8f0;
+  color: #374151;
+}
+
+[data-theme="light"] .transaction-body::-webkit-scrollbar {
+  width: 4px;
+}
+
+[data-theme="light"] .transaction-body::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+
+[data-theme="light"] .transaction-body::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 2px;
+}
+
+[data-theme="light"] .transaction-row {
+  border-bottom: 1px solid #e2e8f0;
+  color: #1e293b;
+}
+
+[data-theme="light"] .transaction-row:hover {
+  background: #f8fafc;
+}
+
+[data-theme="light"] .transaction-row:nth-child(even) {
+  background: rgba(59, 130, 246, 0.02);
+}
+
+[data-theme="light"] .transaction-row:nth-child(even):hover {
+  background: #f8fafc;
+}
+
+[data-theme="light"] .transaction-col-no {
+  color: #6b7280;
+}
+
+[data-theme="light"] .transaction-col-serial {
+  color: #1e293b;
+}
+
+[data-theme="light"] .transaction-col-denomination {
+  color: #10b981;
+}
+
+[data-theme="light"] .transaction-col-currency {
+  color: #f59e0b;
+}
+
+[data-theme="light"] .transaction-col-error {
+  color: #dc2626;
+}
+
+[data-theme="light"] .col-serial:empty::after,
+[data-theme="light"] .col-error:empty::after {
+  color: #9ca3af;
+}
+
+/* 无数据消息 - 亮色主题 */
+[data-theme="light"] .no-data-message {
+  color: #6b7280;
+}
+
+/* 抽屉底部操作 - 亮色主题 */
+[data-theme="light"] .drawer-footer {
+  background: #f8fafc;
+  border-top: 1px solid #e2e8f0;
+}
+
+[data-theme="light"] .action-btn.secondary {
+  background: #f3f4f6;
+  color: #374151;
+  border: 1px solid #d1d5db;
+}
+
+[data-theme="light"] .action-btn.secondary:hover {
+  background: #e5e7eb;
+}
+
+[data-theme="light"] .action-btn.primary {
+  background: #10b981;
+  color: white;
+}
+
+[data-theme="light"] .action-btn.primary:hover {
+  background: #059669;
+}
+
+/* 货币Tab切换 - 亮色主题 */
+[data-theme="light"] .detail-section .currency-tabs {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+}
+
+[data-theme="light"] .detail-section .currency-tab {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  color: #6b7280;
+}
+
+[data-theme="light"] .detail-section .currency-tab:hover {
+  background: #f1f5f9;
+  border-color: #3b82f6;
+  color: #1e293b;
+}
+
+[data-theme="light"] .detail-section .currency-tab.active {
+  background: #3b82f6;
+  border-color: #2563eb;
+  color: #ffffff;
+}
+
+[data-theme="light"] .detail-section .currency-tab .tab-count {
+  background: rgba(0, 0, 0, 0.15);
+}
+
+[data-theme="light"] .detail-section .currency-tab.active .tab-count {
+  background: rgba(255, 255, 255, 0.25);
+  color: #ffffff;
+}
+
+/* 货币统计区域 - 亮色主题 */
+[data-theme="light"] .currency-breakdown {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+}
+
+[data-theme="light"] .currency-breakdown-title {
+  color: #1e293b;
+}
+
+[data-theme="light"] .currency-stat-item {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+}
+
+[data-theme="light"] .currency-header {
+  border-bottom: 1px solid #e2e8f0;
+}
+
+[data-theme="light"] .currency-code {
+  color: #1e293b;
+}
+
+[data-theme="light"] .currency-stat .stat-label {
+  color: #6b7280;
+}
+
+[data-theme="light"] .currency-stat .stat-value {
+  color: #1e293b;
+}

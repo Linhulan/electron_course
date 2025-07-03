@@ -577,3 +577,240 @@
     min-height: 150px; /* 移动端减少最小高度 */
   }
 }
+
+/* ============================================
+   亮色主题样式 - SerialPortPanel
+   ============================================ */
+
+/* 主布局背景 */
+[data-theme="light"] .serial-port-panel-layout {
+  background-color: #f8fafc;
+  color: #1e293b;
+}
+
+/* 配置和日志区域 */
+[data-theme="light"] .serial-port-connection,
+[data-theme="light"] .serial-port-communication {
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+[data-theme="light"] .serial-port-panel {
+  background-color: #ffffff;
+  color: #1e293b;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+/* 标题 */
+[data-theme="light"] .serial-port-panel h3 {
+  color: #1e293b;
+}
+
+/* 错误消息 */
+[data-theme="light"] .error-message {
+  background-color: #fee2e2;
+  color: #dc2626;
+  border: 1px solid #fecaca;
+}
+
+/* 表单标签 */
+[data-theme="light"] .port-selection label,
+[data-theme="light"] .config-row label {
+  color: #374151;
+}
+
+/* 下拉选择框 */
+[data-theme="light"] .port-select-row select,
+[data-theme="light"] .config-row select {
+  background-color: #ffffff;
+  color: #1e293b;
+  border: 1px solid #d1d5db;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+[data-theme="light"] .port-select-row select:focus,
+[data-theme="light"] .config-row select:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+[data-theme="light"] .port-select-row select option,
+[data-theme="light"] .config-row select option {
+  background-color: #ffffff;
+  color: #1e293b;
+}
+
+/* 刷新按钮 */
+[data-theme="light"] .refresh-btn {
+  background-color: #3b82f6;
+  color: white;
+  box-shadow: 0 2px 4px rgba(59, 130, 246, 0.2);
+}
+
+[data-theme="light"] .refresh-btn:hover:not(:disabled) {
+  background-color: #2563eb;
+  box-shadow: 0 4px 8px rgba(59, 130, 246, 0.3);
+}
+
+/* 连接按钮 */
+[data-theme="light"] .connect-btn {
+  background-color: #10b981;
+  box-shadow: 0 2px 4px rgba(16, 185, 129, 0.2);
+}
+
+[data-theme="light"] .connect-btn:hover:not(:disabled) {
+  background-color: #059669;
+  box-shadow: 0 4px 8px rgba(16, 185, 129, 0.3);
+}
+
+[data-theme="light"] .disconnect-btn {
+  background-color: #ef4444;
+  box-shadow: 0 2px 4px rgba(239, 68, 68, 0.2);
+}
+
+[data-theme="light"] .disconnect-btn:hover:not(:disabled) {
+  background-color: #dc2626;
+  box-shadow: 0 4px 8px rgba(239, 68, 68, 0.3);
+}
+
+/* 状态指示器 */
+[data-theme="light"] .connection-status {
+  color: #374151;
+}
+
+[data-theme="light"] .connection-status.connected {
+  color: #059669;
+}
+
+[data-theme="light"] .connection-status.disconnected {
+  color: #dc2626;
+}
+
+[data-theme="light"] .connection-status.connecting {
+  color: #f59e0b;
+}
+
+/* 数据显示区域 */
+[data-theme="light"] .data-display {
+  background-color: #f8fafc;
+  border: 1px solid #e2e8f0;
+  color: #1e293b;
+}
+
+/* 滚动条 - 亮色主题 */
+[data-theme="light"] .data-display::-webkit-scrollbar {
+  width: 8px;
+}
+
+[data-theme="light"] .data-display::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 4px;
+}
+
+[data-theme="light"] .data-display::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+
+[data-theme="light"] .data-display::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* 输入框 */
+[data-theme="light"] .send-input {
+  background-color: #ffffff;
+  color: #1e293b;
+  border: 1px solid #d1d5db;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+[data-theme="light"] .send-input:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+[data-theme="light"] .send-input::placeholder {
+  color: #9ca3af;
+}
+
+/* 发送按钮 */
+[data-theme="light"] .send-btn {
+  background-color: #3b82f6;
+  box-shadow: 0 2px 4px rgba(59, 130, 246, 0.2);
+}
+
+[data-theme="light"] .send-btn:hover:not(:disabled) {
+  background-color: #2563eb;
+  box-shadow: 0 4px 8px rgba(59, 130, 246, 0.3);
+}
+
+/* 测试按钮 */
+[data-theme="light"] .test-btn {
+  background-color: #f59e0b;
+  box-shadow: 0 2px 4px rgba(245, 158, 11, 0.2);
+}
+
+[data-theme="light"] .test-btn:hover:not(:disabled) {
+  background-color: #d97706;
+  box-shadow: 0 4px 8px rgba(245, 158, 11, 0.3);
+}
+
+/* 发送数据容器 */
+[data-theme="light"] .send-data-container {
+  border-top: 1px solid #e2e8f0;
+}
+
+/* 复选框和标签 */
+[data-theme="light"] .checkbox-row label {
+  color: #374151;
+}
+
+[data-theme="light"] .checkbox-row input[type="checkbox"] {
+  accent-color: #3b82f6;
+}
+
+/* 数据类型标签 */
+[data-theme="light"] .data-type {
+  color: #6b7280;
+}
+
+/* 通信历史记录 */
+[data-theme="light"] .data-item {
+  border-bottom: 1px solid #e2e8f0;
+}
+
+[data-theme="light"] .data-item.sent {
+  background-color: rgba(59, 130, 246, 0.05);
+}
+
+[data-theme="light"] .data-item.received {
+  background-color: rgba(16, 185, 129, 0.05);
+}
+
+[data-theme="light"] .data-item .timestamp {
+  color: #6b7280;
+}
+
+[data-theme="light"] .data-item .data-content {
+  color: #1e293b;
+}
+
+/* 禁用状态 */
+[data-theme="light"] .refresh-btn:disabled,
+[data-theme="light"] .connect-btn:disabled,
+[data-theme="light"] .disconnect-btn:disabled,
+[data-theme="light"] .send-btn:disabled,
+[data-theme="light"] .test-btn:disabled {
+  opacity: 0.5;
+  box-shadow: none;
+}
+
+[data-theme="light"] .port-select-row select:disabled,
+[data-theme="light"] .config-row select:disabled,
+[data-theme="light"] .send-input:disabled {
+  background-color: #f3f4f6;
+  color: #9ca3af;
+  border-color: #e5e7eb;
+}

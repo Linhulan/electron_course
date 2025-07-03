@@ -6,6 +6,7 @@ import {
   XAxis,
   YAxis,
 } from 'recharts';
+import { useAppConfigStore } from './contexts/store';
 
 type BaseChartProps = {
   data: { value: number | undefined }[];
@@ -14,10 +15,16 @@ type BaseChartProps = {
 };
 
 export function BaseChart(props: BaseChartProps) {
+  const theme = useAppConfigStore((state) => state.theme);
+  
+  // 根据主题选择网格颜色
+  const gridStroke = theme === 'light' ? '#e2e8f0' : '#333';
+  const gridFill = theme === 'light' ? '#f8fafc' : '#1C1C1C';
+  
   return (
     <ResponsiveContainer width={'100%'} height={'100%'}>
       <AreaChart data={props.data}>
-        <CartesianGrid stroke="#333" strokeDasharray="5 5" fill="#1C1C1C" />
+        <CartesianGrid stroke={gridStroke} strokeDasharray="5 5" fill={gridFill} />
         <Area
           fillOpacity={0.3}
           fill={props.fill}

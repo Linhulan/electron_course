@@ -827,13 +827,12 @@
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   border-color: #667eea;
   color: #ffffff;
-  box-shadow: 0 2px 6px rgba(102, 126, 234, 0.3);
+  box-shadow: 0 2px 6px rgba(59, 130, 246, 0.3);
 }
 
 .currency-tab.active:hover {
-  background: linear-gradient(135deg, #5a67d8 0%, #6b4093 100%);
-  transform: translateY(-1px);
-  box-shadow: 0 3px 8px rgba(102, 126, 234, 0.4);
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+  box-shadow: 0 3px 8px rgba(59, 130, 246, 0.4);
 }
 
 .tab-count {
@@ -1641,11 +1640,12 @@
   border-radius: 6px;
   min-width: 50px;
   text-align: center;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 4px rgba(59, 130, 246, 0.2);
 }
 
 .currency-value[data-currency="MULTI"] {
   background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  box-shadow: 0 2px 4px rgba(236, 72, 153, 0.2);
 }
 
 /*  响应式设计 */
@@ -1752,5 +1752,621 @@
   .records-grid {
     grid-template-columns: 1fr;
     gap: 1rem;
+  }
+}
+
+/* ========================================
+   Light Theme Styles
+   ======================================== */
+
+[data-theme="light"] .counter-dashboard {
+  background: #f8fafc;
+  color: #1e293b;
+}
+
+/* Dashboard主滚动条样式 - 亮色主题 */
+[data-theme="light"] .counter-dashboard::-webkit-scrollbar-track {
+  background: #e2e8f0;
+}
+
+[data-theme="light"] .counter-dashboard::-webkit-scrollbar-thumb {
+  background: #94a3b8;
+}
+
+[data-theme="light"] .counter-dashboard::-webkit-scrollbar-thumb:hover {
+  background: #64748b;
+}
+
+[data-theme="light"] .counter-dashboard::-webkit-scrollbar-thumb:active {
+  background: #475569;
+}
+
+/* 头部区域 - 亮色主题 */
+[data-theme="light"] .dashboard-header {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+[data-theme="light"] .dashboard-title h2 {
+  color: #1e293b;
+}
+
+[data-theme="light"] .connection-status {
+  color: #64748b;
+  background: #f3f4f6;
+  border: 1px solid #d1d5db;
+}
+
+[data-theme="light"] .status-indicator {
+  background: #ef4444;
+}
+
+[data-theme="light"] .status-indicator.connected {
+  background: #10b981;
+}
+
+[data-theme="light"] .time-range-select {
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+  color: #1e293b;
+}
+
+[data-theme="light"] .time-range-select:focus {
+  border-color: #3b82f6;
+}
+
+/* 控制按钮 - 亮色主题 */
+[data-theme="light"] .control-btn.start {
+  background: #22c55e;
+}
+
+[data-theme="light"] .control-btn.start:hover {
+  background: #16a34a;
+}
+
+[data-theme="light"] .control-btn.stop {
+  background: #ef4444;
+}
+
+[data-theme="light"] .control-btn.stop:hover {
+  background: #dc2626;
+}
+
+[data-theme="light"] .control-btn.clear {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  box-shadow: 0 2px 4px rgba(239, 68, 68, 0.2);
+}
+
+[data-theme="light"] .control-btn.clear:hover {
+  background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+}
+
+[data-theme="light"] .control-btn.export {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  box-shadow: 0 2px 4px rgba(16, 185, 129, 0.2);
+}
+
+[data-theme="light"] .control-btn.export:hover:not(:disabled) {
+  background: linear-gradient(135deg, #059669 0%, #047857 100%);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+}
+
+[data-theme="light"] .control-btn.export:disabled,
+[data-theme="light"] .control-btn.export.disabled {
+  background: linear-gradient(135deg, #9ca3af 0%, #6b7280 100%);
+  color: #6b7280;
+  border-color: #9ca3af;
+}
+
+/* 仿真控制按钮 - 亮色主题 */
+[data-theme="light"] .simulation-controls {
+  border-left: 1px solid #cbd5e1;
+}
+
+[data-theme="light"] .control-btn.simulation-start {
+  background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+  box-shadow: 0 2px 4px rgba(139, 92, 246, 0.2);
+}
+
+[data-theme="light"] .control-btn.simulation-start:hover {
+  background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
+  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+}
+
+[data-theme="light"] .control-btn.simulation-stop {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  box-shadow: 0 2px 4px rgba(245, 158, 11, 0.2);
+}
+
+[data-theme="light"] .control-btn.simulation-stop:hover {
+  background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
+  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+}
+
+[data-theme="light"] .control-btn.test-data {
+  background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
+  box-shadow: 0 2px 4px rgba(6, 182, 212, 0.2);
+}
+
+[data-theme="light"] .control-btn.test-data:hover {
+  background: linear-gradient(135deg, #0891b2 0%, #0e7490 100%);
+  box-shadow: 0 4px 12px rgba(6, 182, 212, 0.3);
+}
+
+[data-theme="light"] .simulation-status {
+  background: rgba(139, 92, 246, 0.1);
+  border: 1px solid rgba(139, 92, 246, 0.3);
+  color: #7c3aed;
+}
+
+/* Session统计概览行 - 亮色主题 */
+[data-theme="light"] .session-summary-row {
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+[data-theme="light"] .session-summary-item {
+  color: #1e293b;
+}
+
+[data-theme="light"] .session-summary-label {
+  color: #64748b;
+}
+
+/* 货币统计行 - 亮色主题 */
+[data-theme="light"] .currency-stats-row {
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+  border: 1px solid #e2e8f0;
+}
+
+[data-theme="light"] .currency-stats-row::before {
+  background: linear-gradient(90deg, transparent 0%, rgba(59, 130, 246, 0.05) 100%);
+}
+
+[data-theme="light"] .currency-stats-row:hover::before {
+  opacity: 1;
+}
+
+[data-theme="light"] .currency-stats-row:hover {
+  background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+  border-left: 2px solid #3b82f6;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
+}
+
+[data-theme="light"] .currency-code {
+  color: #1e293b;
+}
+
+[data-theme="light"] .currency-amount {
+  color: #059669;
+}
+
+[data-theme="light"] .currency-notes {
+  color: #475569;
+}
+
+[data-theme="light"] .currency-errors {
+  color: #dc2626;
+}
+
+[data-theme="light"] .currency-percentage {
+  color: #64748b;
+}
+
+[data-theme="light"] .stacked-badge {
+  background: #3b82f6;
+  box-shadow: 0 2px 6px rgba(59, 130, 246, 0.4);
+}
+
+[data-theme="light"] .stacked-badge:hover {
+  background: #2563eb;
+  box-shadow: 0 4px 10px rgba(59, 130, 246, 0.5);
+}
+
+/* 统计卡片 - 亮色主题 */
+[data-theme="light"] .stat-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+[data-theme="light"] .stat-card:hover {
+  border-color: #cbd5e1;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+}
+
+[data-theme="light"] .stat-value {
+  color: #1e293b !important;
+}
+
+[data-theme="light"] .stat-label {
+  color: #64748b;
+}
+
+/* 当前会话 - 亮色主题 */
+[data-theme="light"] .current-session {
+  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
+}
+
+[data-theme="light"] .clear-session-btn {
+  background: rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+[data-theme="light"] .clear-session-btn:hover {
+  background: rgba(255, 255, 255, 0.3);
+  border-color: rgba(255, 255, 255, 0.5);
+}
+
+[data-theme="light"] .session-value.end-time {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+/* 记录卡片 - 亮色主题 */
+[data-theme="light"] .record-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+[data-theme="light"] .card-header {
+  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+  border-bottom: 2px solid #e2e8f0;
+}
+
+[data-theme="light"] .card-header h3 {
+  color: #1e293b;
+}
+
+[data-theme="light"] .record-count {
+  color: #64748b;
+  background: #f1f5f9;
+}
+
+/* 货币Tab - 亮色主题 */
+[data-theme="light"] .currency-tabs {
+  background: #f8fafc;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+[data-theme="light"] .currency-tab {
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  color: #475569;
+}
+
+[data-theme="light"] .currency-tab:hover {
+  background: #f1f5f9;
+  border-color: #94a3b8;
+  color: #1e293b;
+}
+
+[data-theme="light"] .currency-tab.active {
+  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+  border-color: #3b82f6;
+  color: #ffffff;
+  box-shadow: 0 2px 6px rgba(59, 130, 246, 0.3);
+}
+
+[data-theme="light"] .currency-tab.active:hover {
+  background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
+  box-shadow: 0 3px 8px rgba(59, 130, 246, 0.4);
+}
+
+[data-theme="light"] .tab-count {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+[data-theme="light"] .currency-tab.active .tab-count {
+  background: rgba(255, 255, 255, 0.4);
+}
+
+/* 头部统计 - 亮色主题 */
+[data-theme="light"] .header-stats {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(29, 78, 216, 0.1) 100%);
+  border: 1px solid rgba(59, 130, 246, 0.2);
+}
+
+[data-theme="light"] .stat-item:hover {
+  background: rgba(59, 130, 246, 0.1);
+}
+
+[data-theme="light"] .stat-item::after {
+  background: linear-gradient(90deg, #3b82f6 0%, #1d4ed8 100%);
+}
+
+[data-theme="light"] .stat-item .stat-value {
+  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+[data-theme="light"] .stat-label {
+  color: #64748b;
+}
+
+[data-theme="light"] .stat-item:hover .stat-label {
+  color: #475569;
+}
+
+/* 卡片内容滚动条 - 亮色主题 */
+[data-theme="light"] .card-content::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+
+[data-theme="light"] .card-content::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+}
+
+[data-theme="light"] .card-content::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+[data-theme="light"] .details-content::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+
+[data-theme="light"] .details-content::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+}
+
+[data-theme="light"] .details-content::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* 无数据状态 - 亮色主题 */
+[data-theme="light"] .no-data.enhanced {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.02) 0%, rgba(29, 78, 216, 0.02) 100%);
+  border: 2px dashed rgba(59, 130, 246, 0.2);
+}
+
+[data-theme="light"] .illustration-dots span {
+  background: rgba(59, 130, 246, 0.5);
+}
+
+[data-theme="light"] .no-data.enhanced .no-data-text {
+  background: linear-gradient(135deg, #1e293b 0%, #475569 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+[data-theme="light"] .no-data.enhanced .no-data-hint {
+  color: #64748b;
+}
+
+[data-theme="light"] .no-data-suggestion {
+  color: #1d4ed8;
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.15) 0%, rgba(29, 78, 216, 0.1) 100%);
+  border: 1px solid rgba(59, 130, 246, 0.3);
+}
+
+[data-theme="light"] .no-data-suggestion::before {
+  background: linear-gradient(45deg, #3b82f6, #1d4ed8);
+}
+
+/* 表格样式 - 亮色主题 */
+[data-theme="light"] .table-header {
+  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+  border-bottom: 2px solid #3b82f6;
+  color: #1e293b;
+}
+
+[data-theme="light"] .table-header::after {
+  background: linear-gradient(90deg, #3b82f6 0%, #1d4ed8 100%);
+}
+
+[data-theme="light"] .table-header .header-icon {
+  color: #3b82f6;
+}
+
+[data-theme="light"] .table-row {
+  border-bottom: 1px solid #e2e8f0;
+  color: #1e293b;
+}
+
+[data-theme="light"] .table-row:hover {
+  background: linear-gradient(90deg, rgba(59, 130, 246, 0.08) 0%, rgba(29, 78, 216, 0.05) 100%);
+  border-left: 3px solid #3b82f6;
+  box-shadow: 0 4px 20px rgba(59, 130, 246, 0.15);
+  transform: translateY(-1px);
+}
+
+[data-theme="light"] .table-row.clickable:hover {
+  background: linear-gradient(90deg, rgba(59, 130, 246, 0.12) 0%, rgba(29, 78, 216, 0.08) 100%);
+  border-left: 3px solid #3b82f6;
+  box-shadow: 0 4px 20px rgba(59, 130, 246, 0.2);
+}
+
+[data-theme="light"] .table-row.clickable:active {
+  background: linear-gradient(90deg, rgba(59, 130, 246, 0.15) 0%, rgba(29, 78, 216, 0.1) 100%);
+}
+
+[data-theme="light"] .time-primary {
+  color: #1e293b;
+  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+[data-theme="light"] .time-secondary {
+  color: #64748b;
+}
+
+[data-theme="light"] .count-value,
+[data-theme="light"] .amount-value {
+  color: #1e293b;
+}
+
+[data-theme="light"] .count-unit {
+  color: #64748b;
+}
+
+[data-theme="light"] .table-row:hover .count-unit {
+  color: #475569;
+}
+
+[data-theme="light"] .error-value.no-error {
+  color: #059669;
+  background: linear-gradient(135deg, rgba(5, 150, 105, 0.15) 0%, rgba(4, 120, 87, 0.1) 100%);
+  border: 1px solid rgba(5, 150, 105, 0.3);
+  box-shadow: 0 2px 8px rgba(5, 150, 105, 0.1);
+}
+
+[data-theme="light"] .error-value.has-error {
+  color: #dc2626;
+  background: linear-gradient(135deg, rgba(220, 38, 38, 0.15) 0%, rgba(185, 28, 28, 0.1) 100%);
+  border: 1px solid rgba(220, 38, 38, 0.3);
+  box-shadow: 0 2px 8px rgba(220, 38, 38, 0.1);
+}
+
+/* 详细记录表格 - 亮色主题 */
+[data-theme="light"] .details-list {
+  border: 1px solid #e2e8f0;
+  background: #ffffff;
+}
+
+[data-theme="light"] .details-header {
+  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+  border-bottom: 2px solid #3b82f6;
+  color: #1e293b;
+}
+
+[data-theme="light"] .details-row {
+  background: #ffffff;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+[data-theme="light"] .details-row.sub-row {
+  background: #f8fafc;
+  border-top: 1px solid #e2e8f0;
+}
+
+[data-theme="light"] .details-row:hover {
+  background: #f1f5f9 !important;
+}
+
+[data-theme="light"] .denom-value {
+  color: #0891b2;
+}
+
+[data-theme="light"] .count-value {
+  color: #059669;
+}
+
+[data-theme="light"] .count-label {
+  color: #64748b;
+}
+
+[data-theme="light"] .total-row {
+  background: #f1f5f9 !important;
+  border-top: 2px solid #3b82f6;
+}
+
+[data-theme="light"] .total-row:hover {
+  background: #e2e8f0 !important;
+}
+
+[data-theme="light"] .total-row .col-denom strong,
+[data-theme="light"] .total-row .col-pcs strong,
+[data-theme="light"] .total-row .col-amount strong {
+  color: #1e293b;
+}
+
+[data-theme="light"] .details-total-container {
+  background: #ffffff;
+  border-top: 1px solid #e2e8f0;
+}
+
+/* 详细记录Card优化 - 亮色主题 */
+[data-theme="light"] .detailed-records-card .details-header {
+  background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+  border-bottom: 2px solid #3b82f6;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+[data-theme="light"] .detailed-records-card .details-row {
+  background: transparent;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+[data-theme="light"] .detailed-records-card .details-row:hover {
+  background: #f8fafc;
+}
+
+[data-theme="light"] .detailed-records-card .total-row {
+ 
+  background: #f1f5f9 !important;
+  border-top: 2px solid #94a3b8;
+}
+
+/* 计数记录Card优化 - 亮色主题 */
+[data-theme="light"] .counting-records-card .table-header {
+  background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+  border-bottom: 2px solid #3b82f6;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+[data-theme="light"] .counting-records-card .table-row {
+  background: transparent;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+[data-theme="light"] .counting-records-card .table-row::before {
+  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+}
+
+[data-theme="light"] .counting-records-card .table-row:hover {
+  background: linear-gradient(90deg, rgba(59, 130, 246, 0.08) 0%, rgba(29, 78, 216, 0.05) 100%);
+  box-shadow: 0 4px 20px rgba(59, 130, 246, 0.15);
+}
+
+[data-theme="light"] .counting-records-card .table-row:nth-child(even) {
+  background: rgba(59, 130, 246, 0.02);
+}
+
+[data-theme="light"] .counting-records-card .table-row:nth-child(even):hover {
+  background: linear-gradient(90deg, rgba(59, 130, 246, 0.08) 0%, rgba(29, 78, 216, 0.05) 100%);
+}
+
+/* Currency值 - 亮色主题 */
+[data-theme="light"] .currency-value {
+  color: #ffffff;
+  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+  box-shadow: 0 2px 4px rgba(59, 130, 246, 0.2);
+}
+
+[data-theme="light"] .currency-value[data-currency="MULTI"] {
+  background: linear-gradient(135deg, #ec4899 0%, #be185d 100%);
+  box-shadow: 0 2px 4px rgba(236, 72, 153, 0.2);
+}
+
+/* Session错误统计 - 亮色主题 */
+[data-theme="light"] .session-value.error.count {
+  color: #fca5a5;
+}
+
+[data-theme="light"] .col-error.error.count {
+  color: #f87171;
+}
+
+[data-theme="light"] .col-error {
+  color: #1e293b;
+}
+
+[data-theme="light"] .error-count {
+  color: #dc2626;
+}
+
+/* 响应式调整 - 亮色主题会继承暗色主题的响应式规则 */
+@media (max-width: 1024px) {
+  [data-theme="light"] .session-summary-item {
+    background: rgba(59, 130, 246, 0.05);
   }
 }
