@@ -3,13 +3,13 @@
   background-color: var(--bg-primary);
   min-height: 100vh;
   color: var(--text-primary);
-  transition: var(--transition-colors);
+  /* 移除主题切换动画 */
 }
 
 /* 防止启动时的内容跳动 */
 .app-layout {
   opacity: 1;
-  transition: opacity 0.2s ease-in, var(--transition-colors);
+  transition: opacity 0.2s ease-in; /* 保留页面加载动画，移除主题切换动画 */
 }
 
 .app-layout.loading {
@@ -56,7 +56,7 @@ header {
   background-color: var(--bg-secondary);
   color: var(--text-primary);
   -webkit-app-region: drag;
-  transition: var(--transition-colors);
+  /* 移除主题切换动画 */
 }
 
 .header-left,
@@ -231,7 +231,7 @@ header button {
   overflow-y: auto;
   background: var(--bg-tertiary);
   position: relative;
-  transition: var(--transition-colors);
+  /* 移除主题切换动画 */
 }
 
 .main-content::-webkit-scrollbar {
@@ -299,7 +299,7 @@ header button {
   font-weight: 600;
   -webkit-app-region: no-drag;
   margin-left: 0.5rem;
-  transition: var(--transition-colors);
+  /* 移除主题切换动画 */
 }
 
 /* 窗口控制按钮容器优化 */

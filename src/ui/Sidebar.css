@@ -13,7 +13,6 @@
   border: 1px solid rgba(255, 255, 255, 0.18);
   border-left: none;
   z-index: 1000;
-  transition: all 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
   position: relative;
 }
 
@@ -91,7 +90,6 @@
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
   font-size: 0.8rem;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
@@ -123,7 +121,6 @@
   cursor: pointer;
   padding: 0.25rem;
   border-radius: 6px;
-  transition: all 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
   background: transparent;
 }
 
@@ -157,12 +154,7 @@
   margin: 0 0.5rem;
   border-radius: 12px;
   cursor: pointer;
-  transition: 
-    all 0.3s cubic-bezier(0.4, 0.0, 0.2, 1),
-    font-weight 0.45s cubic-bezier(0.25, 0.46, 0.45, 0.94),
-    text-shadow 0.45s cubic-bezier(0.25, 0.46, 0.45, 0.94),
-    letter-spacing 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94),
-    filter 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);  color: rgba(255, 255, 255, 0.85);
+  color: rgba(255, 255, 255, 0.85);
   font-size: 0.95rem;
   font-weight: 400;
   position: relative;
@@ -179,10 +171,10 @@
   position: absolute;
   top: 0;
   left: 0;
-  right: 0;  bottom: 0;
+  right: 0;
+  bottom: 0;
   background: rgba(255, 255, 255, 0.02);
   border-radius: inherit;
-  transition: all 0.3s ease;
 }
 
 .sidebar.collapsed .sidebar-item {
@@ -227,10 +219,6 @@
 
 /* 为图标添加平滑过渡和模糊效果 */
 .sidebar-item-icon {
-  transition: 
-    transform 0.35s cubic-bezier(0.4, 0.0, 0.2, 1),
-    filter 0.45s cubic-bezier(0.25, 0.46, 0.45, 0.94),
-    text-shadow 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
   filter: blur(0.3px) opacity(0.85);
 }
 
@@ -284,8 +272,6 @@
   flex: 1;
   text-align: left;
   opacity: 1;
-  transition: 
-    opacity 0.2s ease;
   /* 确保字体始终清晰，无模糊和发亮效果 */
   filter: none;
   text-shadow: none;
