@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
-import { useTranslation } from 'react-i18next';
-import { LanguageSwitcher } from './components/LanguageSwitcher';
-import { useAppConfigStore } from './contexts/store';
+import { useTranslation } from "react-i18next";
+import { LanguageSwitcher } from "./components/LanguageSwitcher";
+import { useAppConfigStore } from "./contexts/store";
 import "./App.css";
 import { SerialPortPanel } from "./SerialPortPanel";
 import { CounterDashboard } from "./CounterDashboard";
@@ -13,17 +13,17 @@ interface AppProps {
 }
 
 function App({ onAppReady }: AppProps) {
-  const [currentPage, setCurrentPage] = useState<PageType>('serial-port');
+  const [currentPage, setCurrentPage] = useState<PageType>("serial-port");
   const { t, ready } = useTranslation();
   const { theme } = useAppConfigStore();
 
   // 应用主题到根元素
   useEffect(() => {
     const root = document.documentElement;
-    if (theme === 'light') {
-      root.setAttribute('data-theme', 'light');
+    if (theme === "light") {
+      root.setAttribute("data-theme", "light");
     } else {
-      root.removeAttribute('data-theme'); // dark 是默认主题
+      root.removeAttribute("data-theme"); // dark 是默认主题
     }
   }, [theme]);
 
@@ -44,14 +44,14 @@ function App({ onAppReady }: AppProps) {
   };
   const getPageTitle = () => {
     switch (currentPage) {
-      case 'serial-port':
-        return t('serialPort.title');
-      case 'counter-dashboard':
-        return t('counter.title');
-      case 'file-manager':
-        return t('fileManager.title');
+      case "serial-port":
+        return t("serialPort.title");
+      case "counter-dashboard":
+        return t("counter.title");
+      case "file-manager":
+        return t("fileManager.title");
       default:
-        return t('app.title');
+        return t("app.title");
     }
   };
 
@@ -61,13 +61,25 @@ function App({ onAppReady }: AppProps) {
       <div className="app-layout">
         <Sidebar currentPage={currentPage} onPageChange={handlePageChange} />
         <main className="main-content">
-          <div className={`page-container ${currentPage === 'serial-port' ? 'active' : 'hidden'}`}>
+          <div
+            className={`page-container ${
+              currentPage === "serial-port" ? "active" : "hidden"
+            }`}
+          >
             <SerialPortPanel className="page-content" />
           </div>
-          <div className={`page-container ${currentPage === 'counter-dashboard' ? 'active' : 'hidden'}`}>
+          <div
+            className={`page-container ${
+              currentPage === "counter-dashboard" ? "active" : "hidden"
+            }`}
+          >
             <CounterDashboard className="page-content" />
           </div>
-          <div className={`page-container ${currentPage === 'file-manager' ? 'active' : 'hidden'}`}>
+          <div
+            className={`page-container ${
+              currentPage === "file-manager" ? "active" : "hidden"
+            }`}
+          >
             <FileManagerPage className="page-content" />
           </div>
         </main>
@@ -80,8 +92,32 @@ function Header({ title }: { title: string }) {
   const { theme, setTheme } = useAppConfigStore();
   const [isMaximized, setIsMaximized] = useState(false);
 
-  const toggleTheme = () => {
-    setTheme(theme === 'light' ? 'dark' : 'light');
+  const toggleTheme = (e: any) => {
+    const x = e.clientX;
+    const y = e.clientY;
+    const targetRadius = Math.hypot(
+      Math.max(x, window.innerWidth - x),
+      Math.max(y, window.innerHeight - y)
+    );
+    const transition = document.startViewTransition(() => {
+      setTheme(theme === "light" ? "dark" : "light");
+    });
+
+    transition.ready.then(() => {
+      document.documentElement.animate(
+        {
+          clipPath: [
+            `circle(0% at ${x}px ${y}px)`,
+            `circle(${targetRadius}px at ${x}px ${y}px)`,
+          ],
+          easing: "ease-in-out",
+        },
+        {
+          duration: 350,
+          pseudoElement: "::view-transition-new(root)",
+        }
+      );
+    });
   };
 
   const handleMaximize = () => {
@@ -98,30 +134,27 @@ function Header({ title }: { title: string }) {
         <button
           className="theme-switcher"
           onClick={toggleTheme}
-          title={`Switch to ${theme === 'light' ? 'dark' : 'light'} theme`}
+          title={`Switch to ${theme === "light" ? "dark" : "light"} theme`}
         >
-          {theme === 'light' ? '◐' : '◑'}
+          {theme === "light" ? "◐" : "◑"}
         </button>
         <LanguageSwitcher compact className="header-language-switcher" />
         <button
           id="minimize"
           onClick={() => window.electron.sendFrameAction("MINIMIZE")}
           title="Minimize"
-        >
-        </button>
+        ></button>
         <button
           id="maximize"
           onClick={handleMaximize}
           title={isMaximized ? "Restore" : "Maximize"}
           className={isMaximized ? "maximized" : ""}
-        >
-        </button>
+        ></button>
         <button
           id="close"
           onClick={() => window.electron.sendFrameAction("CLOSE")}
           title="Close"
-        >
-        </button>
+        ></button>
       </div>
     </header>
   );

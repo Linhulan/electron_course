@@ -6,6 +6,11 @@
   /* 移除主题切换动画 */
 }
 
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none; /* 禁用主题切换动画 */
+}
+
 /* 防止启动时的内容跳动 */
 .app-layout {
   opacity: 1;
