@@ -24,7 +24,7 @@ export class ZMProtocolParser implements ProtocolParser<BaseProtocolData[]> {
   private static readonly PROTOCOL_TAIL = [0xA5, 0x5A];
   private static readonly PROTOCOL_HEADER_STR = "AA55";
   private static readonly PROTOCOL_TAIL_STR = "A55A";
-  private static readonly MIN_PACKET_LENGTH = 22; // 11字节 = 16个十六进制字符 (最小包：头部4 + 长度4 + MODE4 + CRC2 + 尾部4)
+  private static readonly MIN_PACKET_LENGTH = 14; // 7字节 = 14个十六进制字符 (最小包：头部4 + 长度4 + MODE4 + CRC2 + 尾部4)
   private static readonly OVERHEAD_LENGTH = 14;   // 头部4 + 长度4 + CRC2 + 尾部4
   private static readonly HEAD_LENGTH = 4;        // 头部4 + 长度4 + CRC2 + 尾部4
 
@@ -177,7 +177,7 @@ export class ZMProtocolParser implements ProtocolParser<BaseProtocolData[]> {
       
       // 解析数据部分（CMD-G后到CRC前）
       const dataStart = 6;
-      const dataEnd = bytes.length - 1;
+      const dataEnd = bytes.length - 2; // CRC前的最后2字节是尾部A55A
       const data = bytes.slice(dataStart, dataEnd);
       
       // 解析CRC（倒数第3字节）
@@ -201,9 +201,22 @@ export class ZMProtocolParser implements ProtocolParser<BaseProtocolData[]> {
   
   private parseDataByCmdGroup(cmdGroup: number, data: number[]): BaseProtocolData | null {
     debugLog(`[${this.getProtocolName()}] Parsing data by CMD-G: ${cmdGroup}`, data);
+    const base_packet: BaseProtocolData = {
+      timestamp: new Date().toLocaleString(),
+      protocolType: this.getProtocolName(),
+      cmdGroup: cmdGroup,
+      rawData: data.map(byte => byte.toString(16).padStart(2, '0')).join(' '),
+    }
     switch (cmdGroup) {
+      case ZMCommandCode.HANDSHAKE:
+        return {
+          ...base_packet,
+        };
       case ZMCommandCode.COUNT_RESULT:
-        return this.parseCountResultData(data);
+        return { 
+          ...this.parseCountResultData(data),
+          ...base_packet
+        };
       default:
         return null;
     }

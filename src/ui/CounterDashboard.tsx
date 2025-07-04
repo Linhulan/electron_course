@@ -1,4 +1,10 @@
-import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import React, {
+  useState,
+  useEffect,
+  useRef,
+  useCallback,
+  useMemo,
+} from "react";
 import { useTranslation } from "react-i18next";
 import "./CounterDashboard.css";
 import {
@@ -14,12 +20,18 @@ import {
 import { initializeProtocols } from "./protocols/init";
 import { SessionDetailDrawer } from "./components/SessionDetailDrawer";
 import ExportPanel from "./components/ExportPanel";
-import { formatAmount, formatCurrency, formatDenomination } from "./common/common";
+import {
+  formatAmount,
+  formatCurrency,
+  formatDenomination,
+} from "./common/common";
 import {
   SessionData,
   DenominationDetail,
   CounterData,
   CurrencyCountRecord,
+  BaseProtocolData,
+  ZMCommandCode,
 } from "./common/types";
 import { useAppConfigStore } from "./contexts/store";
 
@@ -60,7 +72,7 @@ const handleSessionUpdate = (
     }
     const newSession: SessionData = {
       id: generateSnowflakeId(),
-      no: 1,                                      //TODO: 这里需要根据实际情况生成会话编号
+      no: 1, //TODO: 这里需要根据实际情况生成会话编号
       timestamp: now.toLocaleTimeString(),
       startTime: now.toLocaleString(),
       currencyCode: protocolData.currencyCode || "",
@@ -132,49 +144,57 @@ const handleSessionUpdate = (
   if (isSessionUpdate(protocolData.status)) {
     updatedSession.totalCount = protocolData.totalCount;
     updatedSession.totalAmount = protocolData.totalAmount;
+    let currencyCode = protocolData.currencyCode || "";
+    let denomination = protocolData.denomination || 0;
 
-    // 如果有错误代码，累积错误张数
-    if (protocolData.errorCode !== 0) {
+    // 如果有错误代码，累积错误张数, 并且货币代码和面额都有可能是错的，不能直接使用
+    if (protocolData.errorCode !== 0) 
+    {
+      currencyCode = ""
+      denomination = 0;
       updatedSession.errorCount = (currentSession.errorCount || 0) + 1;
     }
-
-    // 获取对应货币的计数记录
-    const record = updatedSession.currencyCountRecords?.get(
-      protocolData.currencyCode
-    );
-    if (record) {
-      // record.totalCount = protocolData.totalCount;
-      // record.totalAmount = protocolData.totalAmount;
-
-      record.totalCount  += 1;
-      record.totalAmount += protocolData.denomination;
-      record.errorCount  += protocolData.errorCode !== 0 ? 1 : 0;
-
-      record.denominationBreakdown.set(protocolData.denomination, {
-        denomination: protocolData.denomination,
-        count:
-          (record.denominationBreakdown.get(protocolData.denomination)?.count ||
-            0) + 1,
-        amount:
-          (record.denominationBreakdown.get(protocolData.denomination)
-            ?.amount || 0) + protocolData.denomination,
-      });
-    } else {
-      updatedSession.currencyCountRecords?.set(protocolData.currencyCode, {
-        currencyCode: protocolData.currencyCode,
-        totalCount: 1,
-        totalAmount: protocolData.denomination,
-        errorCount: protocolData.errorCode !== 0 ? 1 : 0,
-        denominationBreakdown: new Map<number, DenominationDetail>().set(
-          protocolData.denomination,
-          {
-            denomination: protocolData.denomination,
-            count: 1,
-            amount: protocolData.denomination,
-          }
-        ),
-      });
+    else
+    {
+      // 没报错，则记录对应货币的计数记录
+      const record = updatedSession.currencyCountRecords?.get(
+        protocolData.currencyCode
+      );
+      if (record) {
+        record.totalCount += 1;
+        // record.errorCount += protocolData.errorCode !== 0 ? 1 : 0;
+  
+        // if (protocolData.errorCode === 0) {
+        //   record.totalAmount += protocolData.denomination;
+        // }
+  
+        record.denominationBreakdown.set(protocolData.denomination, {
+          denomination: protocolData.denomination,
+          count:
+            (record.denominationBreakdown.get(protocolData.denomination)?.count ||
+              0) + 1,
+          amount:
+            (record.denominationBreakdown.get(protocolData.denomination)
+              ?.amount || 0) + protocolData.denomination,
+        });
+      } else {
+        updatedSession.currencyCountRecords?.set(protocolData.currencyCode, {
+          currencyCode: protocolData.currencyCode,
+          totalCount: 1,
+          totalAmount: protocolData.denomination,
+          errorCount: protocolData.errorCode !== 0 ? 1 : 0,
+          denominationBreakdown: new Map<number, DenominationDetail>().set(
+            protocolData.denomination,
+            {
+              denomination: protocolData.denomination,
+              count: 1,
+              amount: protocolData.denomination,
+            }
+          ),
+        });
+      }
     }
+
 
     // 更新面额分布统计
     // updatedSession.denominationBreakdown.set(protocolData.currencyCode, {
@@ -192,13 +212,13 @@ const handleSessionUpdate = (
       id: generateSnowflakeId(),
       no: (currentSession.details?.length || 0) + 1,
       timestamp: now.toLocaleTimeString(),
-      currencyCode: protocolData.currencyCode,
-      denomination: protocolData.denomination,
+      currencyCode: currencyCode,
+      denomination: denomination,
       status: status,
       errorCode: "E" + protocolData.errorCode.toString(10),
       serialNumber: protocolData.serialNumber || "",
     });
-    
+
     // 限制单个session的details数组大小，防止内存过度使用
     if (updatedSession.details && updatedSession.details.length > 2000) {
       updatedSession.details = updatedSession.details.slice(-2000); // 只保留最新的2000条
@@ -220,7 +240,7 @@ const handleSessionUpdate = (
 };
 
 const autoSaveHandler = (session: SessionData) => {
-  const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
+  const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, "-");
   window.electron.exportExcel(session ? [session] : [], {
     useDefaultDir: true,
     openAfterExport: false,
@@ -251,6 +271,10 @@ export const CounterDashboard: React.FC<CounterDashboardProps> = ({
     errorPcs: 0,
   });
   const autoSave = useAppConfigStore((state) => state.autoSave);
+  const serialConnected = useAppConfigStore((state) => state.serialConnected);
+  const setSerialConnected = useAppConfigStore(
+    (state) => state.setSerialConnected
+  );
 
   const [isConnected, setIsConnected] = useState(false);
   const [isSimulationMode, setIsSimulationMode] = useState(false);
@@ -298,7 +322,7 @@ export const CounterDashboard: React.FC<CounterDashboardProps> = ({
   const dataDisplayRef = useRef<HTMLDivElement>(null);
 
   // ===== 性能优化：缓存复杂计算结果 =====
-  
+
   // 1. 缓存可用货币列表
   const availableCurrencies = useMemo(() => {
     return Array.from(stats.totalRecords.keys()).sort();
@@ -306,8 +330,10 @@ export const CounterDashboard: React.FC<CounterDashboardProps> = ({
 
   // 2. 缓存总计数（避免循环依赖）
   const totalCount = useMemo(() => {
-    return Array.from(stats.totalRecords.values())
-      .reduce((sum, record) => sum + record.totalCount, 0);
+    return Array.from(stats.totalRecords.values()).reduce(
+      (sum, record) => sum + record.totalCount,
+      0
+    );
   }, [stats.totalRecords]);
 
   // 3. 缓存排序后的货币统计数据
@@ -325,7 +351,9 @@ export const CounterDashboard: React.FC<CounterDashboardProps> = ({
 
   // 4. 缓存布局相关计算
   const layoutDisplayCount = useMemo(() => {
-    return windowWidth >= 1200 ? TWO_COLUMN_CURRENCY_DISPLAY_COUNT : DEFAULT_CURRENCY_DISPLAY_COUNT;
+    return windowWidth >= 1200
+      ? TWO_COLUMN_CURRENCY_DISPLAY_COUNT
+      : DEFAULT_CURRENCY_DISPLAY_COUNT;
   }, [windowWidth]);
 
   // 5. 缓存布局判断
@@ -341,8 +369,9 @@ export const CounterDashboard: React.FC<CounterDashboardProps> = ({
   const denominationDetailsByCurrency = useMemo(() => {
     const currencyDetailsMap = new Map<string, DenominationDetail[]>();
     stats.totalRecords.forEach((record, currencyCode) => {
-      const details = Array.from(record.denominationBreakdown.values())
-        .sort((a, b) => b.denomination - a.denomination);
+      const details = Array.from(record.denominationBreakdown.values()).sort(
+        (a, b) => b.denomination - a.denomination
+      );
       currencyDetailsMap.set(currencyCode, details);
     });
     return currencyDetailsMap;
@@ -351,41 +380,50 @@ export const CounterDashboard: React.FC<CounterDashboardProps> = ({
   // 7. 缓存当前选中货币的相关数据
   const currentCurrencyData = useMemo(() => {
     if (!selectedCurrencyTab) return null;
-    
+
     const record = stats.totalRecords.get(selectedCurrencyTab);
-    const details = denominationDetailsByCurrency.get(selectedCurrencyTab) || [];
-    
+    const details =
+      denominationDetailsByCurrency.get(selectedCurrencyTab) || [];
+
     return {
       record,
       details,
       totalCount: record?.totalCount || 0,
-      totalAmount: record?.totalAmount || 0
+      totalAmount: record?.totalAmount || 0,
     };
   }, [selectedCurrencyTab, stats.totalRecords, denominationDetailsByCurrency]);
 
   // ===== 辅助函数定义（需要在useMemo之前） =====
-  
-  // 获取Session的货币显示
-  const getSessionCurrencyDisplay = useCallback((session: SessionData): string => {
-    // 如果有新的货币记录结构
-    if (session.currencyCountRecords && session.currencyCountRecords.size > 0) {
-      const currencies = Array.from(session.currencyCountRecords.keys());
-      if (currencies.length === 1) {
-        return currencies[0];
-      } else if (currencies.length > 1) {
-        return "MULTI";
-      }
-    }
 
-    // 兼容旧数据结构
-    return session.currencyCode || "CNY";
-  }, []);
+  // 获取Session的货币显示
+  const getSessionCurrencyDisplay = useCallback(
+    (session: SessionData): string => {
+      // 如果有新的货币记录结构
+      if (
+        session.currencyCountRecords &&
+        session.currencyCountRecords.size > 0
+      ) {
+        const currencies = Array.from(session.currencyCountRecords.keys());
+        if (currencies.length === 1) {
+          return currencies[0];
+        } else if (currencies.length > 1) {
+          return "MULTI";
+        }
+      }
+
+      // 兼容旧数据结构
+      return session.currencyCode || "CNY";
+    },
+    []
+  );
 
   const getAmountDisplay = useCallback((session: SessionData): string => {
     if (session.currencyCountRecords && session.currencyCountRecords.size > 0) {
       const currencies = Array.from(session.currencyCountRecords.keys());
       if (currencies.length === 1) {
-        return formatAmount(session.currencyCountRecords.get(currencies[0])?.totalAmount || 0);
+        return formatAmount(
+          session.currencyCountRecords.get(currencies[0])?.totalAmount || 0
+        );
       } else if (currencies.length > 1) {
         return currencies.length + " Currencies";
       }
@@ -397,13 +435,15 @@ export const CounterDashboard: React.FC<CounterDashboardProps> = ({
 
   // 8. 缓存渲染用的会话数据
   const renderSessionData = useMemo(() => {
-    return sessionData.map(item => ({
+    return sessionData.map((item) => ({
       ...item,
       displayCurrency: getSessionCurrencyDisplay(item),
       displayAmount: getAmountDisplay(item),
       formattedCount: item.totalCount.toLocaleString(),
-      formattedEndDate: item.endTime ? new Date(item.endTime).toLocaleDateString() : null,
-      hasError: (item.errorCount || 0) > 0
+      formattedEndDate: item.endTime
+        ? new Date(item.endTime).toLocaleDateString()
+        : null,
+      hasError: (item.errorCount || 0) > 0,
     }));
   }, [sessionData, getSessionCurrencyDisplay, getAmountDisplay]);
 
@@ -446,6 +486,40 @@ export const CounterDashboard: React.FC<CounterDashboardProps> = ({
     };
   }, []); // 监听串口数据并解析协议 - 使用新的协议管理器
 
+  // 使用策略模式对不同协议的不同模式码进行处理
+  const handleProtocolData = (protocolDataArr: BaseProtocolData[]) => {
+    console.log("Received protocol data:", protocolDataArr);
+    protocolDataArr.forEach((data) => {
+      switch (data.protocolType) {
+        case "ZMProtocol":
+          if ( data.cmdGroup == ZMCommandCode.HANDSHAKE ) 
+          {
+            console.log("----------Received ZM handshake data:", data);
+            setSerialConnected(true);
+          }
+          else if (data.cmdGroup === ZMCommandCode.COUNT_RESULT) 
+          {
+            console.log("Received ZM count result data:", data);
+            // 处理ZM点钞结果数据
+            const updatedSession = handleSessionUpdate(
+              data as CountingProtocolData,
+              currentSession,
+              autoSave,
+              setCurrentSession,
+              setSessionData
+            );
+            console.log("Updated session from hex data:", updatedSession);
+          }
+          break;
+        case "OtherProtocol":
+          // 处理其他协议数据
+          break;
+        default:
+          console.warn("Unknown protocol type:", data.protocolType);
+      }
+    });
+  };
+
   useEffect(() => {
     const unsubscribeDataReceived = window.electron.onSerialDataReceived(
       (data) => {
@@ -455,20 +529,10 @@ export const CounterDashboard: React.FC<CounterDashboardProps> = ({
             // 使用协议管理器解析数据
             const protocolDataArr = protocolManager.parseData(
               data.hexData
-            ) as CountingProtocolData[];
-            if (protocolDataArr && protocolDataArr.length > 0) {
-              for (const protocolData of protocolDataArr) {
-                const updatedSession = handleSessionUpdate(
-                  protocolData,
-                  currentSession,
-                  autoSave,
-                  setCurrentSession,
-                  setSessionData
-                );
+            ) as BaseProtocolData[];
 
-                console.log("Updated session from hex data:", updatedSession);
-              }
-            }
+            handleProtocolData(protocolDataArr);
+
           } catch (error) {
             console.error("Error parsing serial data:", error);
           }
@@ -653,19 +717,22 @@ export const CounterDashboard: React.FC<CounterDashboardProps> = ({
     setIsExportPanelOpen(false);
   }, []);
 
-  const handleExportComplete = useCallback((result: {
-    success: boolean;
-    message?: string;
-  }) => {
-    console.log("Export completed in dashboard:", result);
-    // 可以在这里添加导出完成后的处理逻辑
-    // 比如显示成功消息、更新状态等
-  }, []);
+  const handleExportComplete = useCallback(
+    (result: { success: boolean; message?: string }) => {
+      console.log("Export completed in dashboard:", result);
+      // 可以在这里添加导出完成后的处理逻辑
+      // 比如显示成功消息、更新状态等
+    },
+    []
+  );
 
   // 时间范围选择处理
-  const handleTimeRangeChange = useCallback((e: React.ChangeEvent<HTMLSelectElement>) => {
-    setSelectedTimeRange(e.target.value as "1h" | "24h" | "7d" | "30d");
-  }, []);
+  const handleTimeRangeChange = useCallback(
+    (e: React.ChangeEvent<HTMLSelectElement>) => {
+      setSelectedTimeRange(e.target.value as "1h" | "24h" | "7d" | "30d");
+    },
+    []
+  );
 
   // 货币Tab点击处理
   const handleCurrencyTabClick = useCallback((currencyCode: string) => {
@@ -983,7 +1050,9 @@ export const CounterDashboard: React.FC<CounterDashboardProps> = ({
   useEffect(() => {
     if (selectedSessionId !== null) {
       // 检查当前选中的session是否还存在于sessionData中
-      const sessionExists = sessionData.some(session => session.id === selectedSessionId);
+      const sessionExists = sessionData.some(
+        (session) => session.id === selectedSessionId
+      );
       if (!sessionExists) {
         // 如果session不存在，清除引用
         setSelectedSessionId(null);
@@ -1029,20 +1098,23 @@ export const CounterDashboard: React.FC<CounterDashboardProps> = ({
     }
   }, []);
 
-  const getStatusText = useCallback((status: CounterData["status"]) => {
-    switch (status) {
-      case "counting":
-        return t("counter.sessionStatus.counting");
-      case "completed":
-        return t("counter.sessionStatus.completed");
-      case "error":
-        return t("counter.sessionStatus.error");
-      case "paused":
-        return t("counter.sessionStatus.paused");
-      default:
-        return status;
-    }
-  }, [t]);
+  const getStatusText = useCallback(
+    (status: CounterData["status"]) => {
+      switch (status) {
+        case "counting":
+          return t("counter.sessionStatus.counting");
+        case "completed":
+          return t("counter.sessionStatus.completed");
+        case "error":
+          return t("counter.sessionStatus.error");
+        case "paused":
+          return t("counter.sessionStatus.paused");
+        default:
+          return status;
+      }
+    },
+    [t]
+  );
 
   const getStatusColor = useCallback((status: CounterData["status"]) => {
     switch (status) {
@@ -1058,8 +1130,6 @@ export const CounterDashboard: React.FC<CounterDashboardProps> = ({
         return "#6c757d";
     }
   }, []);
-
-
 
   return (
     <div className={`counter-dashboard ${className || ""}`}>

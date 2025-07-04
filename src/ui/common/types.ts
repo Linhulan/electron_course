@@ -43,6 +43,7 @@ export interface ProtocolManager {
 export interface BaseProtocolData {
   timestamp: string;
   protocolType: string;
+  cmdGroup?: number;
   rawData: string;
 }
 
@@ -54,7 +55,7 @@ export interface BaseProtocolData {
 export interface CountingProtocolData extends BaseProtocolData {
   check?: number[]; // 0:1 CHECK: 0xFD 0xDF
   length?: number; // 2 长度: 0x2C
-  cmdGroup?: number; // 3 CMD-G: 0x0E
+  // cmdGroup?: number; // 3 CMD-G: 0x0E
   totalCount: number; // 4:7 总张数 (低位先行)
   denomination: number; // 8:11 面额
   totalAmount: number; // 12:19 总金额 (8字节)
@@ -118,6 +119,7 @@ export enum CDMStatus {
 }
 
 export enum ZMCommandCode {
+  HANDSHAKE = 0x00, // 握手
   COUNT_RESULT = 0x01, // 点钞结果
 }
 
