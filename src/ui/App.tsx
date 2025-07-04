@@ -7,6 +7,7 @@ import { SerialPortPanel } from "./SerialPortPanel";
 import { CounterDashboard } from "./CounterDashboard";
 import { FileManagerPage } from "./components/FileManagerPage";
 import { Sidebar, PageType } from "./Sidebar";
+import { Toaster } from "react-hot-toast";
 
 interface AppProps {
   onAppReady?: () => void;
@@ -84,6 +85,7 @@ function App({ onAppReady }: AppProps) {
           </div>
         </main>
       </div>
+      <Toaster />
     </>
   );
 }

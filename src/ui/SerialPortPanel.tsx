@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import "./SerialPortPanel.css";
 import { useAppConfigStore } from "./contexts/store";
+import toast from "react-hot-toast";
 
 interface SerialPortPanelProps {
   className?: string;
@@ -98,10 +99,18 @@ export const SerialPortPanel: React.FC<SerialPortPanelProps> = ({
       console.warn("No available ports to auto-connect");
       return;
     }
+    const toastId = toast.loading(
+      t("counter.autoConnectInfo", "Connecting to serial port..."),
+      { position: "top-right" }
+    );
 
     for (const port of availablePorts) {
       if (useAppConfigStore.getState().serialConnected) {
-        break;
+        toast.success(
+          t("counter.autoConnectSuccess", "Successfully connected to serial port."),
+          { id: toastId }
+        );
+        return;
       }
       console.log(`Attempting to connect to port: ${port.path}`);
       //断开错误的连接
@@ -123,6 +132,11 @@ export const SerialPortPanel: React.FC<SerialPortPanelProps> = ({
 
       await new Promise((resolve) => setTimeout(resolve, 300));
     }
+
+    toast.error(
+      t("counter.autoConnectFailed", "Failed to auto-connect to any serial port."),
+      { id: toastId }
+    );
   }, [availablePorts, serialConnected, config, addToDataDisplay]);
 
   const refreshPorts = useCallback(async () => {
@@ -220,16 +234,19 @@ export const SerialPortPanel: React.FC<SerialPortPanelProps> = ({
   // 监听来自 CounterDashboard 的手动自动连接事件
   useEffect(() => {
     const handleManualAutoConnect = () => {
-      console.log('Manual auto-connect triggered from dashboard');
-      addToDataDisplay('Manual auto-connect triggered from dashboard', 'system');
+      console.log("Manual auto-connect triggered from dashboard");
+      addToDataDisplay(
+        "Manual auto-connect triggered from dashboard",
+        "system"
+      );
       autoConnect();
     };
 
     // 监听自定义事件
-    window.addEventListener('triggerAutoConnect', handleManualAutoConnect);
+    window.addEventListener("triggerAutoConnect", handleManualAutoConnect);
 
     return () => {
-      window.removeEventListener('triggerAutoConnect', handleManualAutoConnect);
+      window.removeEventListener("triggerAutoConnect", handleManualAutoConnect);
     };
   }, [autoConnect, addToDataDisplay]);
 
@@ -450,11 +467,7 @@ export const SerialPortPanel: React.FC<SerialPortPanelProps> = ({
 
           <div className="connection-status">
             <strong>{t("serialPort.connectionStatus")}:</strong>
-            <span
-              className={
-                serialConnected ? "connected" : "disconnected"
-              }
-            >
+            <span className={serialConnected ? "connected" : "disconnected"}>
               {serialConnected
                 ? ` ${t("serialPort.connected")} ${connectionStatus.portPath}`
                 : ` ${t("serialPort.disconnected")}`}

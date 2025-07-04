@@ -35,6 +35,7 @@ import {
 } from "./common/types";
 import { useAppConfigStore } from "./contexts/store";
 import { SerialPortPanel } from "./SerialPortPanel";
+import toast from "react-hot-toast";
 
 interface CounterStats {
   totalRecords: Map<string, CurrencyCountRecord>; // 改为必需字段，包含所有货币的统计信息
@@ -149,14 +150,11 @@ const handleSessionUpdate = (
     let denomination = protocolData.denomination || 0;
 
     // 如果有错误代码，累积错误张数, 并且货币代码和面额都有可能是错的，不能直接使用
-    if (protocolData.errorCode !== 0) 
-    {
-      currencyCode = ""
+    if (protocolData.errorCode !== 0) {
+      currencyCode = "";
       denomination = 0;
       updatedSession.errorCount = (currentSession.errorCount || 0) + 1;
-    }
-    else
-    {
+    } else {
       // 没报错，则记录对应货币的计数记录
       const record = updatedSession.currencyCountRecords?.get(
         protocolData.currencyCode
@@ -164,16 +162,16 @@ const handleSessionUpdate = (
       if (record) {
         record.totalCount += 1;
         // record.errorCount += protocolData.errorCode !== 0 ? 1 : 0;
-  
+
         // if (protocolData.errorCode === 0) {
         //   record.totalAmount += protocolData.denomination;
         // }
-  
+
         record.denominationBreakdown.set(protocolData.denomination, {
           denomination: protocolData.denomination,
           count:
-            (record.denominationBreakdown.get(protocolData.denomination)?.count ||
-              0) + 1,
+            (record.denominationBreakdown.get(protocolData.denomination)
+              ?.count || 0) + 1,
           amount:
             (record.denominationBreakdown.get(protocolData.denomination)
               ?.amount || 0) + protocolData.denomination,
@@ -195,7 +193,6 @@ const handleSessionUpdate = (
         });
       }
     }
-
 
     // 更新面额分布统计
     // updatedSession.denominationBreakdown.set(protocolData.currencyCode, {
@@ -493,13 +490,10 @@ export const CounterDashboard: React.FC<CounterDashboardProps> = ({
     protocolDataArr.forEach((data) => {
       switch (data.protocolType) {
         case "ZMProtocol":
-          if ( data.cmdGroup == ZMCommandCode.HANDSHAKE ) 
-          {
+          if (data.cmdGroup == ZMCommandCode.HANDSHAKE) {
             console.log("----------Received ZM handshake data:", data);
             setSerialConnected(true);
-          }
-          else if (data.cmdGroup === ZMCommandCode.COUNT_RESULT) 
-          {
+          } else if (data.cmdGroup === ZMCommandCode.COUNT_RESULT) {
             console.log("Received ZM count result data:", data);
             // 处理ZM点钞结果数据
             const updatedSession = handleSessionUpdate(
@@ -533,7 +527,6 @@ export const CounterDashboard: React.FC<CounterDashboardProps> = ({
             ) as BaseProtocolData[];
 
             handleProtocolData(protocolDataArr);
-
           } catch (error) {
             console.error("Error parsing serial data:", error);
           }
@@ -1139,15 +1132,21 @@ export const CounterDashboard: React.FC<CounterDashboardProps> = ({
       <div className="dashboard-header">
         <div className="dashboard-title">
           <h2>💰 {t("counter.title")}</h2>
-          
-          <button 
+
+          <button
             className="connection-status"
             onClick={() => {
-              console.log("Connection status clicked - triggering auto-connect");
+              console.log(
+                "Connection status clicked - triggering auto-connect"
+              );
               // 触发自定义事件通知 SerialPortPanel 执行自动连接
-              window.dispatchEvent(new CustomEvent('triggerAutoConnect'));
+              window.dispatchEvent(new CustomEvent("triggerAutoConnect"));
             }}
-            title={serialConnected ? t("counter.connected") : t("counter.disconnected")}
+            title={
+              serialConnected
+                ? t("counter.connected")
+                : t("counter.disconnected")
+            }
           >
             <span
               className={`status-indicator ${
@@ -1155,7 +1154,9 @@ export const CounterDashboard: React.FC<CounterDashboardProps> = ({
               }`}
             ></span>
             <span>
-              {serialConnected ? t("counter.connected") : t("counter.disconnected")}
+              {serialConnected
+                ? t("counter.connected")
+                : t("counter.disconnected")}
             </span>
           </button>
         </div>{" "}
