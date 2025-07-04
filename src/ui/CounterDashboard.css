@@ -65,6 +65,20 @@
   gap: 0.5rem;
   font-size: 0.9rem;
   color: #b3b3b3;
+  background: transparent;
+  border: none;
+  padding: 0.5rem 0.75rem;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.connection-status:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.connection-status:active {
+  background: rgba(255, 255, 255, 0.15);
 }
 
 .status-indicator {
@@ -1796,6 +1810,14 @@
   color: #64748b;
   background: #f3f4f6;
   border: 1px solid #d1d5db;
+}
+
+[data-theme="light"] .connection-status:hover {
+  background: #e5e7eb;
+}
+
+[data-theme="light"] .connection-status:active {
+  background: #d1d5db;
 }
 
 [data-theme="light"] .status-indicator {

@@ -34,6 +34,7 @@ import {
   ZMCommandCode,
 } from "./common/types";
 import { useAppConfigStore } from "./contexts/store";
+import { SerialPortPanel } from "./SerialPortPanel";
 
 interface CounterStats {
   totalRecords: Map<string, CurrencyCountRecord>; // 改为必需字段，包含所有货币的统计信息
@@ -1138,16 +1139,25 @@ export const CounterDashboard: React.FC<CounterDashboardProps> = ({
       <div className="dashboard-header">
         <div className="dashboard-title">
           <h2>💰 {t("counter.title")}</h2>
-          <div className="connection-status">
+          
+          <button 
+            className="connection-status"
+            onClick={() => {
+              console.log("Connection status clicked - triggering auto-connect");
+              // 触发自定义事件通知 SerialPortPanel 执行自动连接
+              window.dispatchEvent(new CustomEvent('triggerAutoConnect'));
+            }}
+            title={serialConnected ? t("counter.connected") : t("counter.disconnected")}
+          >
             <span
               className={`status-indicator ${
-                isConnected ? "connected" : "disconnected"
+                serialConnected ? "connected" : "disconnected"
               }`}
             ></span>
             <span>
-              {isConnected ? t("counter.connected") : t("counter.disconnected")}
+              {serialConnected ? t("counter.connected") : t("counter.disconnected")}
             </span>
-          </div>
+          </button>
         </div>{" "}
         <div className="dashboard-controls">
           <select

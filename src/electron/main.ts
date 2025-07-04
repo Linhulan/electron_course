@@ -234,23 +234,23 @@ app.on("ready", async () => {
   createMenu(mainWindow);
   handleCloseEvenets(mainWindow);
   // 获取串口列表
-  try {
-    const ports = await getAvailablePorts();
-    console.log("Serial ports detected:");
+  // try {
+  //   const ports = await getAvailablePorts();
+  //   console.log("Serial ports detected:");
 
-    // 使用简单的日志格式避免编码问题
-    ports.forEach((port, index) => {
-      console.log(`Port ${index + 1}:`);
-      console.log(`  Path: ${port.path}`);
-      console.log(`  Manufacturer: ${port.manufacturer || "Unknown"}`);
-      console.log(`  Vendor ID: ${port.vendorId || "N/A"}`);
-      console.log(`  Product ID: ${port.productId || "N/A"}`);
-      console.log(`  Serial Number: ${port.serialNumber || "N/A"}`);
-      console.log("---");
-    });
-  } catch (error) {
-    console.error("Error getting serial ports:", error);
-  }
+  //   // 使用简单的日志格式避免编码问题
+  //   ports.forEach((port, index) => {
+  //     console.log(`Port ${index + 1}:`);
+  //     console.log(`  Path: ${port.path}`);
+  //     console.log(`  Manufacturer: ${port.manufacturer || "Unknown"}`);
+  //     console.log(`  Vendor ID: ${port.vendorId || "N/A"}`);
+  //     console.log(`  Product ID: ${port.productId || "N/A"}`);
+  //     console.log(`  Serial Number: ${port.serialNumber || "N/A"}`);
+  //     console.log("---");
+  //   });
+  // } catch (error) {
+  //   console.error("Error getting serial ports:", error);
+  // }
 });
 
 function handleCloseEvenets(mainWindow: BrowserWindow) {

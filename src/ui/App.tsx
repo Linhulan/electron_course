@@ -13,7 +13,7 @@ interface AppProps {
 }
 
 function App({ onAppReady }: AppProps) {
-  const [currentPage, setCurrentPage] = useState<PageType>("serial-port");
+  const [currentPage, setCurrentPage] = useState<PageType>("counter-dashboard");
   const { t, ready } = useTranslation();
   const { theme } = useAppConfigStore();
 
@@ -113,7 +113,7 @@ function Header({ title }: { title: string }) {
           easing: "ease-in-out",
         },
         {
-          duration: 350,
+          duration: 500,
           pseudoElement: "::view-transition-new(root)",
         }
       );

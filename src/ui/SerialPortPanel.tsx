@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import "./SerialPortPanel.css";
+import { useAppConfigStore } from "./contexts/store";
 
 interface SerialPortPanelProps {
   className?: string;
@@ -27,6 +28,10 @@ export const SerialPortPanel: React.FC<SerialPortPanelProps> = ({
     stopBits: 1,
     parity: "none",
   });
+  const serialConnected = useAppConfigStore((state) => state.serialConnected);
+  const setSerialConnected = useAppConfigStore(
+    (state) => state.setSerialConnected
+  );
 
   const dataDisplayRef = useRef<HTMLDivElement>(null);
   const addToDataDisplay = useCallback(
@@ -87,6 +92,38 @@ export const SerialPortPanel: React.FC<SerialPortPanelProps> = ({
 
     updateReceiveMode();
   }, [isHexMode]);
+
+  const autoConnect = useCallback(async () => {
+    if (availablePorts.length === 0) {
+      console.warn("No available ports to auto-connect");
+      return;
+    }
+
+    for (const port of availablePorts) {
+      if (useAppConfigStore.getState().serialConnected) {
+        break;
+      }
+      console.log(`Attempting to connect to port: ${port.path}`);
+      //断开错误的连接
+      await window.electron.disconnectSerialPort();
+
+      const connected = await window.electron.connectSerialPort(
+        port.path,
+        config
+      );
+
+      if (!connected) {
+        continue;
+      }
+
+      setSelectedPort(port.path);
+      addToDataDisplay(`Auto-connected to ${port.path}`, "system");
+      await window.electron.sendSerialHexData("AA55030001000001A55A");
+      addToDataDisplay(`Handshake sent to ${port.path}`, "system");
+
+      await new Promise((resolve) => setTimeout(resolve, 300));
+    }
+  }, [availablePorts, serialConnected, config, addToDataDisplay]);
 
   const refreshPorts = useCallback(async () => {
     try {
@@ -180,6 +217,22 @@ export const SerialPortPanel: React.FC<SerialPortPanelProps> = ({
     showTimestamp,
   ]);
 
+  // 监听来自 CounterDashboard 的手动自动连接事件
+  useEffect(() => {
+    const handleManualAutoConnect = () => {
+      console.log('Manual auto-connect triggered from dashboard');
+      addToDataDisplay('Manual auto-connect triggered from dashboard', 'system');
+      autoConnect();
+    };
+
+    // 监听自定义事件
+    window.addEventListener('triggerAutoConnect', handleManualAutoConnect);
+
+    return () => {
+      window.removeEventListener('triggerAutoConnect', handleManualAutoConnect);
+    };
+  }, [autoConnect, addToDataDisplay]);
+
   const handleConnect = async () => {
     if (!selectedPort) {
       setError("Please select a port first");
@@ -190,8 +243,9 @@ export const SerialPortPanel: React.FC<SerialPortPanelProps> = ({
       setIsLoading(true);
       setError("");
       await window.electron.connectSerialPort(selectedPort, config);
+      setSerialConnected(true);
     } catch (err) {
-      setError(`Failed to connect: ${err}`);
+      setError(`Failed to connect: ${selectedPort}`);
     } finally {
       setIsLoading(false);
     }
@@ -202,12 +256,14 @@ export const SerialPortPanel: React.FC<SerialPortPanelProps> = ({
       setIsLoading(true);
       setError("");
       await window.electron.disconnectSerialPort();
+      setSerialConnected(false);
     } catch (err) {
       setError(`Failed to disconnect: ${err}`);
     } finally {
       setIsLoading(false);
     }
   };
+
   const handleSendData = async () => {
     if (!sendMessage.trim()) return;
     try {
@@ -293,6 +349,14 @@ export const SerialPortPanel: React.FC<SerialPortPanelProps> = ({
               >
                 <span className="refresh-icon">🔄</span>
               </button>
+              <button
+                onClick={autoConnect}
+                disabled={isLoading}
+                className="refresh-btn"
+                title={t("serialPort.refreshPorts")}
+              >
+                <span className="refresh-icon">🔄Connect</span>
+              </button>
             </div>
           </div>
 
@@ -308,7 +372,7 @@ export const SerialPortPanel: React.FC<SerialPortPanelProps> = ({
                     baudRate: parseInt(e.target.value),
                   }))
                 }
-                disabled={connectionStatus.isConnected}
+                disabled={serialConnected}
               >
                 <option value={9600}>9600</option>
                 <option value={19200}>19200</option>
@@ -331,7 +395,7 @@ export const SerialPortPanel: React.FC<SerialPortPanelProps> = ({
                     dataBits: parseInt(e.target.value) as 5 | 6 | 7 | 8,
                   }))
                 }
-                disabled={connectionStatus.isConnected}
+                disabled={serialConnected}
               >
                 <option value={5}>5</option>
                 <option value={6}>6</option>
@@ -350,7 +414,7 @@ export const SerialPortPanel: React.FC<SerialPortPanelProps> = ({
                     stopBits: parseFloat(e.target.value) as 1 | 1.5 | 2,
                   }))
                 }
-                disabled={connectionStatus.isConnected}
+                disabled={serialConnected}
               >
                 <option value={1}>1</option>
                 <option value={1.5}>1.5</option>
@@ -373,7 +437,7 @@ export const SerialPortPanel: React.FC<SerialPortPanelProps> = ({
                       | "space",
                   }))
                 }
-                disabled={connectionStatus.isConnected}
+                disabled={serialConnected}
               >
                 <option value="none">None</option>
                 <option value="even">Even</option>
@@ -388,17 +452,17 @@ export const SerialPortPanel: React.FC<SerialPortPanelProps> = ({
             <strong>{t("serialPort.connectionStatus")}:</strong>
             <span
               className={
-                connectionStatus.isConnected ? "connected" : "disconnected"
+                serialConnected ? "connected" : "disconnected"
               }
             >
-              {connectionStatus.isConnected
+              {serialConnected
                 ? ` ${t("serialPort.connected")} ${connectionStatus.portPath}`
                 : ` ${t("serialPort.disconnected")}`}
             </span>
           </div>
 
           <div className="connection-actions">
-            {!connectionStatus.isConnected ? (
+            {!serialConnected ? (
               <button
                 onClick={handleConnect}
                 disabled={!selectedPort || isLoading}
@@ -534,7 +598,7 @@ export const SerialPortPanel: React.FC<SerialPortPanelProps> = ({
                 <button
                   onClick={() =>
                     setSendMessage(
-                      isHexSendMode ? "FD DF 06 0A 01 D9" : "Hello"
+                      isHexSendMode ? "AA 55 03 00 01 00 00 01 A5 5A" : "Hello"
                     )
                   }
                   disabled={!connectionStatus.isConnected}
