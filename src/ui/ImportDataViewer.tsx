@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { SessionData, CounterData } from './common/types';
 import styles from './ImportDataViewer.module.css';
@@ -38,6 +38,8 @@ export const ImportDataViewer: React.FC<ImportDataViewerProps> = ({ className })
   const [filteredDetails, setFilteredDetails] = useState<Map<string, CounterData[]>>(new Map());
   const [sortBy, setSortBy] = useState<'timestamp' | 'sessionID' | 'totalCount' | 'totalAmount'>('timestamp');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+  const [isSearching, setIsSearching] = useState(false);
+  const [searchHistory, setSearchHistory] = useState<SearchFilters[]>([]);
 
   // 导入数据处理
   const handleImportExcel = async () => {
@@ -75,126 +77,192 @@ export const ImportDataViewer: React.FC<ImportDataViewerProps> = ({ className })
     }
   };
 
-  // 搜索功能
+  // 检查是否有有效的搜索条件
+  const hasValidSearchFilters = useCallback(() => {
+    return Object.values(searchFilters).some(value => 
+      value !== undefined && value !== '' && value !== null
+    );
+  }, [searchFilters]);
+
+  // 保存当前搜索条件到历史
+  const saveSearchToHistory = useCallback(() => {
+    if (hasValidSearchFilters()) {
+      setSearchHistory(prev => {
+        const newHistory = [searchFilters, ...prev.filter(h => 
+          JSON.stringify(h) !== JSON.stringify(searchFilters)
+        )];
+        return newHistory.slice(0, 5); // 只保留最近5次搜索
+      });
+    }
+  }, [searchFilters, hasValidSearchFilters]);
+
+  // 从历史记录中应用搜索条件
+  const applySearchFromHistory = useCallback((filters: SearchFilters) => {
+    setSearchFilters(filters);
+  }, []);
+
+  // 搜索功能 - 优化为支持自由组合的AND逻辑
   const performSearch = useCallback(() => {
     if (!importedData.length) return;
+
+    setIsSearching(true);
+
+    // 如果没有任何搜索条件，显示所有数据
+    if (!hasValidSearchFilters()) {
+      setSearchResults([]);
+      setFilteredDetails(new Map());
+      setShowSearchResults(false);
+      setIsSearching(false);
+      return;
+    }
 
     const results: SearchResult[] = [];
     const sessionFilteredDetails = new Map<string, CounterData[]>();
     
     importedData.forEach(session => {
-      // 搜索Session级别的字段
-      let sessionMatches = false;
-      let sessionMatchField = '';
+      // 检查Session级别的所有条件（AND逻辑）
+      const sessionConditions = [];
+      let sessionMatchFields: string[] = [];
 
-      if (searchFilters.sessionID && session.id.toString().includes(searchFilters.sessionID.toString())) {
-        sessionMatches = true;
-        sessionMatchField = 'sessionID';
+      // Session ID 条件
+      if (searchFilters.sessionID) {
+        const matches = session.id.toString().toLowerCase().includes(searchFilters.sessionID.toLowerCase());
+        sessionConditions.push(matches);
+        if (matches) sessionMatchFields.push('sessionID');
       }
 
-      if (searchFilters.currencyCode && session.currencyCode?.toLowerCase().includes(searchFilters.currencyCode.toLowerCase())) {
-        sessionMatches = true;
-        sessionMatchField = 'currencyCode';
+      // 货币代码条件（Session级别）
+      if (searchFilters.currencyCode) {
+        const matches = session.currencyCode?.toLowerCase().includes(searchFilters.currencyCode.toLowerCase()) || false;
+        sessionConditions.push(matches);
+        if (matches) sessionMatchFields.push('currencyCode');
       }
 
+      // 日期范围条件
       if (searchFilters.startDate || searchFilters.endDate) {
         const sessionDate = new Date(session.startTime);
         const startDate = searchFilters.startDate ? new Date(searchFilters.startDate) : null;
         const endDate = searchFilters.endDate ? new Date(searchFilters.endDate) : null;
         
-        if ((!startDate || sessionDate >= startDate) && (!endDate || sessionDate <= endDate)) {
-          sessionMatches = true;
-          sessionMatchField = 'dateRange';
-        }
+        const matches = (!startDate || sessionDate >= startDate) && (!endDate || sessionDate <= endDate);
+        sessionConditions.push(matches);
+        if (matches) sessionMatchFields.push('dateRange');
       }
 
+      // 错误状态条件
       if (searchFilters.hasError !== undefined) {
         const hasError = (session.errorCount || 0) > 0;
-        if (hasError === searchFilters.hasError) {
-          sessionMatches = true;
-          sessionMatchField = 'hasError';
-        }
+        const matches = hasError === searchFilters.hasError;
+        sessionConditions.push(matches);
+        if (matches) sessionMatchFields.push('hasError');
       }
 
-      // 收集匹配的详细记录
+      // Status条件（Session级别）
+      if (searchFilters.status) {
+        const matches = session.status === searchFilters.status;
+        sessionConditions.push(matches);
+        if (matches) sessionMatchFields.push('status');
+      }
+
+      // Session级别匹配：所有指定的条件都必须满足
+      const sessionMatches = sessionConditions.length === 0 || sessionConditions.every(condition => condition);
+
+      // 收集匹配的详细记录（仅当Session级别条件满足时）
       const matchedDetails: CounterData[] = [];
-
-      // 搜索Details级别的字段
-      if (session.details) {
+      
+      if (sessionMatches && session.details) {
         session.details.forEach(detail => {
-          let detailMatches = false;
-          let detailMatchField = '';
+          const detailConditions = [];
+          let detailMatchFields: string[] = [];
 
-          // 冠字号搜索（高级功能）
+          // 冠字号条件
           if (searchFilters.serialNumber) {
             const searchSerial = searchFilters.serialNumber.toLowerCase();
             const detailSerial = detail.serialNumber?.toLowerCase() || '';
-            
-            if (detailSerial.includes(searchSerial)) {
-              detailMatches = true;
-              detailMatchField = 'serialNumber';
-              
-              // 高级搜索：冠字号+货币代码组合搜索
-              if (searchFilters.currencyCode) {
-                const searchCurrency = searchFilters.currencyCode.toLowerCase();
-                const detailCurrency = detail.currencyCode?.toLowerCase() || '';
-                
-                if (detailCurrency.includes(searchCurrency)) {
-                  detailMatchField = 'serialNumber+currency';
-                } else {
-                  detailMatches = false; // 如果货币代码不匹配，则不算匹配
-                }
-              }
-            }
+            const matches = detailSerial.includes(searchSerial);
+            detailConditions.push(matches);
+            if (matches) detailMatchFields.push('serialNumber');
           }
 
+          // 面额条件
           if (searchFilters.denomination) {
             const searchDenom = parseFloat(searchFilters.denomination);
-            if (!isNaN(searchDenom) && detail.denomination === searchDenom) {
-              detailMatches = true;
-              detailMatchField = 'denomination';
-            }
+            const matches = !isNaN(searchDenom) && detail.denomination === searchDenom;
+            detailConditions.push(matches);
+            if (matches) detailMatchFields.push('denomination');
           }
 
-          if (searchFilters.status && detail.status === searchFilters.status) {
-            detailMatches = true;
-            detailMatchField = 'status';
+          // 货币代码条件（Detail级别，与Session级别的货币条件可以不同）
+          if (searchFilters.currencyCode) {
+            const searchCurrency = searchFilters.currencyCode.toLowerCase();
+            const detailCurrency = detail.currencyCode?.toLowerCase() || '';
+            const matches = detailCurrency.includes(searchCurrency);
+            detailConditions.push(matches);
+            if (matches) detailMatchFields.push('detailCurrency');
           }
 
-          if (detailMatches) {
+          // Status条件（Detail级别）
+          if (searchFilters.status) {
+            const matches = detail.status === searchFilters.status;
+            detailConditions.push(matches);
+            if (matches) detailMatchFields.push('detailStatus');
+          }
+
+          // Detail级别匹配：如果有detail级别的搜索条件，所有指定的条件都必须满足
+          const hasDetailSearchCriteria = searchFilters.serialNumber || 
+                                        searchFilters.denomination || 
+                                        (searchFilters.currencyCode && session.details) ||
+                                        (searchFilters.status && session.details);
+          
+          const detailMatches = !hasDetailSearchCriteria || 
+                               (detailConditions.length > 0 && detailConditions.every(condition => condition));
+
+          if (detailMatches && hasDetailSearchCriteria) {
             matchedDetails.push(detail);
             results.push({
               session,
               detail,
               matchType: 'detail',
-              matchField: detailMatchField
+              matchField: detailMatchFields.join('+')
             });
           }
         });
       }
 
-      // 如果Session级别匹配，或者有匹配的details
-      if (sessionMatches || matchedDetails.length > 0) {
-        if (sessionMatches && matchedDetails.length === 0) {
-          // Session级别匹配但没有detail匹配，显示所有details
+      // 决定如何处理这个Session
+      const hasDetailSearchCriteria = searchFilters.serialNumber || 
+                                     searchFilters.denomination ||
+                                     (searchFilters.status && session.details);
+
+      if (sessionMatches) {
+        if (hasDetailSearchCriteria) {
+          // 有Detail级别的搜索条件，只显示匹配的details
+          if (matchedDetails.length > 0) {
+            sessionFilteredDetails.set(session.id, matchedDetails);
+          }
+        } else {
+          // 只有Session级别的搜索条件，显示所有details
           sessionFilteredDetails.set(session.id, session.details || []);
           results.push({
             session,
-            detail: {} as CounterData, // 空对象，因为这是Session级别的匹配
+            detail: {} as CounterData,
             matchType: 'session',
-            matchField: sessionMatchField
+            matchField: sessionMatchFields.join('+')
           });
-        } else if (matchedDetails.length > 0) {
-          // 有匹配的details，只显示匹配的details
-          sessionFilteredDetails.set(session.id, matchedDetails);
         }
       }
     });
 
     setSearchResults(results);
     setFilteredDetails(sessionFilteredDetails);
-    setShowSearchResults(results.length > 0);
-  }, [importedData, searchFilters]);
+    setShowSearchResults(results.length > 0 || Object.keys(searchFilters).some(key => searchFilters[key as keyof SearchFilters] !== undefined && searchFilters[key as keyof SearchFilters] !== ''));
+    setIsSearching(false);
+    
+    // 保存有效的搜索条件到历史
+    if (results.length > 0) {
+      saveSearchToHistory();
+    }
+  }, [importedData, searchFilters, hasValidSearchFilters, saveSearchToHistory]);
 
   // 清除搜索
   const clearSearch = () => {
@@ -268,6 +336,36 @@ export const ImportDataViewer: React.FC<ImportDataViewerProps> = ({ className })
     }).format(amount);
   };
 
+  // 自动搜索：当搜索条件改变时自动执行搜索
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      performSearch();
+    }, 300); // 300ms防抖延迟
+
+    return () => clearTimeout(timeoutId);
+  }, [performSearch]);
+
+  // 键盘快捷键支持
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      // Ctrl/Cmd + K 聚焦搜索
+      if ((event.ctrlKey || event.metaKey) && event.key === 'k') {
+        event.preventDefault();
+        const firstInput = document.querySelector('.searchPanel input') as HTMLInputElement;
+        if (firstInput) {
+          firstInput.focus();
+        }
+      }
+      // Escape 清除搜索
+      if (event.key === 'Escape' && hasValidSearchFilters()) {
+        clearSearch();
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [hasValidSearchFilters, clearSearch]);
+
   return (
     <div className={`${styles.importDataViewer} ${className || ''}`}>
       {/* 功能区域 */}
@@ -299,20 +397,47 @@ export const ImportDataViewer: React.FC<ImportDataViewerProps> = ({ className })
       </div>
 
       {/* 搜索筛选区域 */}
-      <div className={styles.searchPanel}>
+      <div className={`${styles.searchPanel} searchPanel`}>
         <div className={styles.searchHeader}>
           <div className={styles.searchTitle}>
             <h3>🔍 {t('importViewer.searchFilters', 'Search & Filters')}</h3>
-            {showSearchResults && (
-              <span className={styles.searchResultsCount}>
-                {searchResults.length} {t('importViewer.resultsFound', 'results found')}
+            {(showSearchResults || hasValidSearchFilters()) && (
+              <span className={`${styles.searchResultsCount} ${isSearching ? styles.searching : ''}`}>
+                {isSearching ? (
+                  <span>🔍 {t('importViewer.searching', 'Searching...')}</span>
+                ) : (
+                  <>
+                    {(() => {
+                      const sessionCount = new Set(searchResults.map(r => r.session.id)).size;
+                      const detailCount = searchResults.filter(r => r.matchType === 'detail').length;
+                      
+                      if (sessionCount === 0) {
+                        return `${t('importViewer.noResults', 'No results found')}`;
+                      }
+                      
+                      if (detailCount > 0) {
+                        return `${sessionCount} ${t('importViewer.sessions', 'sessions')}, ${detailCount} ${t('importViewer.details', 'details')}`;
+                      } else {
+                        return `${sessionCount} ${t('importViewer.sessions', 'sessions')}`;
+                      }
+                    })()}
+                  </>
+                )}
               </span>
             )}
           </div>
           
           <div className={styles.searchActions}>
-            <button className={styles.searchBtn} onClick={performSearch}>
-              🔍 {t('importViewer.search', 'Search')}
+            <button 
+              className={styles.searchBtn} 
+              onClick={performSearch}
+              disabled={isSearching}
+            >
+              {isSearching ? (
+                <>{t('importViewer.searching', 'Searching...')}</>
+              ) : (
+                <>🔍 {t('importViewer.search', 'Search')}</>
+              )}
             </button>
             <button className={styles.clearBtn} onClick={clearSearch}>
               🗑️ {t('importViewer.clear', 'Clear')}
@@ -543,7 +668,6 @@ export const ImportDataViewer: React.FC<ImportDataViewerProps> = ({ className })
                     <div className={styles.detailsTable}>
                       <div className={styles.tableHeader}>
                         <div className={styles.colNo}>{t('importViewer.tableNo', 'No.')}</div>
-                        <div className={styles.colTime}>{t('importViewer.tableTime', 'Time')}</div>
                         <div className={styles.colCurrency}>{t('importViewer.tableCurrency', 'Currency')}</div>
                         <div className={styles.colDenomination}>{t('importViewer.tableDenomination', 'Denomination')}</div>
                         <div className={styles.colSerial}>{t('importViewer.tableSerialNumber', 'Serial Number')}</div>
@@ -555,7 +679,6 @@ export const ImportDataViewer: React.FC<ImportDataViewerProps> = ({ className })
                         {detailsToShow.map((detail, index) => (
                           <div key={detail.id + index} className={styles.tableRow}>
                             <div className={styles.colNo}>{detail.no}</div>
-                            <div className={styles.colTime}>{detail.timestamp}</div>
                             <div className={styles.colCurrency}>{detail.currencyCode}</div>
                             <div className={styles.colDenomination}>
                               {formatCurrency(detail.denomination, detail.currencyCode)}
