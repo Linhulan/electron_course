@@ -228,6 +228,17 @@ app.on("ready", async () => {
     return await fileManager.setDefaultExportDir(dirPath);
   });
 
+  // Excel导入相关处理器
+  ipcMainHandle("import-from-excel", async (...args: unknown[]) => {
+    const [filePath, options] = args as [string | undefined, any];
+    return await fileManager.importFromExcel(filePath, options);
+  });
+
+  ipcMainHandle("import-from-directory", async (...args: unknown[]) => {
+    const [directory, options] = args as [string | undefined, any];
+    return await fileManager.importFromDirectory(directory, options);
+  });
+
   // ==========================================
 
   createTray(mainWindow);

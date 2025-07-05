@@ -37,6 +37,10 @@ electron.contextBridge.exposeInMainWorld("electron", {
   deleteFile: (filePath: string) => ipcInvoke("delete-file", filePath),
   getDefaultExportDir: () => ipcInvoke("get-default-export-dir"),
   setDefaultExportDir: (dirPath: string) => ipcInvoke("set-default-export-dir", dirPath),
+  
+  // Excel导入函数
+  importFromExcel: (filePath?: string, options?: any) => ipcInvoke("import-from-excel", filePath, options),
+  importFromDirectory: (directory?: string, options?: any) => ipcInvoke("import-from-directory", directory, options),
 } satisfies Window["electron"]);
 
 function ipcInvoke<Key extends keyof EventPayloadMapping>(

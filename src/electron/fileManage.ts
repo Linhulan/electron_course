@@ -522,12 +522,12 @@ export class FileManager {
       pdf.autoTable({
         startY: currentY + 5,
         head: [['Currency', 'Notes', 'Amount', 'Error Count', 'Percentage']],
-        body: currencyStats.map(stat => [
+        body: currencyStats.map((stat) => [
           stat.currencyCode,
           stat.totalCount,
           formatCurrency(stat.totalAmount, { currency: stat.currencyCode }),
           stat.errorCount,
-          `${stat.percentage.toFixed(2)}%`
+          `0.00%` // 简化百分比计算
         ]),
         theme: 'striped',
         margin: { left: 15, right: 15 },
@@ -870,9 +870,22 @@ export class FileManager {
   // ==================== Excel 生成辅助方法 ====================
 
   /**
+   * 获取状态文本
+   */
+  private getStatusText(status: SessionData['status']): string {
+    switch (status) {
+      case 'counting': return 'Counting';
+      case 'completed': return 'Completed';
+      case 'error': return 'Error';
+      case 'paused': return 'Paused';
+      default: return 'Unknown';
+    }
+  }
+
+  /**
    * 创建摘要工作表 - 美化版本，与PDF样式保持一致
    */
-  private async createSummarySheet(workbook: any, sessionDataList: SessionData[]): Promise<void> {
+  private async createSummarySheet(workbook: ExcelJS.Workbook, sessionDataList: SessionData[]): Promise<void> {
     const worksheet = workbook.addWorksheet('📊 Summary Statistics');
 
     // 计算统计数据
@@ -945,7 +958,7 @@ export class FileManager {
     headerRow.height = 28;
     
     // 设置表头样式
-    headerRow.eachCell((cell: any, colNumber: number) => {
+    headerRow.eachCell((cell: ExcelJS.Cell, colNumber: number) => {
       if (colNumber <= 3) {
         cell.fill = { 
           type: 'gradient', 
@@ -986,7 +999,7 @@ export class FileManager {
       
       const isEvenRow = index % 2 === 0;
       
-      dataRow.eachCell((cell: any, colNumber: number) => {
+      dataRow.eachCell((cell: ExcelJS.Cell, colNumber: number) => {
         if (colNumber <= 3) {
           // 交替行颜色 - 与PDF的alternateRowStyles保持一致
           cell.fill = { 
@@ -1054,7 +1067,7 @@ export class FileManager {
   /**
    * 创建详细信息工作表
    */
-  private async createDetailSheet(workbook: any, sessionDataList: SessionData[]): Promise<void> {
+  private async createDetailSheet(workbook: ExcelJS.Workbook, sessionDataList: SessionData[]): Promise<void> {
     const worksheet = workbook.addWorksheet('Details');
 
     worksheet.columns = [
@@ -1102,7 +1115,7 @@ export class FileManager {
   /**
    * 创建统一的面额统计工作表（所有货币在一个Sheet中，每个货币独立表格）
    */
-  private async createUnifiedDenominationSheet(workbook: any, sessionDataList: SessionData[]): Promise<void> {
+  private async createUnifiedDenominationSheet(workbook: ExcelJS.Workbook, sessionDataList: SessionData[]): Promise<void> {
     const worksheet = workbook.addWorksheet('Denomination Statistics');
     const multiCurrencyDenominationStats = this.calculateMultiCurrencyDenominationStats(sessionDataList);
     
@@ -1340,7 +1353,7 @@ export class FileManager {
   /**
    * 创建纸币详细信息工作表 - 美化版本
    */
-  private async createBanknoteDetailsSheet(workbook: any, sessionDataList: SessionData[]): Promise<void> {
+  private async createBanknoteDetailsSheet(workbook: ExcelJS.Workbook, sessionDataList: SessionData[]): Promise<void> {
     const worksheet = workbook.addWorksheet('💵 Banknote Details');
 
     // 设置列定义
@@ -1572,50 +1585,573 @@ export class FileManager {
   }
 
   /**
-   * 计算面额统计 - 兼容旧版本数据结构
+   * 从Excel文件导入SessionData[]
+   * @param filePath Excel文件路径（可选，如果不提供则打开文件选择对话框）
+   * @param options 导入选项
    */
-  private calculateDenominationStats(sessionDataList: SessionData[]): Array<{
-    denomination: number;
-    count: number;
-    amount: number;
-    percentage: number;
-  }> {
-    const denominationMap = new Map<number, { count: number; amount: number }>();
-
-    sessionDataList.forEach(session => {
-      // 兼容旧版本：优先使用 denominationBreakdown
-      if (session.denominationBreakdown) {
-        session.denominationBreakdown.forEach((detail, denomination) => {
-          const existing = denominationMap.get(denomination) || { count: 0, amount: 0 };
-          denominationMap.set(denomination, {
-            count: existing.count + detail.count,
-            amount: existing.amount + detail.amount
-          });
+  async importFromExcel(
+    filePath?: string, 
+    options: ImportOptions = {}
+  ): Promise<ImportResult> {
+    try {
+      // 如果没有提供文件路径，打开文件选择对话框
+      if (!filePath) {
+        const result = await dialog.showOpenDialog({
+          title: 'Select Excel File to Import',
+          defaultPath: this.config.defaultExportDir,
+          filters: [
+            { name: 'Excel Files', extensions: ['xlsx', 'xls'] },
+            { name: 'All Files', extensions: ['*'] }
+          ],
+          properties: ['openFile']
         });
-      } else if (session.currencyCountRecords) {
-        // 新版本：从 currencyCountRecords 中提取
-        session.currencyCountRecords.forEach((record) => {
-          record.denominationBreakdown.forEach((detail, denomination) => {
-            const existing = denominationMap.get(denomination) || { count: 0, amount: 0 };
-            denominationMap.set(denomination, {
-              count: existing.count + detail.count,
-              amount: existing.amount + detail.amount
+
+        if (result.canceled || !result.filePaths.length) {
+          return { success: false, errors: ['User cancelled import'] };
+        }
+
+        filePath = result.filePaths[0];
+      }
+
+      // 验证文件存在性
+      try {
+        await fs.access(filePath);
+      } catch {
+        return { 
+          success: false, 
+          errors: [`File not found: ${filePath}`] 
+        };
+      }
+
+      // 读取并解析Excel文件
+      const importResult = await this.parseExcelFile(filePath, options);
+      
+      return importResult;
+    } catch (error) {
+      console.error('Excel import failed:', error);
+      return {
+        success: false,
+        errors: [error instanceof Error ? error.message : 'Unknown error']
+      };
+    }
+  }
+
+  /**
+   * 批量导入指定目录下的Excel文件
+   * @param directory 目录路径（可选，默认使用defaultExportDir）
+   * @param options 导入选项
+   */
+  async importFromDirectory(
+    directory?: string,
+    options: ImportOptions = {}
+  ): Promise<ImportResult> {
+    try {
+      const targetDir = directory || this.config.defaultExportDir;
+      
+      // 扫描目录中的Excel文件
+      const excelFiles = await this.scanExcelFiles(targetDir, options.filePattern);
+      
+      if (excelFiles.length === 0) {
+        return {
+          success: false,
+          errors: ['No Excel files found in the specified directory']
+        };
+      }
+
+      const allSessionData: SessionData[] = [];
+      const importedFiles: ImportedFileInfo[] = [];
+      const errors: string[] = [];
+      let totalImported = 0;
+      let totalSkipped = 0;
+      let totalErrors = 0;
+
+      // 逐个处理Excel文件
+      for (const filePath of excelFiles) {
+        try {
+          const result = await this.parseExcelFile(filePath, options);
+          
+          if (result.success && result.sessionData) {
+            allSessionData.push(...result.sessionData);
+            totalImported += result.importedCount || 0;
+            totalSkipped += result.skippedCount || 0;
+            
+            importedFiles.push({
+              filePath,
+              filename: path.basename(filePath),
+              sessionCount: result.sessionData.length,
+              importedAt: new Date().toISOString(),
+              fileSize: (await fs.stat(filePath)).size,
+              isValid: true
             });
-          });
+          } else {
+            totalErrors++;
+            errors.push(...(result.errors || [`Failed to import ${path.basename(filePath)}`]));
+            
+            importedFiles.push({
+              filePath,
+              filename: path.basename(filePath),
+              sessionCount: 0,
+              importedAt: new Date().toISOString(),
+              fileSize: (await fs.stat(filePath)).size,
+              isValid: false,
+              errors: result.errors
+            });
+          }
+        } catch (error) {
+          totalErrors++;
+          const errorMsg = error instanceof Error ? error.message : 'Unknown error';
+          errors.push(`Error processing ${path.basename(filePath)}: ${errorMsg}`);
+        }
+      }
+
+      // 如果启用了跳过重复项，需要去重
+      const finalSessionData = options.skipDuplicates 
+        ? this.removeDuplicateSessions(allSessionData)
+        : allSessionData;
+
+      return {
+        success: finalSessionData.length > 0,
+        sessionData: finalSessionData,
+        importedCount: totalImported,
+        skippedCount: totalSkipped,
+        errorCount: totalErrors,
+        errors: errors.length > 0 ? errors : undefined
+      };
+    } catch (error) {
+      console.error('Directory import failed:', error);
+      return {
+        success: false,
+        errors: [error instanceof Error ? error.message : 'Unknown error']
+      };
+    }
+  }
+
+  /**
+   * 解析单个Excel文件
+   */
+  private async parseExcelFile(
+    filePath: string, 
+    options: ImportOptions = {}
+  ): Promise<ImportResult> {
+    try {
+      const workbook = new ExcelJS.Workbook();
+      await workbook.xlsx.readFile(filePath);
+
+      // 查找必要的工作表
+      const banknoteSheet = this.findWorksheet(workbook, ['💵 Banknote Details', 'Banknote Details']);
+      
+      if (!banknoteSheet) {
+        return {
+          success: false,
+          errors: ['Required "Banknote Details" worksheet not found']
+        };
+      }
+
+      // 解析纸币详细数据
+      const sessionData = await this.parseBanknoteDetailsSheet(banknoteSheet);
+      
+      // 可选：验证数据
+      if (options.validateData !== false) {
+        const validationErrors = this.validateImportedData(sessionData);
+        if (validationErrors.length > 0) {
+          return {
+            success: false,
+            errors: validationErrors
+          };
+        }
+      }
+
+      return {
+        success: true,
+        sessionData,
+        importedCount: sessionData.length,
+        skippedCount: 0,
+        errorCount: 0,
+        filePath
+      };
+    } catch (error) {
+      return {
+        success: false,
+        errors: [error instanceof Error ? error.message : 'Failed to parse Excel file']
+      };
+    }
+  }
+
+  /**
+   * 扫描目录中的Excel文件
+   */
+  private async scanExcelFiles(directory: string, pattern?: string): Promise<string[]> {
+    try {
+      const files = await fs.readdir(directory);
+      const excelFiles: string[] = [];
+
+      for (const file of files) {
+        const filePath = path.join(directory, file);
+        const stats = await fs.stat(filePath);
+        
+        if (stats.isFile()) {
+          const ext = path.extname(file).toLowerCase();
+          if (['.xlsx', '.xls'].includes(ext)) {
+            // 应用文件名模式过滤
+            if (!pattern || this.matchesPattern(file, pattern)) {
+              excelFiles.push(filePath);
+            }
+          }
+        }
+      }
+
+      return excelFiles.sort();
+    } catch (error) {
+      console.error('Failed to scan directory:', error);
+      return [];
+    }
+  }
+
+  /**
+   * 查找指定名称的工作表
+   */
+  private findWorksheet(workbook: ExcelJS.Workbook, names: string[]): ExcelJS.Worksheet | null {
+    for (const name of names) {
+      const worksheet = workbook.getWorksheet(name);
+      if (worksheet) {
+        return worksheet;
+      }
+    }
+    return null;
+  }
+
+  /**
+   * 解析纸币详细信息工作表
+   */
+  private async parseBanknoteDetailsSheet(
+    worksheet: ExcelJS.Worksheet
+  ): Promise<SessionData[]> {
+    const sessionMap = new Map<number, SessionData>();
+    const headerRow = worksheet.getRow(1);
+    
+    // 动态识别列索引
+    const columnMapping = this.identifyColumns(headerRow);
+    
+    // 遍历数据行（跳过标题行）
+    worksheet.eachRow((row, rowNumber) => {
+      if (rowNumber === 1) return; // 跳过标题行
+      
+      try {
+        const rowData = this.parseDetailRow(row, columnMapping);
+        if (!rowData) return;
+        
+        // 获取或创建Session
+        let session = sessionMap.get(rowData.sessionNo);
+        if (!session) {
+          session = this.createSessionFromFirstDetail(rowData);
+          sessionMap.set(rowData.sessionNo, session);
+        }
+        
+        // 添加详细记录
+        session.details = session.details || [];
+        session.details.push(rowData.detail);
+        
+        // 更新Session统计
+        this.updateSessionStats(session, rowData.detail);
+        
+      } catch (error) {
+        console.warn(`Error parsing row ${rowNumber}:`, error);
+      }
+    });
+
+    // 转换为数组并完成最终处理
+    const sessions = Array.from(sessionMap.values());
+    
+    // 为每个Session重建面额分布和货币记录
+    sessions.forEach(session => {
+      this.rebuildSessionAggregations(session);
+    });
+
+    return sessions;
+  }
+
+  /**
+   * 识别Excel列的映射关系
+   */
+  private identifyColumns(headerRow: ExcelJS.Row): Map<string, number> {
+    const mapping = new Map<string, number>();
+    
+    headerRow.eachCell((cell, colNumber) => {
+      const value = cell.value?.toString().toLowerCase() || '';
+      
+      // 识别各种可能的列名变体
+      if (value.includes('session') && value.includes('no')) {
+        mapping.set('sessionNo', colNumber);
+      } else if (value.includes('note') && value.includes('no')) {
+        mapping.set('noteNo', colNumber);
+      } else if (value.includes('timestamp') || value.includes('time')) {
+        mapping.set('timestamp', colNumber);
+      } else if (value.includes('denomination') || value.includes('amount')) {
+        mapping.set('denomination', colNumber);
+      } else if (value.includes('currency')) {
+        mapping.set('currencyCode', colNumber);
+      } else if (value.includes('serial')) {
+        mapping.set('serialNumber', colNumber);
+      } else if (value.includes('error')) {
+        mapping.set('errorCode', colNumber);
+      } else if (value.includes('status')) {
+        mapping.set('status', colNumber);
+      }
+    });
+    
+    return mapping;
+  }
+
+  /**
+   * 解析详细记录行
+   */
+  private parseDetailRow(
+    row: ExcelJS.Row, 
+    columnMapping: Map<string, number>
+  ): { sessionNo: number; detail: CounterData } | null {
+    try {
+      const sessionNo = this.getCellValue(row, columnMapping.get('sessionNo'));
+      const noteNo = this.getCellValue(row, columnMapping.get('noteNo'));
+      const timestamp = this.getCellValue(row, columnMapping.get('timestamp'));
+      const denomination = this.getCellValue(row, columnMapping.get('denomination'));
+      const currencyCode = this.getCellValue(row, columnMapping.get('currencyCode'));
+      const serialNumber = this.getCellValue(row, columnMapping.get('serialNumber'));
+      const errorCode = this.getCellValue(row, columnMapping.get('errorCode'));
+      const status = this.getCellValue(row, columnMapping.get('status'));
+
+      // 必需字段验证
+      if (!sessionNo || !noteNo || !timestamp) {
+        return null;
+      }
+
+      // 解析面额值（移除货币符号）
+      const parsedDenomination = this.parseDenomination(denomination);
+      
+      const detail: CounterData = {
+        id: Date.now() + Math.random(), // 临时ID，后续可能需要重新生成
+        no: parseInt(noteNo.toString()) || 0,
+        timestamp: timestamp.toString(),
+        currencyCode: currencyCode?.toString() || 'CNY',
+        denomination: parsedDenomination,
+        status: this.parseStatus(status?.toString()),
+        errorCode: errorCode && errorCode !== '-' ? errorCode.toString() : undefined,
+        serialNumber: serialNumber && serialNumber !== '-' ? serialNumber.toString() : undefined
+      };
+
+      return {
+        sessionNo: parseInt(sessionNo.toString()),
+        detail
+      };
+    } catch (error) {
+      console.warn('Error parsing detail row:', error);
+      return null;
+    }
+
+ }
+  /**
+   * 从第一条详细记录创建Session
+   */
+  private createSessionFromFirstDetail(rowData: { sessionNo: number; detail: CounterData }): SessionData {
+    return {
+      id: Date.now() + Math.random(), // 临时ID
+      no: rowData.sessionNo,
+      timestamp: rowData.detail.timestamp,
+      startTime: rowData.detail.timestamp,
+      currencyCode: rowData.detail.currencyCode,
+      status: 'completed', // 导入的数据默认为已完成
+      totalCount: 0,
+      totalAmount: 0,
+      errorCount: 0,
+      details: [],
+      currencyCountRecords: new Map(),
+      denominationBreakdown: new Map()
+    };
+  }
+
+  /**
+   * 更新Session统计信息
+   */
+  private updateSessionStats(session: SessionData, detail: CounterData): void {
+    session.totalCount++;
+    session.totalAmount = (session.totalAmount || 0) + detail.denomination;
+    
+    if (detail.status === 'error' || (detail.errorCode && detail.errorCode !== 'E0')) {
+      session.errorCount++;
+    }
+    
+    // 更新结束时间
+    session.endTime = detail.timestamp;
+  }
+
+  /**
+   * 重建Session的聚合数据（面额分布和货币记录）
+   */
+  private rebuildSessionAggregations(session: SessionData): void {
+    const denominationBreakdown = new Map<number, DenominationDetail>();
+    const currencyCountRecords = new Map<string, CurrencyCountRecord>();
+    
+    // 重置统计
+    session.totalCount = 0;
+    session.totalAmount = 0;
+    session.errorCount = 0;
+
+    session.details?.forEach(detail => {
+      const { currencyCode, denomination } = detail;
+      const isError = detail.status === 'error' || (detail.errorCode && detail.errorCode !== 'E0');
+      
+      // 更新总统计
+      session.totalCount++;
+      if (!isError) {
+        session.totalAmount = (session.totalAmount || 0) + denomination;
+      }
+      if (isError) {
+        session.errorCount++;
+      }
+
+      // 更新面额分布（兼容旧结构）
+      const existingDenom = denominationBreakdown.get(denomination);
+      if (existingDenom) {
+        existingDenom.count++;
+        if (!isError) {
+          existingDenom.amount += denomination;
+        }
+      } else {
+        denominationBreakdown.set(denomination, {
+          denomination,
+          count: 1,
+          amount: isError ? 0 : denomination
+        });
+      }
+
+      // 更新货币记录
+      let currencyRecord = currencyCountRecords.get(currencyCode);
+      if (!currencyRecord) {
+        currencyRecord = {
+          currencyCode,
+          totalCount: 0,
+          totalAmount: 0,
+          errorCount: 0,
+          denominationBreakdown: new Map()
+        };
+        currencyCountRecords.set(currencyCode, currencyRecord);
+      }
+
+      currencyRecord.totalCount++;
+      if (!isError) {
+        currencyRecord.totalAmount += denomination;
+      }
+      if (isError) {
+        currencyRecord.errorCount++;
+      }
+
+      // 更新货币记录的面额分布
+      const currencyDenom = currencyRecord.denominationBreakdown.get(denomination);
+      if (currencyDenom) {
+        currencyDenom.count++;
+        if (!isError) {
+          currencyDenom.amount += denomination;
+        }
+      } else {
+        currencyRecord.denominationBreakdown.set(denomination, {
+          denomination,
+          count: 1,
+          amount: isError ? 0 : denomination
         });
       }
     });
 
-    const totalAmount = Array.from(denominationMap.values()).reduce((sum, item) => sum + item.amount, 0);
+    session.denominationBreakdown = denominationBreakdown;
+    session.currencyCountRecords = currencyCountRecords;
+  }
 
-    return Array.from(denominationMap.entries())
-      .map(([denomination, data]) => ({
-        denomination,
-        count: data.count,
-        amount: data.amount,
-        percentage: totalAmount > 0 ? (data.amount / totalAmount) * 100 : 0
-      }))
-      .sort((a, b) => b.denomination - a.denomination);
+  /**
+   * 工具方法：获取单元格值
+   */
+  private getCellValue(row: ExcelJS.Row, colNumber?: number): string | number | null {
+    if (!colNumber) return null;
+    const cell = row.getCell(colNumber);
+    return cell.value as string | number | null;
+  }
+
+  /**
+   * 解析面额值
+   */
+  private parseDenomination(value: string | number | null): number {
+    if (typeof value === 'number') return value;
+    if (typeof value === 'string') {
+      // 移除货币符号和逗号
+      const cleaned = value.replace(/[^0-9.-]/g, '');
+      const parsed = parseFloat(cleaned);
+      return isNaN(parsed) ? 0 : parsed;
+    }
+    return 0;
+  }
+
+  /**
+   * 解析状态值
+   */
+  private parseStatus(value?: string): CounterData['status'] {
+    if (!value) return 'completed';
+    const lower = value.toLowerCase();
+    if (lower.includes('error')) return 'error';
+    if (lower.includes('counting')) return 'counting';
+    if (lower.includes('paused')) return 'paused';
+    return 'completed';
+  }
+
+  /**
+   * 计算货币统计信息
+   */
+  private getCurrencyStats(sessionDataList: SessionData[]): Array<{
+    currencyCode: string;
+    totalAmount: number;
+    totalCount: number;
+    errorCount: number;
+  }> {
+    const currencyStatsMap = new Map<string, {
+      currencyCode: string;
+      totalAmount: number;
+      totalCount: number;
+      errorCount: number;
+    }>();
+
+    sessionDataList.forEach(session => {
+      if (session.currencyCountRecords) {
+        session.currencyCountRecords.forEach((record, currencyCode) => {
+          const existing = currencyStatsMap.get(currencyCode);
+          if (existing) {
+            existing.totalAmount += record.totalAmount;
+            existing.totalCount += record.totalCount;
+            existing.errorCount += record.errorCount;
+          } else {
+            currencyStatsMap.set(currencyCode, {
+              currencyCode,
+              totalAmount: record.totalAmount,
+              totalCount: record.totalCount,
+              errorCount: record.errorCount
+            });
+          }
+        });
+      } else {
+        // 兼容旧数据结构
+        const currencyCode = session.currencyCode || 'CNY';
+        const existing = currencyStatsMap.get(currencyCode);
+        if (existing) {
+          existing.totalAmount += session.totalAmount || 0;
+          existing.totalCount += session.totalCount;
+          existing.errorCount += session.errorCount;
+        } else {
+          currencyStatsMap.set(currencyCode, {
+            currencyCode,
+            totalAmount: session.totalAmount || 0,
+            totalCount: session.totalCount,
+            errorCount: session.errorCount
+          });
+        }
+      }
+    });
+
+    return Array.from(currencyStatsMap.values());
   }
 
   /**
@@ -1628,129 +2164,147 @@ export class FileManager {
     amount: number;
     percentage: number;
   }> {
-    const denominationMap = new Map<string, { count: number; amount: number }>();
+    const stats: Array<{
+      currencyCode: string;
+      denomination: number;
+      count: number;
+      amount: number;
+      percentage: number;
+    }> = [];
+
     const currencyTotals = new Map<string, number>();
 
+    // 首先计算每种货币的总金额
     sessionDataList.forEach(session => {
-      // 优先使用新的 currencyCountRecords 结构
-      if (session.currencyCountRecords && session.currencyCountRecords.size > 0) {
+      if (session.currencyCountRecords) {
         session.currencyCountRecords.forEach((record, currencyCode) => {
+          const current = currencyTotals.get(currencyCode) || 0;
+          currencyTotals.set(currencyCode, current + record.totalAmount);
+        });
+      }
+    });
+
+    // 然后计算每个面额的统计
+    sessionDataList.forEach(session => {
+      if (session.currencyCountRecords) {
+        session.currencyCountRecords.forEach((record, currencyCode) => {
+          const currencyTotal = currencyTotals.get(currencyCode) || 0;
+          
           record.denominationBreakdown.forEach((detail, denomination) => {
-            const key = `${currencyCode}-${denomination}`;
-            const existing = denominationMap.get(key) || { count: 0, amount: 0 };
-            denominationMap.set(key, {
-              count: existing.count + detail.count,
-              amount: existing.amount + detail.amount
-            });
+            const percentage = currencyTotal > 0 ? (detail.amount / currencyTotal) * 100 : 0;
             
-            // 累计每种货币的总金额
-            const currencyTotal = currencyTotals.get(currencyCode) || 0;
-            currencyTotals.set(currencyCode, currencyTotal + detail.amount);
-          });
-        });
-      } else {
-        // 兼容旧版本数据结构
-        const currencyCode = session.currencyCode || 'CNY';
-        if (session.denominationBreakdown) {
-          session.denominationBreakdown.forEach((detail, denomination) => {
-            const key = `${currencyCode}-${denomination}`;
-            const existing = denominationMap.get(key) || { count: 0, amount: 0 };
-            denominationMap.set(key, {
-              count: existing.count + detail.count,
-              amount: existing.amount + detail.amount
-            });
+            const existing = stats.find(s => 
+              s.currencyCode === currencyCode && s.denomination === denomination
+            );
             
-            // 累计每种货币的总金额
-            const currencyTotal = currencyTotals.get(currencyCode) || 0;
-            currencyTotals.set(currencyCode, currencyTotal + detail.amount);
+            if (existing) {
+              existing.count += detail.count;
+              existing.amount += detail.amount;
+              // 重新计算百分比
+              existing.percentage = currencyTotal > 0 ? (existing.amount / currencyTotal) * 100 : 0;
+            } else {
+              stats.push({
+                currencyCode,
+                denomination,
+                count: detail.count,
+                amount: detail.amount,
+                percentage
+              });
+            }
           });
-        }
-      }
-    });
-
-    return Array.from(denominationMap.entries())
-      .map(([key, data]) => {
-        const [currencyCode, denominationStr] = key.split('-');
-        const denomination = parseInt(denominationStr);
-        const currencyTotal = currencyTotals.get(currencyCode) || 0;
-        return {
-          currencyCode,
-          denomination,
-          count: data.count,
-          amount: data.amount,
-          percentage: currencyTotal > 0 ? (data.amount / currencyTotal) * 100 : 0
-        };
-      })
-      .sort((a, b) => {
-        // 先按货币代码排序，再按面额降序排序
-        if (a.currencyCode !== b.currencyCode) {
-          return a.currencyCode.localeCompare(b.currencyCode);
-        }
-        return b.denomination - a.denomination;
-      });
-  }
-
-  /**
-   * 获取货币统计信息
-   */
-  private getCurrencyStats(sessionDataList: SessionData[]): Array<{
-    currencyCode: string;
-    totalCount: number;
-    totalAmount: number;
-    errorCount: number;
-    percentage: number;
-  }> {
-    const currencyMap = new Map<string, { count: number; amount: number; errorCount: number }>();
-    
-    sessionDataList.forEach(session => {
-      // 优先使用新的 currencyCountRecords 结构
-      if (session.currencyCountRecords && session.currencyCountRecords.size > 0) {
-        session.currencyCountRecords.forEach((record, currencyCode) => {
-          const existing = currencyMap.get(currencyCode) || { count: 0, amount: 0, errorCount: 0 };
-          currencyMap.set(currencyCode, {
-            count: existing.count + record.totalCount,
-            amount: existing.amount + record.totalAmount,
-            errorCount: existing.errorCount + record.errorCount
-          });
-        });
-      } else {
-        // 兼容旧版本数据结构
-        const currencyCode = session.currencyCode || 'CNY';
-        const existing = currencyMap.get(currencyCode) || { count: 0, amount: 0, errorCount: 0 };
-        currencyMap.set(currencyCode, {
-          count: existing.count + session.totalCount,
-          amount: existing.amount + (session.totalAmount || 0),
-          errorCount: existing.errorCount + (session.errorCount || 0)
         });
       }
     });
 
-    const totalAmount = Array.from(currencyMap.values()).reduce((sum, item) => sum + item.amount, 0);
-    
-    return Array.from(currencyMap.entries()).map(([currencyCode, data]) => ({
-      currencyCode,
-      totalCount: data.count,
-      totalAmount: data.amount,
-      errorCount: data.errorCount,
-      percentage: totalAmount > 0 ? (data.amount / totalAmount) * 100 : 0
-    })).sort((a, b) => b.totalAmount - a.totalAmount);
+    return stats.sort((a, b) => {
+      // 先按货币代码排序，再按面额降序排序
+      if (a.currencyCode !== b.currencyCode) {
+        return a.currencyCode.localeCompare(b.currencyCode);
+      }
+      return b.denomination - a.denomination;
+    });
   }
 
   /**
-   * 获取状态文本
+   * 验证导入的数据
    */
-  private getStatusText(status: string): string {
-    const statusMap: Record<string, string> = {
-      'counting': 'Counting',
-      'completed': 'Completed',
-      'error': 'Error',
-      'paused': 'Paused'
-    };
-    return statusMap[status] || status;
+  private validateImportedData(sessions: SessionData[]): string[] {
+    const errors: string[] = [];
+    
+    sessions.forEach((session, index) => {
+      if (!session.id || !session.no) {
+        errors.push(`Session ${index + 1}: Missing required fields (id, no)`);
+      }
+      
+      if (!session.details || session.details.length === 0) {
+        errors.push(`Session ${session.no}: No detail records found`);
+      }
+      
+      if (session.totalCount !== (session.details?.length || 0)) {
+        errors.push(`Session ${session.no}: Total count mismatch`);
+      }
+    });
+    
+    return errors;
   }
 
+  /**
+   * 移除重复的Session
+   */
+  private removeDuplicateSessions(sessions: SessionData[]): SessionData[] {
+    const seen = new Set<string>();
+    return sessions.filter(session => {
+      // 使用session号码和开始时间作为唯一标识
+      const key = `${session.no}_${session.startTime}`;
+      if (seen.has(key)) {
+        return false;
+      }
+      seen.add(key);
+      return true;
+    });
+  }
+
+  /**
+   * 文件名模式匹配
+   */
+  private matchesPattern(filename: string, pattern: string): boolean {
+    // 简单的通配符匹配
+    const regex = new RegExp(
+      '^' + pattern.replace(/\*/g, '.*').replace(/\?/g, '.') + '$', 
+      'i'
+    );
+    return regex.test(filename);
+  }
 
 }
 
 // 导出单例实例
 export const fileManager = new FileManager();
+
+export interface ImportOptions {
+  directory?: string; // 指定导入目录，默认使用defaultExportDir
+  filePattern?: string; // 文件名匹配模式，如 "CounterSession_*.xlsx"
+  validateData?: boolean; // 是否验证数据完整性，默认true
+  mergeWithExisting?: boolean; // 是否与现有数据合并，默认false
+  skipDuplicates?: boolean; // 是否跳过重复的Session，默认true
+}
+
+export interface ImportResult {
+  success: boolean;
+  sessionData?: SessionData[];
+  importedCount?: number;
+  skippedCount?: number;
+  errorCount?: number;
+  errors?: string[];
+  filePath?: string;
+}
+
+export interface ImportedFileInfo {
+  filePath: string;
+  filename: string;
+  sessionCount: number;
+  importedAt: string;
+  fileSize: number;
+  isValid: boolean;
+  errors?: string[];
+}

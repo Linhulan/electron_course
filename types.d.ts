@@ -1,3 +1,22 @@
+// Excel导入相关类型定义
+type ImportOptions = {
+  directory?: string;
+  filePattern?: string;
+  validateData?: boolean;
+  mergeWithExisting?: boolean;
+  skipDuplicates?: boolean;
+};
+
+type ImportResult = {
+  success: boolean;
+  sessionData?: SessionData[]; // 导入的会话数据数组
+  importedCount?: number;
+  skippedCount?: number;
+  errorCount?: number;
+  errors?: string[];
+  filePath?: string;
+};
+
 type Statistics = {
   cpuUsage: number;
   ramUsage: number;
@@ -84,6 +103,9 @@ type EventPayloadMapping = {
   "delete-file": boolean;
   "get-default-export-dir": string;
   "set-default-export-dir": boolean;
+  // Excel导入相关事件
+  "import-from-excel": ImportResult;
+  "import-from-directory": ImportResult;
 };
 
 type UnsubscribeFunction = () => void;
@@ -117,14 +139,17 @@ interface Window {
     onSerialError: (callback: (error: SerialError) => void) => UnsubscribeFunction;
     
     // 文件管理函数
-    exportExcel: (sessionData: any[], options?: ExportOptions) => Promise<ExportResult>;
-    exportPDF: (sessionData: any[], options?: ExportOptions) => Promise<ExportResult>;
+    exportExcel: (sessionData: SessionData[], options?: ExportOptions) => Promise<ExportResult>;
+    exportPDF: (sessionData: SessionData[], options?: ExportOptions) => Promise<ExportResult>;
     getExportHistory: () => Promise<ExportFileInfo[]>;
     openFile: (filePath: string) => Promise<boolean>;
     showInFolder: (filePath: string) => Promise<boolean>;
     deleteFile: (filePath: string) => Promise<boolean>;
     getDefaultExportDir: () => Promise<string>;
     setDefaultExportDir: (dirPath: string) => Promise<boolean>;
+    // Excel导入函数
+    importFromExcel: (filePath?: string, options?: ImportOptions) => Promise<ImportResult>;
+    importFromDirectory: (directory?: string, options?: ImportOptions) => Promise<ImportResult>;
   };
 }
 

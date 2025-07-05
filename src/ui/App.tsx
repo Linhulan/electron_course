@@ -6,6 +6,7 @@ import "./App.css";
 import { SerialPortPanel } from "./SerialPortPanel";
 import { CounterDashboard } from "./CounterDashboard";
 import { FileManagerPage } from "./components/FileManagerPage";
+import { ImportDataViewer } from "./ImportDataViewer";
 import { Sidebar, PageType } from "./Sidebar";
 import { Toaster } from "react-hot-toast";
 
@@ -51,6 +52,8 @@ function App({ onAppReady }: AppProps) {
         return t("counter.title");
       case "file-manager":
         return t("fileManager.title");
+      case "import-viewer":
+        return t("importViewer.title");
       default:
         return t("app.title");
     }
@@ -85,6 +88,13 @@ function App({ onAppReady }: AppProps) {
           >
             <FileManagerPage className="page-content" />
           </div>
+          <div
+            className={`page-container ${
+              currentPage === "import-viewer" ? "active" : "hidden"
+            }`}
+          >
+            <ImportDataViewer className="page-content" />
+          </div>
         </main>
       </div>
       <Toaster position="top-right" />
@@ -96,7 +106,7 @@ function Header({ title }: { title: string }) {
   const { theme, setTheme } = useAppConfigStore();
   const [isMaximized, setIsMaximized] = useState(false);
 
-  const toggleTheme = (e: any) => {
+  const toggleTheme = (e: React.MouseEvent) => {
     const x = e.clientX;
     const y = e.clientY;
     const targetRadius = Math.hypot(

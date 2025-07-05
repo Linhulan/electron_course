@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next";
 import { LanguageSwitcher } from "./components/LanguageSwitcher";
 import "./Sidebar.css";
 
-export type PageType = "serial-port" | "counter-dashboard" | "file-manager";
+export type PageType = "serial-port" | "counter-dashboard" | "file-manager" | "import-viewer";
 
 interface SidebarProps {
   currentPage: PageType;
@@ -36,6 +36,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
           icon: "📁",
           description: t("sidebar.fileManagerDesc"),
         },
+        {
+          id: "import-viewer" as PageType,
+          label: t("sidebar.importViewer"),
+          icon: "📊",
+          description: t("sidebar.importViewerDesc"),
+        },
       ]
     : [
         {
@@ -49,6 +55,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
           label: t("sidebar.fileManager"),
           icon: "📁",
           description: t("sidebar.fileManagerDesc"),
+        },
+        {
+          id: "import-viewer" as PageType,
+          label: t("sidebar.importViewer"),
+          icon: "📊",
+          description: t("sidebar.importViewerDesc"),
         },
       ];
 
