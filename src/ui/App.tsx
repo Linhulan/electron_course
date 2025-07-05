@@ -87,7 +87,7 @@ function App({ onAppReady }: AppProps) {
           </div>
         </main>
       </div>
-      <Toaster />
+      <Toaster position="top-right" />
     </>
   );
 }
