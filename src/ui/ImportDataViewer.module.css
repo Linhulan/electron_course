@@ -87,11 +87,18 @@
   padding: 20px 24px;
 }
 
+.searchHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0px 4px;
+  margin-bottom: 1rem;
+}
+
 .searchTitle {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 16px;
 }
 
 .searchTitle h3 {
@@ -157,7 +164,6 @@
 .searchActions {
   display: flex;
   gap: 12px;
-  margin-top: 8px;
 }
 
 .searchBtn,

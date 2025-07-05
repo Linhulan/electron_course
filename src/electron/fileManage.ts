@@ -5,7 +5,6 @@ import jsPDF from 'jspdf';
 import ExcelJS from 'exceljs';
 import { formatAmount, formatCurrency, formatDenomination } from './utils.js';
 
-
 declare module 'jspdf' {
   interface jsPDF {
     autoTable: (options: any) => void;
@@ -19,7 +18,7 @@ declare module 'jspdf' {
  * 点钞机数据接口 - 用于记录每次点钞的详细信息
  */
 interface CounterData {
-  id: number;
+  id: string;
   no: number; // 记录编号
   timestamp: string;
   currencyCode: string; // 货币代码 (例如: "CNY")
@@ -42,7 +41,7 @@ interface CurrencyCountRecord {
 
 // Session数据结构 - 用于记录完整的点钞会话
 interface SessionData {
-  id: number;
+  id: string;
   no: number;
   user?: string; // 用户名 (如果有)
   machineId?: string; // 机器ID (如果有)
@@ -1071,7 +1070,7 @@ export class FileManager {
     const worksheet = workbook.addWorksheet('Details');
 
     worksheet.columns = [
-      { header: 'Session ID', key: 'id', width: 10 },
+      { header: 'Session ID', key: 'id', width: 20 },
       { header: 'Session No.', key: 'no', width: 12 },
       { header: 'Start Time', key: 'startTime', width: 20 },
       { header: 'End Time', key: 'endTime', width: 20 },
@@ -1358,7 +1357,7 @@ export class FileManager {
 
     // 设置列定义
     worksheet.columns = [
-      { header: '🔢 Session No.', key: 'sessionNo', width: 12 },
+      { header: '🆔 Session ID', key: 'sessionId', width: 20 },
       { header: '📝 Note No.', key: 'noteNo', width: 8 },
       { header: '⏰ Timestamp', key: 'timestamp', width: 18 },
       { header: '💸 Denomination', key: 'denomination', width: 12 },
@@ -1369,7 +1368,7 @@ export class FileManager {
     ];
 
     const allBanknoteDetails: Array<{
-      sessionNo: number;
+      sessionId: string;
       noteNo: number;
       timestamp: string;
       denomination: string;
@@ -1383,7 +1382,7 @@ export class FileManager {
       if (session.details && session.details.length > 0) {
         session.details.forEach(detail => {
           allBanknoteDetails.push({
-            sessionNo: session.no,
+            sessionId: session.id,
             noteNo: detail.no,
             timestamp: detail.timestamp,
             denomination: formatDenomination(detail.denomination, { currency: detail.currencyCode }),
@@ -1470,7 +1469,7 @@ export class FileManager {
           };
           
           // 根据列内容设置对齐方式和特殊样式
-          if (colNumber === 1 || colNumber === 2) { // Session No, Note No
+          if (colNumber === 1 || colNumber === 2) { // Session ID, Note No
             cell.alignment = { vertical: 'middle', horizontal: 'center' };
             cell.font = { ...cell.font, bold: true };
           } else if (colNumber === 3) { // Timestamp
@@ -1826,7 +1825,7 @@ export class FileManager {
   private async parseBanknoteDetailsSheet(
     worksheet: ExcelJS.Worksheet
   ): Promise<SessionData[]> {
-    const sessionMap = new Map<number, SessionData>();
+    const sessionMap = new Map<string, SessionData>();
     const headerRow = worksheet.getRow(1);
     
     // 动态识别列索引
@@ -1841,10 +1840,10 @@ export class FileManager {
         if (!rowData) return;
         
         // 获取或创建Session
-        let session = sessionMap.get(rowData.sessionNo);
+        let session = sessionMap.get(rowData.sessionId);
         if (!session) {
           session = this.createSessionFromFirstDetail(rowData);
-          sessionMap.set(rowData.sessionNo, session);
+          sessionMap.set(rowData.sessionId, session);
         }
         
         // 添加详细记录
@@ -1880,8 +1879,8 @@ export class FileManager {
       const value = cell.value?.toString().toLowerCase() || '';
       
       // 识别各种可能的列名变体
-      if (value.includes('session') && value.includes('no')) {
-        mapping.set('sessionNo', colNumber);
+      if (value.includes('session') && value.includes('id')) {
+        mapping.set('sessionId', colNumber);
       } else if (value.includes('note') && value.includes('no')) {
         mapping.set('noteNo', colNumber);
       } else if (value.includes('timestamp') || value.includes('time')) {
@@ -1908,19 +1907,19 @@ export class FileManager {
   private parseDetailRow(
     row: ExcelJS.Row, 
     columnMapping: Map<string, number>
-  ): { sessionNo: number; detail: CounterData } | null {
+  ): { sessionId: string; detail: CounterData } | null {
     try {
-      const sessionNo = this.getCellValue(row, columnMapping.get('sessionNo'));
-      const noteNo = this.getCellValue(row, columnMapping.get('noteNo'));
-      const timestamp = this.getCellValue(row, columnMapping.get('timestamp'));
-      const denomination = this.getCellValue(row, columnMapping.get('denomination'));
-      const currencyCode = this.getCellValue(row, columnMapping.get('currencyCode'));
-      const serialNumber = this.getCellValue(row, columnMapping.get('serialNumber'));
-      const errorCode = this.getCellValue(row, columnMapping.get('errorCode'));
-      const status = this.getCellValue(row, columnMapping.get('status'));
+      const sessionId = this.getCellValue(row, columnMapping.get('sessionId')) as string;
+      const noteNo = this.getCellValue(row, columnMapping.get('noteNo')) as string;
+      const timestamp = this.getCellValue(row, columnMapping.get('timestamp')) as string;
+      const denomination = this.getCellValue(row, columnMapping.get('denomination')) as number;
+      const currencyCode = this.getCellValue(row, columnMapping.get('currencyCode')) as string;
+      const serialNumber = this.getCellValue(row, columnMapping.get('serialNumber')) as string;
+      const errorCode = this.getCellValue(row, columnMapping.get('errorCode')) as string;
+      const status = this.getCellValue(row, columnMapping.get('status')) as string;
 
       // 必需字段验证
-      if (!sessionNo || !noteNo || !timestamp) {
+      if (!sessionId || !noteNo || !timestamp) {
         return null;
       }
 
@@ -1928,7 +1927,7 @@ export class FileManager {
       const parsedDenomination = this.parseDenomination(denomination);
       
       const detail: CounterData = {
-        id: Date.now() + Math.random(), // 临时ID，后续可能需要重新生成
+        id: sessionId + noteNo, // 生成临时唯一ID，避免精度丢失
         no: parseInt(noteNo.toString()) || 0,
         timestamp: timestamp.toString(),
         currencyCode: currencyCode?.toString() || 'CNY',
@@ -1939,7 +1938,7 @@ export class FileManager {
       };
 
       return {
-        sessionNo: parseInt(sessionNo.toString()),
+        sessionId: sessionId.toString(),
         detail
       };
     } catch (error) {
@@ -1951,10 +1950,10 @@ export class FileManager {
   /**
    * 从第一条详细记录创建Session
    */
-  private createSessionFromFirstDetail(rowData: { sessionNo: number; detail: CounterData }): SessionData {
+  private createSessionFromFirstDetail(rowData: { sessionId: string; detail: CounterData }): SessionData {
     return {
-      id: Date.now() + Math.random(), // 临时ID
-      no: rowData.sessionNo,
+      id: rowData.sessionId, // 使用传入的Session ID
+      no: this.generateSessionNoFromId(rowData.sessionId), // 从Session ID生成显示用的编号
       timestamp: rowData.detail.timestamp,
       startTime: rowData.detail.timestamp,
       currencyCode: rowData.detail.currencyCode,
@@ -1966,6 +1965,16 @@ export class FileManager {
       currencyCountRecords: new Map(),
       denominationBreakdown: new Map()
     };
+  }
+
+  /**
+   * 从Session ID生成显示用的Session编号
+   */
+  private generateSessionNoFromId(sessionId: string): number {
+    // 对于雪花ID，取后6位并转换为数字，确保唯一性
+    const lastDigits = sessionId.slice(-6);
+    const numericPart = lastDigits.replace(/\D/g, ''); // 移除非数字字符
+    return parseInt(numericPart) || Date.now() % 1000000;
   }
 
   /**

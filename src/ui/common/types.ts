@@ -125,7 +125,7 @@ export enum ZMCommandCode {
 
 
 export interface CounterData {
-  id: number;
+  id: string;
   no: number; // 记录编号
   timestamp: string;
   currencyCode: string; // 货币代码 (例如: "CNY")
@@ -148,7 +148,7 @@ export interface CurrencyCountRecord {
 
 // Session数据结构 - 用于记录完整的点钞会话
 export interface SessionData {
-  id: number;
+  id: string;
   no: number;
   user?: string; // 用户名 (如果有)
   machineId?: string; // 机器ID (如果有)

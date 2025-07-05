@@ -1,5 +1,4 @@
 // 协议解析工具函数
-
 /**
  * 从十六进制字符串中提取多个协议包
  * @param hexData 十六进制数据字符串
@@ -175,16 +174,211 @@ export function calculateChecksum(
 
 
 /**
- * 生成一个唯一的雪花ID
- * @returns 生成一个唯一的雪花ID
- * 该ID基于当前时间戳和随机数生成，确保在同一毫秒内生成的ID是唯一的
+ * 雪花ID生成器类 - 支持多机器环境下的唯一ID生成
+ * 基于Twitter的Snowflake算法
+ * 64位ID结构：1位符号位 + 41位时间戳 + 5位数据中心ID + 5位机器ID + 12位序列号
  */
-let snowflakeIdCounter = 0;
+class SnowflakeIdGenerator {
+  private sequence: number = 0;
+  private lastTimestamp: number = -1;
+  private readonly epoch: number = 1672531200000; // 2023-01-01 00:00:00 UTC
+  private readonly machineId: number;
+  private readonly datacenterId: number;
+  
+  // 各部分占用的位数
+  private readonly machineIdBits: number = 5;
+  private readonly datacenterIdBits: number = 5;
+  private readonly sequenceBits: number = 12;
+  
+  // 各部分的最大值
+  private readonly maxMachineId: number = (1 << this.machineIdBits) - 1; // 31
+  private readonly maxDatacenterId: number = (1 << this.datacenterIdBits) - 1; // 31
+  private readonly maxSequence: number = (1 << this.sequenceBits) - 1; // 4095
+  
+  // 各部分左移位数
+  private readonly machineIdShift: number = this.sequenceBits; // 12
+  private readonly datacenterIdShift: number = this.sequenceBits + this.machineIdBits; // 17
+  private readonly timestampLeftShift: number = this.sequenceBits + this.machineIdBits + this.datacenterIdBits; // 22
 
-export function generateSnowflakeId(): number {
-  snowflakeIdCounter = (snowflakeIdCounter + 1) & 0xfff; // 最多支持 4096 个/毫秒
-  // 使用当前时间戳和计数器生成一个唯一的ID
-  return Date.now() * 1000 + snowflakeIdCounter;
+  constructor(machineId?: number, datacenterId?: number) {
+    // 如果没有提供机器ID，则基于本机特征生成
+    this.machineId = machineId ?? this.generateMachineId();
+    this.datacenterId = datacenterId ?? this.generateDatacenterId();
+    
+    if (this.machineId > this.maxMachineId || this.machineId < 0) {
+      throw new Error(`机器ID必须在0到${this.maxMachineId}之间`);
+    }
+    
+    if (this.datacenterId > this.maxDatacenterId || this.datacenterId < 0) {
+      throw new Error(`数据中心ID必须在0到${this.maxDatacenterId}之间`);
+    }
+  }
+
+  /**
+   * 生成机器ID（基于本机特征）
+   */
+  private generateMachineId(): number {
+    // 基于用户代理、屏幕分辨率、时区等生成机器标识
+    const userAgent = typeof navigator !== 'undefined' ? navigator.userAgent : 'unknown';
+    const platform = typeof navigator !== 'undefined' ? navigator.platform : 'unknown';
+    const language = typeof navigator !== 'undefined' ? navigator.language : 'unknown';
+    const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    
+    const machineStr = `${userAgent}_${platform}_${language}_${timezone}`;
+    let hash = 0;
+    for (let i = 0; i < machineStr.length; i++) {
+      const char = machineStr.charCodeAt(i);
+      hash = ((hash << 5) - hash) + char;
+      hash = hash & hash; // 转换为32位整数
+    }
+    return Math.abs(hash) % (this.maxMachineId + 1);
+  }
+
+  /**
+   * 生成数据中心ID（基于网络和硬件特征）
+   */
+  private generateDatacenterId(): number {
+    // 基于屏幕分辨率、CPU核心数等生成数据中心标识
+    const screen = typeof window !== 'undefined' && window.screen 
+      ? `${window.screen.width}x${window.screen.height}` 
+      : 'unknown';
+    const cores = typeof navigator !== 'undefined' && 'hardwareConcurrency' in navigator
+      ? navigator.hardwareConcurrency 
+      : 1;
+    const memory = typeof navigator !== 'undefined' && 'deviceMemory' in navigator
+      ? (navigator as any).deviceMemory 
+      : 0;
+    
+    const datacenterStr = `${screen}_${cores}_${memory}`;
+    let hash = 0;
+    for (let i = 0; i < datacenterStr.length; i++) {
+      const char = datacenterStr.charCodeAt(i);
+      hash = ((hash << 5) - hash) + char;
+      hash = hash & hash;
+    }
+    return Math.abs(hash) % (this.maxDatacenterId + 1);
+  }
+
+  /**
+   * 获取下一个时间戳（毫秒）
+   */
+  private getNextTimestamp(lastTimestamp: number): number {
+    let timestamp = Date.now();
+    while (timestamp <= lastTimestamp) {
+      timestamp = Date.now();
+    }
+    return timestamp;
+  }
+
+  /**
+   * 生成唯一ID
+   */
+  public generateId(): bigint {
+    let timestamp = Date.now();
+
+    // 时钟回拨检查
+    if (timestamp < this.lastTimestamp) {
+      throw new Error(`时钟回拨检测：当前时间${timestamp}小于上次时间${this.lastTimestamp}`);
+    }
+
+    // 同一毫秒内
+    if (timestamp === this.lastTimestamp) {
+      this.sequence = (this.sequence + 1) & this.maxSequence;
+      // 序列号溢出，等待下一毫秒
+      if (this.sequence === 0) {
+        timestamp = this.getNextTimestamp(this.lastTimestamp);
+      }
+    } else {
+      // 新的毫秒，序列号重置
+      this.sequence = 0;
+    }
+
+    this.lastTimestamp = timestamp;
+
+    // 组装ID：时间戳 | 数据中心ID | 机器ID | 序列号
+    const id = BigInt(timestamp - this.epoch) << BigInt(this.timestampLeftShift) |
+               BigInt(this.datacenterId) << BigInt(this.datacenterIdShift) |
+               BigInt(this.machineId) << BigInt(this.machineIdShift) |
+               BigInt(this.sequence);
+
+    return id;
+  }
+
+  /**
+   * 生成字符串格式的ID
+   */
+  public generateStringId(): string {
+    return this.generateId().toString();
+  }
+
+  /**
+   * 生成数字格式的ID（注意：可能丢失精度）
+   */
+  public generateNumberId(): number {
+    const id = this.generateId();
+    if (id > BigInt(Number.MAX_SAFE_INTEGER)) {
+      console.warn('生成的ID超过了JavaScript安全整数范围，建议使用generateStringId()');
+    }
+    return Number(id);
+  }
+
+  /**
+   * 获取当前实例的机器信息
+   */
+  public getMachineInfo(): { machineId: number; datacenterId: number } {
+    return {
+      machineId: this.machineId,
+      datacenterId: this.datacenterId
+    };
+  }
+}
+
+// 创建全局实例
+const snowflakeGenerator = new SnowflakeIdGenerator();
+
+/**
+ * 生成一个唯一的雪花ID（字符串格式，推荐）
+ * @returns 生成一个唯一的雪花ID字符串
+ * 该ID基于改进的雪花算法，支持多机器环境，确保全局唯一性
+ */
+export function generateSnowflakeId(): string {
+  return snowflakeGenerator.generateStringId();
+}
+
+/**
+ * 生成一个唯一的雪花ID（数字格式，兼容旧版本）
+ * @returns 生成一个唯一的雪花ID数字
+ * 注意：超过JavaScript安全整数范围时可能丢失精度，建议使用generateSnowflakeId()
+ */
+export function generateSnowflakeIdNumber(): number {
+  return snowflakeGenerator.generateNumberId();
+}
+
+/**
+ * 从Session ID生成显示用的Session编号
+ */
+export function generateSessionNoFromId(sessionId: string): number {
+  // 对于雪花ID，取后6位并转换为数字，确保唯一性
+  const lastDigits = sessionId.slice(-6);
+  const numericPart = lastDigits.replace(/\D/g, ''); // 移除非数字字符
+  return parseInt(numericPart) || Date.now() % 1000000;
+}
+
+/**
+ * 创建自定义配置的雪花ID生成器
+ * @param machineId 机器ID (0-31)
+ * @param datacenterId 数据中心ID (0-31)
+ * @returns 雪花ID生成器实例
+ */
+export function createSnowflakeGenerator(machineId?: number, datacenterId?: number): SnowflakeIdGenerator {
+  return new SnowflakeIdGenerator(machineId, datacenterId);
+}
+
+/**
+ * 获取当前机器的雪花ID生成器信息
+ */
+export function getSnowflakeGeneratorInfo(): { machineId: number; datacenterId: number } {
+  return snowflakeGenerator.getMachineInfo();
 }
 
 

@@ -15,6 +15,7 @@ import {
   isSessionEnd,
   isSessionUpdate,
   generateSnowflakeId,
+  generateSessionNoFromId,
   debugLog,
 } from "./protocols";
 import { initializeProtocols } from "./protocols/init";
@@ -71,10 +72,11 @@ const handleSessionUpdate = (
         "Previous completed session archived before starting new session"
       );
     }
+    const id = generateSnowflakeId();
     const newSession: SessionData = {
-      id: generateSnowflakeId(),
-      no: 1, //TODO: 这里需要根据实际情况生成会话编号
-      timestamp: now.toLocaleTimeString(),
+      id: id,
+      no: generateSessionNoFromId(id), //TODO: 这里需要根据实际情况生成会话编号
+      timestamp: now.toLocaleString(),
       startTime: now.toLocaleString(),
       currencyCode: protocolData.currencyCode || "",
       totalCount: 0,
@@ -867,8 +869,8 @@ export const CounterDashboard: React.FC<CounterDashboardProps> = ({
       "SGD",
     ];
 
-    // 生成500个测试会话，确保有多货币数据
-    for (let i = 0; i < 500; i++) {
+    // 生成10个测试会话，确保有多货币数据
+    for (let i = 0; i < 10; i++) {
       const sessionTime = new Date(now.getTime() - i * 60 * 60 * 1000); // 每小时一个会话
       const denominationBreakdown = new Map<number, DenominationDetail>();
       const currencyCountRecords = new Map<string, CurrencyCountRecord>();
@@ -879,7 +881,7 @@ export const CounterDashboard: React.FC<CounterDashboardProps> = ({
       let errorCount = 0;
 
       // 为每个会话生成随机数据
-      const noteCount = Math.floor(Math.random() * 100) + 20; // 20-120张
+      const noteCount = Math.floor(Math.random() * 10) + 20; // 20-30张
 
       // 决定这个会话是单货币还是多货币
       const isMultiCurrency = i < 5; // 前5个会话使用多货币
@@ -959,11 +961,11 @@ export const CounterDashboard: React.FC<CounterDashboardProps> = ({
 
         // 添加详细记录
         details.push({
-          id: generateSnowflakeId(),
+          id: generateSnowflakeId() + j,
           no: j + 1,
           timestamp: new Date(
             sessionTime.getTime() + j * 1000
-          ).toLocaleTimeString(),
+          ).toLocaleString(),
           currencyCode: currencyCode,
           denomination,
           status: hasError ? "error" : "completed",

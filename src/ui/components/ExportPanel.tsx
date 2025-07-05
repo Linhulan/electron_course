@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { SessionData } from '../common/types';
 import './ExportPanel.css';
 import { useAppConfigStore } from '../contexts/store';
+import { generateSessionNoFromId } from '../protocols';
 
 // 使用 Electron 的导出结果类型
 interface ElectronExportResult {
@@ -57,10 +58,10 @@ const ExportPanel: React.FC<ExportPanelProps> = ({
       
       // 如果有数据，设置默认文件名
       if (len > 1) {
-        setFilename(`CounterReport_#${sessionData[0].id}~${sessionData[len - 1].id}_${timestamp}`);
+        setFilename(`CounterReport_#${generateSessionNoFromId(sessionData[0].id)}~${generateSessionNoFromId(sessionData[len - 1].id)}_${timestamp}`);
       }
       else if (len === 1) {
-        setFilename(`CounterReport_#${sessionData[0].id}_${timestamp}`);
+        setFilename(`CounterReport_#${generateSessionNoFromId(sessionData[0].id)}_${timestamp}`);
       }
       console.log('Filename updated for session data:', { len, firstNo: sessionData[0]?.id, lastNo: sessionData[len - 1]?.id });
     }

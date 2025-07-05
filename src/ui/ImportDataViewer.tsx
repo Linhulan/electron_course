@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { SessionData, CounterData } from './common/types';
 import styles from './ImportDataViewer.module.css';
@@ -8,7 +8,7 @@ interface ImportDataViewerProps {
 }
 
 interface SearchFilters {
-  sessionNo?: string;
+  sessionID?: string;
   currencyCode?: string;
   serialNumber?: string;
   denomination?: string;
@@ -25,10 +25,6 @@ interface SearchResult {
   matchField: string;
 }
 
-interface FilteredSessionData extends SessionData {
-  filteredDetails?: CounterData[];
-}
-
 export const ImportDataViewer: React.FC<ImportDataViewerProps> = ({ className }) => {
   const { t } = useTranslation();
   
@@ -39,8 +35,8 @@ export const ImportDataViewer: React.FC<ImportDataViewerProps> = ({ className })
   const [isImporting, setIsImporting] = useState(false);
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const [showSearchResults, setShowSearchResults] = useState(false);
-  const [filteredDetails, setFilteredDetails] = useState<Map<number, CounterData[]>>(new Map());
-  const [sortBy, setSortBy] = useState<'timestamp' | 'sessionNo' | 'totalCount' | 'totalAmount'>('timestamp');
+  const [filteredDetails, setFilteredDetails] = useState<Map<string, CounterData[]>>(new Map());
+  const [sortBy, setSortBy] = useState<'timestamp' | 'sessionID' | 'totalCount' | 'totalAmount'>('timestamp');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
 
   // 导入数据处理
@@ -84,16 +80,16 @@ export const ImportDataViewer: React.FC<ImportDataViewerProps> = ({ className })
     if (!importedData.length) return;
 
     const results: SearchResult[] = [];
-    const sessionFilteredDetails = new Map<number, CounterData[]>();
+    const sessionFilteredDetails = new Map<string, CounterData[]>();
     
     importedData.forEach(session => {
       // 搜索Session级别的字段
       let sessionMatches = false;
       let sessionMatchField = '';
 
-      if (searchFilters.sessionNo && session.no.toString().includes(searchFilters.sessionNo)) {
+      if (searchFilters.sessionID && session.id.toString().includes(searchFilters.sessionID.toString())) {
         sessionMatches = true;
-        sessionMatchField = 'sessionNo';
+        sessionMatchField = 'sessionID';
       }
 
       if (searchFilters.currencyCode && session.currencyCode?.toLowerCase().includes(searchFilters.currencyCode.toLowerCase())) {
@@ -220,9 +216,9 @@ export const ImportDataViewer: React.FC<ImportDataViewerProps> = ({ className })
       let aValue: any, bValue: any;
       
       switch (sortBy) {
-        case 'sessionNo':
-          aValue = a.no;
-          bValue = b.no;
+        case 'sessionID':
+          aValue = a.id;
+          bValue = b.id;
           break;
         case 'totalCount':
           aValue = a.totalCount;
@@ -304,24 +300,35 @@ export const ImportDataViewer: React.FC<ImportDataViewerProps> = ({ className })
 
       {/* 搜索筛选区域 */}
       <div className={styles.searchPanel}>
-        <div className={styles.searchTitle}>
-          <h3>🔍 {t('importViewer.searchFilters', 'Search & Filters')}</h3>
-          {showSearchResults && (
-            <span className={styles.searchResultsCount}>
-              {searchResults.length} {t('importViewer.resultsFound', 'results found')}
-            </span>
-          )}
+        <div className={styles.searchHeader}>
+          <div className={styles.searchTitle}>
+            <h3>🔍 {t('importViewer.searchFilters', 'Search & Filters')}</h3>
+            {showSearchResults && (
+              <span className={styles.searchResultsCount}>
+                {searchResults.length} {t('importViewer.resultsFound', 'results found')}
+              </span>
+            )}
+          </div>
+          
+          <div className={styles.searchActions}>
+            <button className={styles.searchBtn} onClick={performSearch}>
+              🔍 {t('importViewer.search', 'Search')}
+            </button>
+            <button className={styles.clearBtn} onClick={clearSearch}>
+              🗑️ {t('importViewer.clear', 'Clear')}
+            </button>
+          </div>
         </div>
 
         <div className={styles.searchFilters}>
           <div className={styles.filterRow}>
             <div className={styles.filterGroup}>
-              <label>{t('importViewer.sessionNo', 'Session No')}</label>
+              <label>{t('importViewer.sessionID', 'Session ID')}</label>
               <input
                 type="text"
-                value={searchFilters.sessionNo || ''}
-                onChange={(e) => setSearchFilters(prev => ({...prev, sessionNo: e.target.value}))}
-                placeholder={t('importViewer.sessionNoPlaceholder', 'Enter session number')}
+                value={searchFilters.sessionID || ''}
+                onChange={(e) => setSearchFilters(prev => ({...prev, sessionID: e.target.value}))}
+                placeholder={t('importViewer.sessionIDPlaceholder', 'Enter session ID')}
               />
             </div>
 
@@ -404,15 +411,6 @@ export const ImportDataViewer: React.FC<ImportDataViewerProps> = ({ className })
               </select>
             </div>
           </div>
-
-          <div className={styles.searchActions}>
-            <button className={styles.searchBtn} onClick={performSearch}>
-              🔍 {t('importViewer.search', 'Search')}
-            </button>
-            <button className={styles.clearBtn} onClick={clearSearch}>
-              🗑️ {t('importViewer.clear', 'Clear')}
-            </button>
-          </div>
         </div>
       </div>
 
@@ -431,7 +429,7 @@ export const ImportDataViewer: React.FC<ImportDataViewerProps> = ({ className })
                 className={styles.sortSelect}
               >
                 <option value="timestamp">{t('importViewer.sortByTime', 'Sort by Time')}</option>
-                <option value="sessionNo">{t('importViewer.sortBySessionNo', 'Sort by Session No')}</option>
+                <option value="sessionID">{t('importViewer.sortBySessionID', 'Sort by Session ID')}</option>
                 <option value="totalCount">{t('importViewer.sortByCount', 'Sort by Count')}</option>
                 <option value="totalAmount">{t('importViewer.sortByAmount', 'Sort by Amount')}</option>
               </select>
@@ -477,7 +475,7 @@ export const ImportDataViewer: React.FC<ImportDataViewerProps> = ({ className })
                     
                     <div className={styles.sessionInfo}>
                       <div className={styles.sessionTime}>
-                        📅 {new Date(session.startTime).toLocaleString()}
+                        📅 {session.startTime}
                       </div>
                       <div className={styles.sessionCurrency}>
                         💱 {session.currencyCode || 'N/A'}
@@ -555,7 +553,7 @@ export const ImportDataViewer: React.FC<ImportDataViewerProps> = ({ className })
                       
                       <div className={styles.tableContent}>
                         {detailsToShow.map((detail, index) => (
-                          <div key={detail.id || index} className={styles.tableRow}>
+                          <div key={detail.id + index} className={styles.tableRow}>
                             <div className={styles.colNo}>{detail.no}</div>
                             <div className={styles.colTime}>{detail.timestamp}</div>
                             <div className={styles.colCurrency}>{detail.currencyCode}</div>
