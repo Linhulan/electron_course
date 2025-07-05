@@ -34,7 +34,6 @@ import {
   ZMCommandCode,
 } from "./common/types";
 import { useAppConfigStore } from "./contexts/store";
-import { SerialPortPanel } from "./SerialPortPanel";
 import toast from "react-hot-toast";
 
 interface CounterStats {
@@ -146,6 +145,7 @@ const handleSessionUpdate = (
   if (isSessionUpdate(protocolData.status)) {
     updatedSession.totalCount = protocolData.totalCount;
     updatedSession.totalAmount = protocolData.totalAmount;
+
     let currencyCode = protocolData.currencyCode || "";
     let denomination = protocolData.denomination || 0;
 
@@ -154,18 +154,17 @@ const handleSessionUpdate = (
       currencyCode = "";
       denomination = 0;
       updatedSession.errorCount = (currentSession.errorCount || 0) + 1;
-    } else {
+    } 
+    else 
+    {
       // 没报错，则记录对应货币的计数记录
       const record = updatedSession.currencyCountRecords?.get(
         protocolData.currencyCode
       );
       if (record) {
         record.totalCount += 1;
+        record.totalAmount += protocolData.denomination;
         // record.errorCount += protocolData.errorCode !== 0 ? 1 : 0;
-
-        // if (protocolData.errorCode === 0) {
-        //   record.totalAmount += protocolData.denomination;
-        // }
 
         record.denominationBreakdown.set(protocolData.denomination, {
           denomination: protocolData.denomination,
@@ -176,7 +175,9 @@ const handleSessionUpdate = (
             (record.denominationBreakdown.get(protocolData.denomination)
               ?.amount || 0) + protocolData.denomination,
         });
-      } else {
+      } 
+      else 
+      {
         updatedSession.currencyCountRecords?.set(protocolData.currencyCode, {
           currencyCode: protocolData.currencyCode,
           totalCount: 1,
@@ -219,12 +220,13 @@ const handleSessionUpdate = (
 
     // 限制单个session的details数组大小，防止内存过度使用
     if (updatedSession.details && updatedSession.details.length > 2000) {
-      updatedSession.details = updatedSession.details.slice(-2000); // 只保留最新的2000条
+      updatedSession.details = updatedSession.details.slice(-2000);
     }
   }
 
   // 如果Session完成，添加到历史记录但保留在当前Session显示 (结束协议不携带金额数据)
-  if (isSessionEnd(protocolData.status)) {
+  if (isSessionEnd(protocolData.status)) 
+    {
     updatedSession.endTime = now.toLocaleString();
 
     // 判断有无实际点钞数据
@@ -233,27 +235,36 @@ const handleSessionUpdate = (
       (updatedSession.currencyCountRecords?.size || 0) === 0
     ) {
       // toast.error("No valid counting data found in this session.");
-      return updatedSession; // 不保存空会话
+      return updatedSession;
     }
     setSessionData((prev) => [updatedSession, ...prev].slice(0, 50));
     setCurrentSession(null);
     if (autoSave) {
       autoSaveHandler(updatedSession); // 自动保存当前Session
     }
-  } else {
+  } 
+  else 
+  {
     setCurrentSession(updatedSession);
   }
   return updatedSession;
 };
 
-const autoSaveHandler = (session: SessionData) => {
+const autoSaveHandler = async (session: SessionData) => {
   const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, "-");
-  window.electron.exportExcel(session ? [session] : [], {
+  const ret = await window.electron.exportExcel(session ? [session] : [], {
     useDefaultDir: true,
     openAfterExport: false,
     customDir: undefined,
     filename: `CounterSession_#${session.id}_${timestamp}.xlsx`,
   });
+
+  if ( ret.success ) {
+    toast.success(`Auto-saved Excel Successfully`);
+  }
+  else {
+    toast.error(`Auto-save Failed`);
+  }
 };
 
 export const CounterDashboard: React.FC<CounterDashboardProps> = ({
@@ -576,10 +587,12 @@ export const CounterDashboard: React.FC<CounterDashboardProps> = ({
     const totalRecords = new Map<string, CurrencyCountRecord>();
     let errorPcs = 0;
     let totalNotes = 0;
+    let totalAmount = 0;
 
     filteredData.forEach((session) => {
       errorPcs += session.errorCount || 0;
       totalNotes += session.totalCount || 0;
+      totalAmount += session.totalAmount || 0;
       if (session.currencyCountRecords) {
         // 使用新的货币记录结构
         session.currencyCountRecords.forEach((record, currencyCode) => {
@@ -666,16 +679,6 @@ export const CounterDashboard: React.FC<CounterDashboardProps> = ({
       }
     });
 
-    // 计算汇总统计数据
-    let totalAmount = 0;
-    // let totalNotes = 0;
-
-    totalRecords.forEach((record) => {
-      totalAmount += record.totalAmount;
-      // totalNotes += record.totalCount;
-      // errorPcs += record.errorCount;
-    });
-
     const newStats: CounterStats = {
       totalRecords,
       totalSessions: filteredData.length,
@@ -686,6 +689,7 @@ export const CounterDashboard: React.FC<CounterDashboardProps> = ({
     };
     setStats(newStats);
   }, [getFilteredData]);
+
   const clearData = () => {
     setSessionData([]);
     setCurrentSession(null);
