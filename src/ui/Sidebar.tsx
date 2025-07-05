@@ -15,7 +15,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onPageChange,
 }) => {
   const { t } = useTranslation();
-  const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(true);
   const menuItems = import.meta.env.DEV
     ? [
         {
