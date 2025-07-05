@@ -1,4 +1,4 @@
-import { dialog, shell } from 'electron';
+import { app, dialog, shell } from 'electron';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import jsPDF from 'jspdf';
@@ -149,7 +149,7 @@ export class FileManager {
       projectRoot = process.cwd();
     } else {
       // 生产环境：使用可执行文件的目录
-      projectRoot = path.dirname(process.execPath);
+      projectRoot = path.dirname(app.getPath('exe'));
     }
 
     const dataDir = path.join(projectRoot, 'Data');

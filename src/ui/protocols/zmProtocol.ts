@@ -21,12 +21,12 @@ import {
  */
 export class ZMProtocolParser implements ProtocolParser<BaseProtocolData[]> {
   private static readonly PROTOCOL_HEADER = [0xAA, 0x55];
-  private static readonly PROTOCOL_TAIL = [0xA5, 0x5A];
+  // private static readonly PROTOCOL_TAIL = [0xA5, 0x5A];
   private static readonly PROTOCOL_HEADER_STR = "AA55";
-  private static readonly PROTOCOL_TAIL_STR = "A55A";
+  // private static readonly PROTOCOL_TAIL_STR = "A55A";
   private static readonly MIN_PACKET_LENGTH = 14; // 7字节 = 14个十六进制字符 (最小包：头部4 + 长度4 + MODE4 + CRC2 + 尾部4)
   private static readonly OVERHEAD_LENGTH = 14;   // 头部4 + 长度4 + CRC2 + 尾部4
-  private static readonly HEAD_LENGTH = 4;        // 头部4 + 长度4 + CRC2 + 尾部4
+  // private static readonly HEAD_LENGTH = 4;        // 头部4 + 长度4 + CRC2 + 尾部4
 
   getProtocolName(): string {
     return "ZMProtocol";
@@ -256,10 +256,10 @@ export class ZMProtocolParser implements ProtocolParser<BaseProtocolData[]> {
   /**
    * 验证CRC校验码
    */
-  private validateCRC(data: number[], expectedCRC: number): boolean {
-    const calculatedCRC = this.calculateCRC(data);
-    return calculatedCRC === expectedCRC;
-  }
+  // private validateCRC(data: number[], expectedCRC: number): boolean {
+  //   const calculatedCRC = this.calculateCRC(data);
+  //   return calculatedCRC === expectedCRC;
+  // }
 
   private validateCheckSUM(data: number[], expectedCheckSUM: number): boolean {
     const calculatedCheckSUM = this.calculateCheckSUM(data);
@@ -274,22 +274,22 @@ export class ZMProtocolParser implements ProtocolParser<BaseProtocolData[]> {
   /**
    * 计算CRC校验码（使用CRC-16-CCITT算法）
    */
-  private calculateCRC(data: number[]): number {
-    let crc = 0x00;
+  // private calculateCRC(data: number[]): number {
+  //   let crc = 0x00;
     
-    for (const byte of data) {
-      crc ^= byte;
-      for (let i = 0; i < 8; i++) {
-        if (crc & 0x80) {
-          crc = (crc << 1) ^ 0x31;
-        } else {
-          crc = crc << 1;
-        }
-      }
-    }
+  //   for (const byte of data) {
+  //     crc ^= byte;
+  //     for (let i = 0; i < 8; i++) {
+  //       if (crc & 0x80) {
+  //         crc = (crc << 1) ^ 0x31;
+  //       } else {
+  //         crc = crc << 1;
+  //       }
+  //     }
+  //   }
 
-    return crc & 0xFF;
-  }
+  //   return crc & 0xFF;
+  // }
 }
 
 /**

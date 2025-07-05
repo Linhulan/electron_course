@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { SessionData } from '../utils/serialization';
+import { SessionData } from '../common/types';
 import './ExportPanel.css';
 import { useAppConfigStore } from '../contexts/store';
 
