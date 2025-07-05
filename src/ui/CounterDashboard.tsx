@@ -226,6 +226,15 @@ const handleSessionUpdate = (
   // 如果Session完成，添加到历史记录但保留在当前Session显示 (结束协议不携带金额数据)
   if (isSessionEnd(protocolData.status)) {
     updatedSession.endTime = now.toLocaleString();
+
+    // 判断有无实际点钞数据
+    if (
+      updatedSession.totalCount <= 0 &&
+      (updatedSession.currencyCountRecords?.size || 0) === 0
+    ) {
+      // toast.error("No valid counting data found in this session.");
+      return updatedSession; // 不保存空会话
+    }
     setSessionData((prev) => [updatedSession, ...prev].slice(0, 50));
     setCurrentSession(null);
     if (autoSave) {
@@ -568,7 +577,6 @@ export const CounterDashboard: React.FC<CounterDashboardProps> = ({
     filteredData.forEach((session) => {
       errorPcs += session.errorCount || 0;
       totalNotes += session.totalCount || 0;
-      console.log("totalNotes:", totalNotes);
       if (session.currencyCountRecords) {
         // 使用新的货币记录结构
         session.currencyCountRecords.forEach((record, currencyCode) => {
