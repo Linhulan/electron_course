@@ -368,14 +368,6 @@ export const SerialPortPanel: React.FC<SerialPortPanelProps> = ({
               >
                 <span className="refresh-icon">🔄</span>
               </button>
-              <button
-                onClick={autoConnect}
-                disabled={isLoading}
-                className="refresh-btn"
-                title={t("serialPort.refreshPorts")}
-              >
-                <span className="refresh-icon">🔄Connect</span>
-              </button>
             </div>
           </div>
 

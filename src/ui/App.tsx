@@ -67,7 +67,9 @@ function App({ onAppReady }: AppProps) {
               currentPage === "serial-port" ? "active" : "hidden"
             }`}
           >
+            {/* 开发模式下展示串口页面 */}
             <SerialPortPanel className="page-content" />
+           
           </div>
           <div
             className={`page-container ${
