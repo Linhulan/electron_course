@@ -105,16 +105,8 @@ export const SerialPortPanel: React.FC<SerialPortPanelProps> = ({
     );
 
     for (const port of availablePorts) {
-      if (useAppConfigStore.getState().serialConnected) {
-        toast.success(
-          t("counter.autoConnectSuccess", "Successfully connected to serial port."),
-          { id: toastId }
-        );
-        return;
-      }
       console.log(`Attempting to connect to port: ${port.path}`);
-      //断开错误的连接
-      await window.electron.disconnectSerialPort();
+      
 
       const connected = await window.electron.connectSerialPort(
         port.path,
@@ -131,6 +123,16 @@ export const SerialPortPanel: React.FC<SerialPortPanelProps> = ({
       addToDataDisplay(`Handshake sent to ${port.path}`, "system");
 
       await new Promise((resolve) => setTimeout(resolve, 300));
+
+      if (useAppConfigStore.getState().serialConnected) {
+        toast.success(
+          t("counter.autoConnectSuccess", "Successfully connected to serial port."),
+          { id: toastId }
+        );
+        return;
+      }
+      //断开错误的连接
+      await window.electron.disconnectSerialPort();
     }
 
     toast.error(
