@@ -429,7 +429,10 @@ export const CounterDashboard: React.FC<CounterDashboardProps> = ({
       const currencies = Array.from(session.currencyCountRecords.keys());
       if (currencies.length === 1) {
         return formatAmount(
-          session.currencyCountRecords.get(currencies[0])?.totalAmount || 0
+          session.currencyCountRecords.get(currencies[0])?.totalAmount || 0,
+          {
+            currency: currencies[0],
+          }
         );
       } else if (currencies.length > 1) {
         return currencies.length + " Currencies";
@@ -445,7 +448,7 @@ export const CounterDashboard: React.FC<CounterDashboardProps> = ({
     return sessionData.map((item) => ({
       ...item,
       displayCurrency: getSessionCurrencyDisplay(item),
-      displayAmount: getAmountDisplay(item),
+      displayAmount:  getAmountDisplay(item),
       formattedCount: (item.totalCount - item.errorCount).toLocaleString(),
       formattedEndDate: item.endTime
         ? new Date(item.endTime).toLocaleDateString()
@@ -1320,17 +1323,15 @@ export const CounterDashboard: React.FC<CounterDashboardProps> = ({
                         </span>
                       </div>
                       <div className="currency-amount">
-                        {formatCurrency(currencyStats.amount)}
+                        {formatCurrency(currencyStats.amount, { currency: currencyStats.currencyCode })}
                       </div>
                       <div className="currency-notes">
                         {currencyStats.noteCount.toLocaleString()}{" "}
                         {t("counter.detailTable.pcs", "notes")}
                       </div>
-                      {currencyStats.errorCount > 0 && (
-                        <div className="currency-errors">
-                          ⚠️ {currencyStats.errorCount.toLocaleString()}
-                        </div>
-                      )}
+                      {/* <div className="currency-errors">
+                        ⚠️ {currencyStats.errorCount.toLocaleString()}
+                      </div> */}
                       {/* <div className="currency-percentage">
                         {currencyStats.percentage.toFixed(1)}%
                       </div> */}
@@ -1577,7 +1578,7 @@ export const CounterDashboard: React.FC<CounterDashboardProps> = ({
                         <div key={detail.denomination} className="details-row">
                           <div className="col-denom">
                             <span className="denom-value">
-                              {formatDenomination(detail.denomination)}
+                              {formatDenomination(detail.denomination, { showCurrencySymbol: false })}
                             </span>
                           </div>
                           <div className="col-pcs">
@@ -1587,7 +1588,7 @@ export const CounterDashboard: React.FC<CounterDashboardProps> = ({
                             </span>
                           </div>
                           <div className="col-amount">
-                            {formatCurrency(detail.amount)}
+                            {formatCurrency(detail.amount, { showCurrencySymbol: false })}
                           </div>
                         </div>
                       ))}
@@ -1607,7 +1608,7 @@ export const CounterDashboard: React.FC<CounterDashboardProps> = ({
                           </div>
                           <div className="col-amount">
                             <strong>
-                              {formatCurrency(getCurrentTabTotalAmount())}
+                              {formatCurrency(getCurrentTabTotalAmount(), { currency: selectedCurrencyTab})}
                             </strong>
                           </div>
                         </div>

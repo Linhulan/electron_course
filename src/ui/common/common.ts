@@ -43,7 +43,20 @@ export const formatCurrency = (
   } = options;
 
   // 面额格式：整数显示，无小数点
-  if (isDenomination) {
+  const hasDecimalCurrency = ["KWD", "BHD", "OMR", "BSD"];
+
+  if (isDenomination) 
+  {
+    if (hasDecimalCurrency.includes(currency)) {
+      // 对于某些货币（如科威特第纳尔、巴林第纳尔等），即使是面额也需要保留小数点
+      return new Intl.NumberFormat(locale, {
+        style: 'currency',
+        currency,
+        minimumFractionDigits: 3,
+        maximumFractionDigits: 3,
+      }).format(amount);
+    }
+
     const formatted = new Intl.NumberFormat(locale, {
       style: showCurrencySymbol ? 'currency' : 'decimal',
       currency: showCurrencySymbol ? currency : undefined,
@@ -70,8 +83,8 @@ export const formatCurrency = (
  * @param denomination 面额数值
  * @returns 格式化后的面额字符串，如 "¥100"
  */
-export const formatDenomination = (denomination: number): string => {
-  return formatCurrency(denomination, { isDenomination: true });
+export const formatDenomination = (denomination: number, options: CurrencyFormatOptions = {}): string => {
+  return formatCurrency(denomination, { isDenomination: true, ...options });
 };
 
 /**
@@ -80,10 +93,11 @@ export const formatDenomination = (denomination: number): string => {
  * @param fractionDigits 小数位数，默认 2
  * @returns 格式化后的金额字符串，如 "¥1,234.56"
  */
-export const formatAmount = (amount: number, fractionDigits: number = 2): string => {
+export const formatAmount = (amount: number, options: CurrencyFormatOptions = {}): string => {
   return formatCurrency(amount, {
-    minimumFractionDigits: fractionDigits,
-    maximumFractionDigits: fractionDigits
+    ...options,
+    minimumFractionDigits: options.minimumFractionDigits || 2,
+    maximumFractionDigits: options.maximumFractionDigits || 2
   });
 };
 

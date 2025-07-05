@@ -475,10 +475,10 @@ const enUS = {
 
       // Detail table
       detailTable: {
-        denomination: "Denom.",
-        count: "Count",
-        total: "Total",
-        totalRow: "Total",
+        denomination: "DENOM.",
+        count: "COUNT",
+        total: "AMOUNT",
+        totalRow: "TOTAL",
         pcs: "pcs",
         bills: "bills",
       },      // No data prompt
