@@ -184,7 +184,7 @@ export const SessionDetailDrawer: React.FC<SessionDetailDrawerProps> = ({
                   {t("counter.session.count")}:
                 </span>
                 <span className="info-value highlight">
-                  {sessionData.totalCount.toLocaleString()}
+                  {(sessionData.totalCount - sessionData.errorCount).toLocaleString()}
                 </span>
               </div>
               <div className="info-item">

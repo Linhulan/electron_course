@@ -49,6 +49,7 @@
   align-items: center;
   gap: 1rem;
   width: fit-content;
+  margin-right: 1rem;
 }
 
 .dashboard-title h2 {
@@ -65,8 +66,6 @@
   gap: 0.5rem;
   font-size: 0.9rem;
   color: #b3b3b3;
-  background: transparent;
-  border: none;
   padding: 0.5rem 0.75rem;
   border-radius: 6px;
   cursor: pointer;
@@ -713,7 +712,7 @@
   font-size: 1rem;
 }
 
-.session-info {
+.dashboard-session-info {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
   gap: 1rem;
@@ -2024,8 +2023,24 @@
   border-color: rgba(255, 255, 255, 0.5);
 }
 
+[data-theme="light"] .session-label {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+[data-theme="light"] .session-value {
+  color: rgba(255, 255, 255, 1);
+}
+
 [data-theme="light"] .session-value.end-time {
   color: rgba(255, 255, 255, 0.9);
+}
+
+[data-theme="light"] .session-item.no-session .session-value {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+[data-theme="light"] .session-header h3 {
+  color: rgba(255, 255, 255, 1);
 }
 
 /* 记录卡片 - 亮色主题 */

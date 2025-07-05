@@ -437,7 +437,7 @@ export const CounterDashboard: React.FC<CounterDashboardProps> = ({
       ...item,
       displayCurrency: getSessionCurrencyDisplay(item),
       displayAmount: getAmountDisplay(item),
-      formattedCount: item.totalCount.toLocaleString(),
+      formattedCount: (item.totalCount - item.errorCount).toLocaleString(),
       formattedEndDate: item.endTime
         ? new Date(item.endTime).toLocaleDateString()
         : null,
@@ -562,8 +562,13 @@ export const CounterDashboard: React.FC<CounterDashboardProps> = ({
 
     // 构建totalRecords - 汇总所有Session的货币统计信息
     const totalRecords = new Map<string, CurrencyCountRecord>();
+    let errorPcs = 0;
+    let totalNotes = 0;
 
     filteredData.forEach((session) => {
+      errorPcs += session.errorCount || 0;
+      totalNotes += session.totalCount || 0;
+      console.log("totalNotes:", totalNotes);
       if (session.currencyCountRecords) {
         // 使用新的货币记录结构
         session.currencyCountRecords.forEach((record, currencyCode) => {
@@ -652,13 +657,12 @@ export const CounterDashboard: React.FC<CounterDashboardProps> = ({
 
     // 计算汇总统计数据
     let totalAmount = 0;
-    let totalNotes = 0;
-    let errorPcs = 0;
+    // let totalNotes = 0;
 
     totalRecords.forEach((record) => {
       totalAmount += record.totalAmount;
-      totalNotes += record.totalCount;
-      errorPcs += record.errorCount;
+      // totalNotes += record.totalCount;
+      // errorPcs += record.errorCount;
     });
 
     const newStats: CounterStats = {
@@ -1136,11 +1140,10 @@ export const CounterDashboard: React.FC<CounterDashboardProps> = ({
           <button
             className="connection-status"
             onClick={() => {
-              console.log(
-                "Connection status clicked - triggering auto-connect"
-              );
               // 触发自定义事件通知 SerialPortPanel 执行自动连接
-              window.dispatchEvent(new CustomEvent("triggerAutoConnect"));
+              if ( !serialConnected ) {
+                window.dispatchEvent(new CustomEvent("triggerAutoConnect"));
+              }
             }}
             title={
               serialConnected
@@ -1363,7 +1366,7 @@ export const CounterDashboard: React.FC<CounterDashboardProps> = ({
                     fontSize: getAmountFontSize(stats.totalAmount || 0),
                   }}
                 >
-                  {formatCurrency(stats.totalAmount || 0)}
+                  {formatCurrency(stats.totalAmount || 0, { showCurrencySymbol: false })}
                 </div>
                 <div className="stat-label">
                   {t("counter.stats.totalAmount")}
@@ -1418,7 +1421,7 @@ export const CounterDashboard: React.FC<CounterDashboardProps> = ({
               </button>
             )}
           </div>
-          <div className="session-info">
+          <div className="dashboard-session-info">
             {currentSession ? (
               <>
                 <div className="session-item">
