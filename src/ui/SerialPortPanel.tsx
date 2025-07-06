@@ -325,10 +325,10 @@ export const SerialPortPanel: React.FC<SerialPortPanelProps> = ({
 
   return (
     <div className={`serial-port-panel-layout ${className || ""}`}>
-      {/* 左侧：串口连接配置 */}
-      <div className="serial-port-config-section">
-        {" "}
-        <div className="serial-port-connection">
+        {/* 左侧：串口连接配置 */}
+        <div className="serial-port-config-section">
+          {" "}
+          <div className="serial-port-connection">
           <h3>{t("serialPort.connection")}</h3>
 
           {error && <div className="error-message">{error}</div>}

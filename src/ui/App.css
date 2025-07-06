@@ -271,12 +271,6 @@ header button {
   z-index: 1;
 }
 
-.page-container.hidden {
-  opacity: 0;
-  pointer-events: none;
-  z-index: 0;
-}
-
 /* 确保main-content支持绝对定位的子元素 */
 
 /* 移除原有的页面退出动画，因为我们使用覆盖层 */

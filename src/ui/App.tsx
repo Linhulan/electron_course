@@ -1,7 +1,9 @@
 import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { LanguageSwitcher } from "./components/LanguageSwitcher";
 import { useAppConfigStore } from "./contexts/store";
+import { usePageNavigation } from "./hooks/usePageNavigation";
 import "./App.css";
 import { SerialPortPanel } from "./SerialPortPanel";
 import { CounterDashboard } from "./CounterDashboard";
@@ -14,10 +16,11 @@ interface AppProps {
   onAppReady?: () => void;
 }
 
-function App({ onAppReady }: AppProps) {
-  const [currentPage, setCurrentPage] = useState<PageType>("counter-dashboard");
+// 主应用内容组件
+function AppContent({ onAppReady }: AppProps) {
   const { t, ready } = useTranslation();
   const { theme } = useAppConfigStore();
+  const { currentPage, navigateToPage, getPageTitle } = usePageNavigation();
 
   // 应用主题到根元素
   useEffect(() => {
@@ -42,63 +45,54 @@ function App({ onAppReady }: AppProps) {
   }, [ready, onAppReady]);
 
   const handlePageChange = (newPage: PageType) => {
-    setCurrentPage(newPage);
-  };
-  const getPageTitle = () => {
-    switch (currentPage) {
-      case "serial-port":
-        return t("serialPort.title");
-      case "counter-dashboard":
-        return t("counter.title");
-      case "file-manager":
-        return t("fileManager.title");
-      case "import-viewer":
-        return t("importViewer.title");
-      default:
-        return t("app.title");
-    }
+    console.log(`handlePageChange: Navigating to page: ${newPage}`);
+    navigateToPage(newPage);
   };
 
   return (
     <>
-      <Header title={getPageTitle()} />
+      <Header title={getPageTitle(t)} />
       <div className="app-layout">
         <Sidebar currentPage={currentPage} onPageChange={handlePageChange} />
         <main className="main-content">
-          <div
-            className={`page-container ${
-              currentPage === "serial-port" ? "active" : "hidden"
-            }`}
-          >
-            {/* 开发模式下展示串口页面 */}
-            <SerialPortPanel className="page-content" />
-           
-          </div>
-          <div
-            className={`page-container ${
-              currentPage === "counter-dashboard" ? "active" : "hidden"
-            }`}
-          >
-            <CounterDashboard className="page-content" />
-          </div>
-          <div
-            className={`page-container ${
-              currentPage === "file-manager" ? "active" : "hidden"
-            }`}
-          >
-            <FileManagerPage className="page-content" />
-          </div>
-          <div
-            className={`page-container ${
-              currentPage === "import-viewer" ? "active" : "hidden"
-            }`}
-          >
-            <ImportDataViewer className="page-content" />
-          </div>
+          <Routes>
+            <Route
+              path="/"
+              element={
+                    <CounterDashboard className="page-content" />
+              }
+            />
+            <Route
+              path="/serial-port"
+              element={
+                    <SerialPortPanel className="page-content" />
+              }
+            />
+            <Route
+              path="/file-manager"
+              element={
+                  <FileManagerPage className="page-content" />
+              }
+            />
+            <Route
+              path="/import-viewer"
+              element={
+                    <ImportDataViewer className="page-content" />
+              }
+            />
+          </Routes>
         </main>
       </div>
       <Toaster position="top-right" />
     </>
+  );
+}
+
+function App({ onAppReady }: AppProps) {
+  return (
+    <Router>
+        <AppContent onAppReady={onAppReady} />
+    </Router>
   );
 }
 
