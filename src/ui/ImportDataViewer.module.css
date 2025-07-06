@@ -75,6 +75,16 @@
   color: white;
 }
 
+.clearFilter {
+  background: var(--warning-color);
+  color: white;
+}
+
+.clearFilter:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+}
+
 .importBtn:hover:not(:disabled) {
   transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
@@ -94,9 +104,8 @@
 
 .searchHeader {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0px 4px;
+  flex-direction: column;
+  gap: 12px;
   margin-bottom: 1rem;
 }
 
@@ -213,35 +222,18 @@
   box-shadow: var(--focus-shadow);
 }
 
-.searchActions {
-  display: flex;
-  gap: 12px;
-  align-items: center;
-  flex-wrap: wrap;
-}
-
-.searchBtn,
 .clearBtn {
-  padding: 10px 16px;
+  padding: 8px 12px;
   border: none;
   border-radius: 6px;
-  font-size: 14px;
+  font-size: 12px;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s ease;
-}
-
-.searchBtn {
-  background: var(--focus-color);
-  color: white;
-}
-
-.clearBtn {
   background: var(--error-color);
   color: white;
 }
 
-.searchBtn:hover,
 .clearBtn:hover {
   transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
@@ -815,7 +807,6 @@
   }
   
   .importBtn,
-  .searchBtn,
   .clearBtn,
   .sortOrderBtn,
   .sessionItem {
@@ -825,7 +816,6 @@
 
 /* 焦点可见性增强 */
 .importBtn:focus-visible,
-.searchBtn:focus-visible,
 .clearBtn:focus-visible,
 .sortOrderBtn:focus-visible {
   outline: 2px solid var(--focus-color);

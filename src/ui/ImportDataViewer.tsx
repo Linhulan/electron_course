@@ -39,7 +39,7 @@ export const ImportDataViewer: React.FC<ImportDataViewerProps> = ({ className })
   const [filteredDetails, setFilteredDetails] = useState<Map<string, CounterData[]>>(new Map());
   const [sortBy, setSortBy] = useState<'timestamp' | 'sessionID' | 'totalCount' | 'totalAmount'>('timestamp');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
-  const [isSearching, setIsSearching] = useState(false);
+  // const [isSearching, setIsSearching] = useState(false);
   // const [searchHistory, setSearchHistory] = useState<SearchFilters[]>([]);
 
   // 导入数据处理
@@ -116,14 +116,11 @@ export const ImportDataViewer: React.FC<ImportDataViewerProps> = ({ className })
   const performSearch = useCallback(() => {
     if (!importedData.length) return;
 
-    setIsSearching(true);
-
     // 如果没有任何搜索条件，显示所有数据
     if (!hasValidSearchFilters()) {
       setSearchResults([]);
       setFilteredDetails(new Map());
       setShowSearchResults(false);
-      setIsSearching(false);
       return;
     }
 
@@ -267,7 +264,6 @@ export const ImportDataViewer: React.FC<ImportDataViewerProps> = ({ className })
     setSearchResults(results);
     setFilteredDetails(sessionFilteredDetails);
     setShowSearchResults(results.length > 0 || Object.keys(searchFilters).some(key => searchFilters[key as keyof SearchFilters] !== undefined && searchFilters[key as keyof SearchFilters] !== ''));
-    setIsSearching(false);
     
     // 保存有效的搜索条件到历史
     if (results.length > 0) {
@@ -392,6 +388,13 @@ export const ImportDataViewer: React.FC<ImportDataViewerProps> = ({ className })
         {/* 导入按钮区 */}
         <div className={styles.importControls}>
           <button 
+            className={`${styles.importBtn} ${styles.clearFilter}`}
+            onClick={clearSearch}
+            disabled={!hasValidSearchFilters()}
+          >
+            🔍 {t('importViewer.clearFilters', 'Clear Filters')}
+          </button>
+          <button 
             className={`${styles.importBtn} ${styles.singleImport}`}
             onClick={handleImportExcel}
             disabled={isImporting}
@@ -412,58 +415,12 @@ export const ImportDataViewer: React.FC<ImportDataViewerProps> = ({ className })
           >
             🗑️ {t('importViewer.clearData', 'Clear Data')}
           </button>
+          
         </div>
       </div>
 
       {/* 搜索筛选区域 */}
       <div className={`${styles.searchPanel} searchPanel`}>
-        <div className={styles.searchHeader}>
-          <div className={styles.searchTitle}>
-            <h3>🔍 {t('importViewer.searchFilters', 'Search & Filters')}</h3>
-            {(showSearchResults || hasValidSearchFilters()) && (
-              <span className={`${styles.searchResultsCount} ${isSearching ? styles.searching : ''}`}>
-                {isSearching ? (
-                  <span>🔍 {t('importViewer.searching', 'Searching...')}</span>
-                ) : (
-                  <>
-                    {(() => {
-                      const sessionCount = new Set(searchResults.map(r => r.session.id)).size;
-                      const detailCount = searchResults.filter(r => r.matchType === 'detail').length;
-                      
-                      if (sessionCount === 0) {
-                        return `${t('importViewer.noResults', 'No results found')}`;
-                      }
-                      
-                      if (detailCount > 0) {
-                        return `${sessionCount} ${t('importViewer.sessions', 'sessions')}, ${detailCount} ${t('importViewer.details', 'details')}`;
-                      } else {
-                        return `${sessionCount} ${t('importViewer.sessions', 'sessions')}`;
-                      }
-                    })()}
-                  </>
-                )}
-              </span>
-            )}
-          </div>
-          
-          <div className={styles.searchActions}>
-            <button 
-              className={styles.searchBtn} 
-              onClick={performSearch}
-              disabled={isSearching}
-            >
-              {isSearching ? (
-                <>{t('importViewer.searching', 'Searching...')}</>
-              ) : (
-                <>🔍 {t('importViewer.search', 'Search')}</>
-              )}
-            </button>
-            <button className={styles.clearBtn} onClick={clearSearch}>
-              🗑️ {t('importViewer.clear', 'Clear')}
-            </button>
-          </div>
-        </div>
-
         <div className={styles.searchFilters}>
           <div className={styles.filterRow}>
             <div className={styles.filterGroup}>
