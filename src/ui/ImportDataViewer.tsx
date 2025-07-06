@@ -5,6 +5,7 @@ import styles from './ImportDataViewer.module.css';
 import toast from 'react-hot-toast';
 import { VirtualSessionList } from './components/VirtualSessionList';
 import { VirtualDetailTable } from './components/VirtualDetailTable';
+import { debugLog } from './protocols';
 
 interface ImportDataViewerProps {
   className?: string;
@@ -280,6 +281,10 @@ export const ImportDataViewer: React.FC<ImportDataViewerProps> = ({ className })
     if (results.length > 0) {
       saveSearchToHistory();
     }
+    else 
+    {
+      setSelectedSession(null);
+    }
   }, [importedData, searchFilters, hasValidSearchFilters, saveSearchToHistory]);
 
   // 清除搜索
@@ -399,16 +404,14 @@ export const ImportDataViewer: React.FC<ImportDataViewerProps> = ({ className })
   useEffect(() => {
     if (showSearchResults && sortedData.length > 0) {
       // 搜索状态开启且有结果时，选中第一个搜索结果
-      console.log('Search results available, selecting first:', sortedData[0]?.id);
+      debugLog('Search results available, selecting first:', sortedData[0]?.id);
       setSelectedSession(sortedData[0]);
     } else if (!showSearchResults && importedData.length > 0) {
-      // 搜索状态关闭时，如果当前选中的session不在原始数据中，选中第一个原始数据
-      if (!selectedSession || !importedData.find(s => s.id === selectedSession.id)) {
-        console.log('Search cleared, selecting first from imported data:', importedData[0]?.id);
-        setSelectedSession(importedData[0]);
-      }
+      // 搜索状态关闭时, 选中第一个原始数据
+      debugLog('Search cleared, selecting first from imported data:', importedData[0]?.id);
+      setSelectedSession(importedData[0]);
     }
-  }, [showSearchResults]);
+  }, [showSearchResults, sortedData]);
 
   return (
     <div className={`${styles.importDataViewer} ${className || ''}`}>
@@ -487,6 +490,24 @@ export const ImportDataViewer: React.FC<ImportDataViewerProps> = ({ className })
                 onChange={(e) => setSearchFilters(prev => ({...prev, serialNumber: e.target.value}))}
                 placeholder={t('importViewer.serialPlaceholder', 'Enter serial number')}
               />
+              {searchFilters.serialNumber && (
+                <div className={styles.searchHint}>
+                  {(() => {
+                    const matchCount = searchResults.filter(r => r.matchType === 'detail' && r.matchField.includes('serialNumber')).length;
+                    return matchCount > 0 ? (
+                      <>
+                        <span className={styles.matchCount}>{matchCount}</span>
+                        <span>{t('importViewer.serialMatches', 'serial number matches found')}</span>
+                      </>
+                    ) : showSearchResults ? (
+                      <>
+                        <span className={styles.noMatch}>0</span>
+                        <span>{t('importViewer.noSerialMatches', 'No matches found')}</span>
+                      </>
+                    ) : null;
+                  })()}
+                </div>
+              )}
             </div>
           </div>
 
@@ -527,7 +548,29 @@ export const ImportDataViewer: React.FC<ImportDataViewerProps> = ({ className })
         {/* 左侧Session列表 */}
         <div className={styles.sessionsPanel}>
           <div className={styles.panelHeader}>
-            <h3>{t('importViewer.sessionList', 'Session List')}</h3>
+            <div className={styles.headerTitleGroup}>
+              <h3>{t('importViewer.sessionList', 'Session List')}</h3>
+              <span className={styles.sessionCount}>
+                {(() => {
+                  const currentCount = sortedData.length;
+                  const totalCount = importedData.length;
+                  
+                  if (showSearchResults && currentCount !== totalCount) {
+                    return (
+                      <span className={styles.matchCount}>
+                        {currentCount} / {totalCount}
+                      </span>
+                    );
+                  } else {
+                    return (
+                      <span className={styles.totalCount}>
+                        {totalCount} {t('importViewer.totalSessions', 'sessions')}
+                      </span>
+                    );
+                  }
+                })()}
+              </span>
+            </div>
             
             {/* 排序控制 */}
             <div className={styles.sortControls}>
@@ -598,6 +641,7 @@ export const ImportDataViewer: React.FC<ImportDataViewerProps> = ({ className })
                       details={detailsToShow}
                       height={detailsHeight}
                       isErrorRow={isErrorRow}
+                      searchTerm={searchFilters.serialNumber}
                     />
                   ) : (
                     <div className={styles.noDetails}>

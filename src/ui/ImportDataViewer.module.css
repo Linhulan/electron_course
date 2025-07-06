@@ -738,9 +738,19 @@
     grid-template-columns: 0.3fr 0.7fr 0.6fr 1.2fr 0.7fr 0.6fr;
     font-size: 11px;
   }
+  
+  /* 响应式适配 - Session计数 */
+  .headerTitleGroup {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+  }
+  
+  .sessionCount {
+    font-size: 11px;
+  }
 }
 
-/* 超小屏幕适配 */
 @media (max-width: 480px) {
   .filterRow {
     grid-template-columns: 1fr;
@@ -756,6 +766,92 @@
   .colSerial {
     max-width: 80px;
   }
+  
+  .headerTitleGroup h3 {
+    font-size: 14px;
+  }
+  
+  .sessionCount .matchCount,
+  .sessionCount .totalCount {
+    padding: 2px 6px;
+    font-size: 10px;
+  }
+}
+
+/* =========================== 搜索高亮样式 =========================== */
+.highlightMatch {
+  background-color: #ffeb3b;
+  color: #000;
+  padding: 1px 2px;
+  border-radius: 2px;
+  font-weight: 600;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+/* 深色主题下的高亮样式 */
+[data-theme="dark"] .highlightMatch {
+  background-color: #ffc107;
+  color: #000;
+}
+
+/* 错误行中的高亮样式 */
+.tableRowError .highlightMatch {
+  background-color: #ff9800;
+  color: #fff;
+}
+
+/* =========================== 搜索提示样式 =========================== */
+.searchHint {
+  font-size: 11px;
+  color: var(--text-secondary);
+  margin-top: 4px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.searchHint .matchCount {
+  background: var(--success-color);
+  color: white;
+  padding: 2px 6px;
+  border-radius: 8px;
+  font-weight: 500;
+}
+
+.searchHint .noMatch {
+  background: var(--error-color);
+  color: white;
+  padding: 2px 6px;
+  border-radius: 8px;
+  font-weight: 500;
+}
+
+/* Session列表标题组样式 */
+.headerTitleGroup {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.sessionCount {
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.sessionCount .matchCount {
+  background: var(--focus-color);
+  color: white;
+  padding: 3px 8px;
+  border-radius: 10px;
+  font-weight: 600;
+}
+
+.sessionCount .totalCount {
+  background: var(--bg-tertiary);
+  color: var(--text-secondary);
+  padding: 3px 8px;
+  border-radius: 10px;
+  border: 1px solid var(--border-color);
 }
 
 /* =========================== 虚拟滚动容器滚动条优化 =========================== */

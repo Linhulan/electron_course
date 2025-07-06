@@ -4,11 +4,13 @@ import { CounterData } from '../common/types';
 import { formatCurrency } from '../common/common';
 import { useTranslation } from 'react-i18next';
 import styles from '../ImportDataViewer.module.css';
+import { HighlightText } from './HighlightText';
 
 interface VirtualDetailTableProps {
   details: CounterData[];
   height: number;
   isErrorRow: (detail: CounterData) => boolean;
+  searchTerm?: string; // 添加搜索词参数
 }
 
 interface DetailRowProps {
@@ -17,11 +19,12 @@ interface DetailRowProps {
   data: {
     details: CounterData[];
     isErrorRow: (detail: CounterData) => boolean;
+    searchTerm?: string; // 添加搜索词参数
   };
 }
 
 const DetailRow: React.FC<DetailRowProps> = ({ index, style, data }) => {
-  const { details, isErrorRow } = data;
+  const { details, isErrorRow, searchTerm } = data;
   const detail = details[index];
   const hasError = isErrorRow(detail);
   const rowClassName = hasError 
@@ -37,7 +40,10 @@ const DetailRow: React.FC<DetailRowProps> = ({ index, style, data }) => {
           {formatCurrency(detail.denomination, { currency: detail.currencyCode })}
         </div>
         <div className={styles.colSerial} title={detail.serialNumber}>
-          {detail.serialNumber || '-'}
+          <HighlightText 
+            text={detail.serialNumber || '-'} 
+            searchTerm={searchTerm || ''} 
+          />
         </div>
         <div className={styles.colError}>
           {detail.errorCode && detail.errorCode !== 'E0' ? detail.errorCode : '-'}
@@ -50,7 +56,8 @@ const DetailRow: React.FC<DetailRowProps> = ({ index, style, data }) => {
 export const VirtualDetailTable: React.FC<VirtualDetailTableProps> = ({
   details,
   height,
-  isErrorRow
+  isErrorRow,
+  searchTerm
 }) => {
   const { t } = useTranslation();
   
@@ -59,7 +66,8 @@ export const VirtualDetailTable: React.FC<VirtualDetailTableProps> = ({
 
   const itemData = {
     details,
-    isErrorRow
+    isErrorRow,
+    searchTerm
   };
 
   if (details.length === 0) {
