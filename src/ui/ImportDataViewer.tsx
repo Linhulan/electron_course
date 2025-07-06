@@ -288,6 +288,11 @@ export const ImportDataViewer: React.FC<ImportDataViewerProps> = ({ className })
     setSearchResults([]);
     setFilteredDetails(new Map());
     setShowSearchResults(false);
+    
+    // 清除搜索后自动选中第一个原始数据的session
+    if (importedData.length > 0) {
+      setSelectedSession(importedData[0]);
+    }
   };
 
   // 排序后的数据
@@ -389,6 +394,21 @@ export const ImportDataViewer: React.FC<ImportDataViewerProps> = ({ className })
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, [importedData, selectedSession]);
+
+  // 当搜索状态改变时，确保选中合适的session
+  useEffect(() => {
+    if (showSearchResults && sortedData.length > 0) {
+      // 搜索状态开启且有结果时，选中第一个搜索结果
+      console.log('Search results available, selecting first:', sortedData[0]?.id);
+      setSelectedSession(sortedData[0]);
+    } else if (!showSearchResults && importedData.length > 0) {
+      // 搜索状态关闭时，如果当前选中的session不在原始数据中，选中第一个原始数据
+      if (!selectedSession || !importedData.find(s => s.id === selectedSession.id)) {
+        console.log('Search cleared, selecting first from imported data:', importedData[0]?.id);
+        setSelectedSession(importedData[0]);
+      }
+    }
+  }, [showSearchResults]);
 
   return (
     <div className={`${styles.importDataViewer} ${className || ''}`}>
