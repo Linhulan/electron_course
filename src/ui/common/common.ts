@@ -116,6 +116,19 @@ export const formatNumber = (amount: number, fractionDigits: number = 2): string
   });
 };
 
+const timeFormatters = new Map<string, Intl.DateTimeFormat>();
+
+const getTimeFormatter = (locale: string = 'zh-CN') => {
+  if (!timeFormatters.has(locale)) {
+    timeFormatters.set(locale, new Intl.DateTimeFormat(locale, {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false
+    }));
+  }
+  return timeFormatters.get(locale)!;
+};
+
 /**
  * 格式化日期时间，提高可读性，支持i18n
  * @param timestamp 时间戳字符串
@@ -127,12 +140,15 @@ export const formatDateTime = (timestamp: string): string => {
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   const yesterday = new Date(today.getTime() - 24 * 60 * 60 * 1000);
   const recordDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
-  
-  const timeStr = date.toLocaleTimeString('zh-CN', { 
-    hour: '2-digit', 
-    minute: '2-digit',
-    hour12: false 
-  });
+
+  const timeFormatter = getTimeFormatter();
+
+  const timeStr = timeFormatter.format(date);
+  // const timeStr = date.toLocaleTimeString('zh-CN', { 
+  //   hour: '2-digit', 
+  //   minute: '2-digit',
+  //   hour12: false 
+  // });
   
   if (recordDate.getTime() === today.getTime()) {
     return `${i18n.t('datetime.today')} ${timeStr}`;

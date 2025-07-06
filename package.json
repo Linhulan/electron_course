@@ -24,6 +24,7 @@
   "dependencies": {
     "@serialport/parser-readline": "^13.0.0",
     "@types/protobufjs": "^6.0.0",
+    "@types/react-window": "^1.8.8",
     "currency-symbol-map": "^5.1.0",
     "exceljs": "^4.4.0",
     "i18next": "^25.2.1",
@@ -38,6 +39,7 @@
     "react-dom": "^19.0.0",
     "react-hot-toast": "^2.5.2",
     "react-i18next": "^15.5.3",
+    "react-window": "^1.8.11",
     "recharts": "^2.15.1",
     "serialport": "^13.0.0",
     "zustand": "^5.0.6"

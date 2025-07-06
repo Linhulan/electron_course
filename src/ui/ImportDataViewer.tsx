@@ -1,8 +1,10 @@
-import React, { useState, useMemo, useCallback, useEffect } from 'react';
+import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { SessionData, CounterData } from './common/types';
 import styles from './ImportDataViewer.module.css';
-import { formatCurrency, formatDateTime } from './common/common';
+import toast from 'react-hot-toast';
+import { VirtualSessionList } from './components/VirtualSessionList';
+import { VirtualDetailTable } from './components/VirtualDetailTable';
 
 interface ImportDataViewerProps {
   className?: string;
@@ -29,6 +31,10 @@ interface SearchResult {
 export const ImportDataViewer: React.FC<ImportDataViewerProps> = ({ className }) => {
   const { t } = useTranslation();
   
+  // Refs for height calculation
+  const sessionsListRef = useRef<HTMLDivElement>(null);
+  const detailsContentRef = useRef<HTMLDivElement>(null);
+  
   // 状态管理
   const [importedData, setImportedData] = useState<SessionData[]>([]);
   const [selectedSession, setSelectedSession] = useState<SessionData | null>(null);
@@ -39,6 +45,8 @@ export const ImportDataViewer: React.FC<ImportDataViewerProps> = ({ className })
   const [filteredDetails, setFilteredDetails] = useState<Map<string, CounterData[]>>(new Map());
   const [sortBy, setSortBy] = useState<'timestamp' | 'sessionID' | 'totalCount' | 'totalAmount'>('timestamp');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+  const [sessionsHeight, setSessionsHeight] = useState(600);
+  const [detailsHeight, setDetailsHeight] = useState(500);
   // const [isSearching, setIsSearching] = useState(false);
   // const [searchHistory, setSearchHistory] = useState<SearchFilters[]>([]);
 
@@ -63,16 +71,19 @@ export const ImportDataViewer: React.FC<ImportDataViewerProps> = ({ className })
 
   const handleImportDirectory = async () => {
     setIsImporting(true);
+    const toastId = toast.loading(t('importViewer.importing', 'Importing...'), { position: 'top-center' });
     try {
       const result = await window.electron.importFromDirectory();
       if (result.success && result.sessionData) {
         setImportedData(result.sessionData);
         if (result.sessionData.length > 0) {
           setSelectedSession(result.sessionData[0]);
+          toast.success( `${result.importedCount} Sessions ${t('importViewer.importSuccess', 'Import successful!')}`, { id: toastId });
         }
       }
     } catch (error) {
       console.error('Batch import failed:', error);
+      toast.error(t('importViewer.importFailed', 'Import failed!'), { id: toastId });
     } finally {
       setIsImporting(false);
     }
@@ -348,31 +359,36 @@ export const ImportDataViewer: React.FC<ImportDataViewerProps> = ({ className })
   useEffect(() => {
     const timeoutId = setTimeout(() => {
       performSearch();
-    }, 300); // 300ms防抖延迟
+    }, 500); // 500ms防抖延迟
 
     return () => clearTimeout(timeoutId);
   }, [performSearch]);
 
-  // 键盘快捷键支持
+  // 动态计算虚拟滚动容器高度
   useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      // Ctrl/Cmd + K 聚焦搜索
-      if ((event.ctrlKey || event.metaKey) && event.key === 'k') {
-        event.preventDefault();
-        const firstInput = document.querySelector('.searchPanel input') as HTMLInputElement;
-        if (firstInput) {
-          firstInput.focus();
-        }
+    const calculateHeights = () => {
+      if (sessionsListRef.current) {
+        const rect = sessionsListRef.current.getBoundingClientRect();
+        const availableHeight = window.innerHeight - rect.top - 20; // 20px 底部间距
+        setSessionsHeight(Math.max(300, availableHeight));
       }
-      // Escape 清除搜索
-      if (event.key === 'Escape' && hasValidSearchFilters()) {
-        clearSearch();
+      
+      if (detailsContentRef.current) {
+        const rect = detailsContentRef.current.getBoundingClientRect();
+        const availableHeight = window.innerHeight - rect.top - 20; // 20px 底部间距
+        setDetailsHeight(Math.max(300, availableHeight));
       }
     };
 
-    document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [hasValidSearchFilters, clearSearch]);
+    calculateHeights();
+    
+    const handleResize = () => {
+      calculateHeights();
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [importedData, selectedSession]);
 
   return (
     <div className={`${styles.importDataViewer} ${className || ''}`}>
@@ -514,64 +530,14 @@ export const ImportDataViewer: React.FC<ImportDataViewerProps> = ({ className })
             </div>
           </div>
 
-          <div className={styles.sessionsList}>
-            {sortedData.length === 0 ? (
-              <div className={styles.noData}>
-                <div className={styles.noDataIcon}>📭</div>
-                <div className={styles.noDataText}>
-                  {t('importViewer.noSessionsLoaded', 'No sessions loaded')}
-                </div>
-                <div className={styles.noDataHint}>
-                  {t('importViewer.importHint', 'Click Import to load data')}
-                </div>
-              </div>
-            ) : (
-              sortedData.map((session) => {
-                const isSelected = selectedSession?.id === session.id;
-                
-                return (
-                  <div
-                    key={session.id}
-                    className={`${styles.sessionItem} ${isSelected ? styles.selected : ''}`}
-                    onClick={() => handleSessionSelect(session)}
-                  >
-                    <div className={styles.sessionHeader}>
-                      <div className={styles.sessionNo}>
-                        #{session.no}
-                      </div>
-                      <div className={`${styles.sessionCurrency} ${getCurrencyDisplay(session) === 'MULTI' ? styles.multiCurrency : ''}`}>
-                        {getCurrencyDisplay(session)}
-                      </div>
-                    </div>
-                    
-                    <div className={styles.sessionInfo}>
-                      <div className={styles.sessionTime}>
-                        📅 {formatDateTime(session.startTime)}
-                      </div>
-                    </div>
-                    
-                    <div className={styles.sessionStats}>
-                      <div className={styles.statItem}>
-                        <span className={styles.statLabel}>{t('importViewer.count', 'Count')}:</span>
-                        <span className={styles.statValue}>{session.totalCount}</span>
-                      </div>
-                      <div className={styles.statItem}>
-                        <span className={styles.statLabel}>{t('importViewer.amount', 'Amount')}:</span>
-                        <span className={styles.statValue}>
-                          {formatCurrency(session.totalAmount || 0, { currency: session.currencyCode })}
-                        </span>
-                      </div>
-                      {(session.errorCount || 0) > 0 && (
-                        <div className={`${styles.statItem} ${styles.error}`}>
-                          <span className={styles.statLabel}>{t('importViewer.errors', 'Errors')}:</span>
-                          <span className={styles.statValue}>{session.errorCount}</span>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                );
-              })
-            )}
+          <div className={styles.sessionsList} ref={sessionsListRef}>
+            <VirtualSessionList
+              sessions={sortedData}
+              selectedSession={selectedSession}
+              onSessionSelect={handleSessionSelect}
+              height={sessionsHeight}
+              getCurrencyDisplay={getCurrencyDisplay}
+            />
           </div>
         </div>
 
@@ -600,7 +566,7 @@ export const ImportDataViewer: React.FC<ImportDataViewerProps> = ({ className })
                 </div>
               </div>
 
-              <div className={styles.detailsContent}>
+              <div className={styles.detailsContent} ref={detailsContentRef}>
                 {(() => {
                   // 获取要显示的details：如果有搜索过滤，显示过滤后的；否则显示全部
                   const detailsToShow = showSearchResults && filteredDetails.has(selectedSession.id) 
@@ -608,40 +574,11 @@ export const ImportDataViewer: React.FC<ImportDataViewerProps> = ({ className })
                     : selectedSession.details;
                   
                   return detailsToShow && detailsToShow.length > 0 ? (
-                    <div className={styles.detailsTable}>
-                      <div className={styles.tableHeader}>
-                        <div className={styles.colNo}>{t('importViewer.tableNo', 'No.')}</div>
-                        <div className={styles.colCurrency}>{t('importViewer.tableCurrency', 'Currency')}</div>
-                        <div className={styles.colDenomination}>{t('importViewer.tableDenomination', 'Denomination')}</div>
-                        <div className={styles.colSerial}>{t('importViewer.tableSerialNumber', 'Serial Number')}</div>
-                        <div className={styles.colError}>{t('importViewer.tableErrorCode', 'Error Code')}</div>
-                      </div>
-                      
-                      <div className={styles.tableContent}>
-                        {detailsToShow.map((detail, index) => {
-                          const hasError = isErrorRow(detail);
-                          const rowClassName = hasError 
-                            ? `${styles.tableRow} ${styles.tableRowError}` 
-                            : styles.tableRow;
-                          
-                          return (
-                            <div key={detail.id + index} className={rowClassName}>
-                              <div className={styles.colNo}>{detail.no}</div>
-                              <div className={styles.colCurrency}>{detail.currencyCode}</div>
-                              <div className={styles.colDenomination}>
-                                {formatCurrency(detail.denomination, { currency: detail.currencyCode })}
-                              </div>
-                              <div className={styles.colSerial} title={detail.serialNumber}>
-                                {detail.serialNumber || '-'}
-                              </div>
-                              <div className={styles.colError}>
-                                {detail.errorCode && detail.errorCode !== 'E0' ? detail.errorCode : '-'}
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
+                    <VirtualDetailTable
+                      details={detailsToShow}
+                      height={detailsHeight}
+                      isErrorRow={isErrorRow}
+                    />
                   ) : (
                     <div className={styles.noDetails}>
                       <div className={styles.noDetailsIcon}>📄</div>

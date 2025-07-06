@@ -258,7 +258,7 @@ const autoSaveHandler = async (session: SessionData) => {
     useDefaultDir: true,
     openAfterExport: false,
     customDir: undefined,
-    filename: `CounterSession_#${session.id}_${timestamp}.xlsx`,
+    filename: `CounterSession_#${session.no}_${timestamp}.xlsx`,
   });
 
   if ( ret.success ) {
@@ -307,7 +307,7 @@ export const CounterDashboard: React.FC<CounterDashboardProps> = ({
     "1h" | "24h" | "7d" | "30d"
   >("24h");
   // 抽屉相关状态
-  const [selectedSessionId, setSelectedSessionId] = useState<number | null>(
+  const [selectedSessionId, setSelectedSessionId] = useState<string | null>(
     null
   );
   const [isDetailDrawerOpen, setIsDetailDrawerOpen] = useState(false);
@@ -714,7 +714,7 @@ export const CounterDashboard: React.FC<CounterDashboardProps> = ({
   }, []);
 
   // 处理Session详情抽屉
-  const handleSessionClick = useCallback((sessionId: number) => {
+  const handleSessionClick = useCallback((sessionId: string) => {
     setSelectedSessionId(sessionId);
     setIsDetailDrawerOpen(true);
   }, []);
@@ -851,7 +851,7 @@ export const CounterDashboard: React.FC<CounterDashboardProps> = ({
   };
 
   // 生成批量测试数据
-  const generateTestData = () => {
+  const generateTestData = async () => {
     console.log("📊 Generating test data...");
 
     const testSessions: SessionData[] = [];
@@ -869,8 +869,8 @@ export const CounterDashboard: React.FC<CounterDashboardProps> = ({
       "SGD",
     ];
 
-    // 生成10个测试会话，确保有多货币数据
-    for (let i = 0; i < 10; i++) {
+    // 生成50个测试会话，确保有多货币数据
+    for (let i = 0; i < 50; i++) {
       const sessionTime = new Date(now.getTime() - i * 60 * 60 * 1000); // 每小时一个会话
       const denominationBreakdown = new Map<number, DenominationDetail>();
       const currencyCountRecords = new Map<string, CurrencyCountRecord>();
@@ -881,7 +881,7 @@ export const CounterDashboard: React.FC<CounterDashboardProps> = ({
       let errorCount = 0;
 
       // 为每个会话生成随机数据
-      const noteCount = Math.floor(Math.random() * 10) + 20; // 20-30张
+      const noteCount = Math.floor(Math.random() * 100) + 20; // 20-119张
 
       // 决定这个会话是单货币还是多货币
       const isMultiCurrency = i < 5; // 前5个会话使用多货币
@@ -976,9 +976,10 @@ export const CounterDashboard: React.FC<CounterDashboardProps> = ({
         });
       }
 
+      const id = generateSnowflakeId();
       const testSession: SessionData = {
-        id: generateSnowflakeId(),
-        no: 1000 + i,
+        id,
+        no: generateSessionNoFromId(id),
         timestamp: sessionTime.toLocaleTimeString(),
         startTime: sessionTime.toLocaleString(),
         endTime: new Date(
@@ -996,6 +997,8 @@ export const CounterDashboard: React.FC<CounterDashboardProps> = ({
       };
 
       testSessions.push(testSession);
+      autoSaveHandler(testSession); // 自动保存测试数据
+      await new Promise(resolve => setTimeout(resolve, 100)); // 延时
       debugLog(`Generated test session ${i + 1}:`, testSession);
     } // 添加到会话数据中
     setSessionData((prev) => [...testSessions, ...prev].slice(0, 50));
