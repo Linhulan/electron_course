@@ -2,6 +2,7 @@ import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { SessionData, CounterData } from './common/types';
 import styles from './ImportDataViewer.module.css';
+import { formatCurrency, formatDateTime } from './common/common';
 
 interface ImportDataViewerProps {
   className?: string;
@@ -39,7 +40,7 @@ export const ImportDataViewer: React.FC<ImportDataViewerProps> = ({ className })
   const [sortBy, setSortBy] = useState<'timestamp' | 'sessionID' | 'totalCount' | 'totalAmount'>('timestamp');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [isSearching, setIsSearching] = useState(false);
-  const [searchHistory, setSearchHistory] = useState<SearchFilters[]>([]);
+  // const [searchHistory, setSearchHistory] = useState<SearchFilters[]>([]);
 
   // 导入数据处理
   const handleImportExcel = async () => {
@@ -77,6 +78,16 @@ export const ImportDataViewer: React.FC<ImportDataViewerProps> = ({ className })
     }
   };
 
+  // 清除导入数据
+  const handleClearImportedData = () => {
+    setImportedData([]);
+    setSelectedSession(null);
+    setSearchFilters({});
+    setSearchResults([]);
+    setFilteredDetails(new Map());
+    setShowSearchResults(false);
+  };
+
   // 检查是否有有效的搜索条件
   const hasValidSearchFilters = useCallback(() => {
     return Object.values(searchFilters).some(value => 
@@ -87,19 +98,19 @@ export const ImportDataViewer: React.FC<ImportDataViewerProps> = ({ className })
   // 保存当前搜索条件到历史
   const saveSearchToHistory = useCallback(() => {
     if (hasValidSearchFilters()) {
-      setSearchHistory(prev => {
-        const newHistory = [searchFilters, ...prev.filter(h => 
-          JSON.stringify(h) !== JSON.stringify(searchFilters)
-        )];
-        return newHistory.slice(0, 5); // 只保留最近5次搜索
-      });
+      // setSearchHistory(prev => {
+      //   const newHistory = [searchFilters, ...prev.filter(h => 
+      //     JSON.stringify(h) !== JSON.stringify(searchFilters)
+      //   )];
+      //   return newHistory.slice(0, 5); // 只保留最近5次搜索
+      // });
     }
   }, [searchFilters, hasValidSearchFilters]);
 
   // 从历史记录中应用搜索条件
-  const applySearchFromHistory = useCallback((filters: SearchFilters) => {
-    setSearchFilters(filters);
-  }, []);
+  // const applySearchFromHistory = useCallback((filters: SearchFilters) => {
+  //   setSearchFilters(filters);
+  // }, []);
 
   // 搜索功能 - 优化为支持自由组合的AND逻辑
   const performSearch = useCallback(() => {
@@ -314,26 +325,27 @@ export const ImportDataViewer: React.FC<ImportDataViewerProps> = ({ className })
   // 处理Session选择
   const handleSessionSelect = (session: SessionData) => {
     setSelectedSession(session);
+  };  
+
+  // 获取货币显示信息（多货币时显示MULTI）
+  const getCurrencyDisplay = (session: SessionData) => {
+    // 检查是否有多货币记录
+    if (session.currencyCountRecords && session.currencyCountRecords.size > 1) {
+      return 'MULTI';
+    }
+    
+    // 检查是否有单一货币记录
+    if (session.currencyCountRecords && session.currencyCountRecords.size === 1) {
+      return Array.from(session.currencyCountRecords.keys())[0];
+    }
+    
+    // 回退到原始货币代码
+    return session.currencyCode || 'N/A';
   };
 
-  // 获取Session的显示状态
-  const getSessionDisplayStatus = (session: SessionData) => {
-    if (session.status === 'error' || (session.errorCount && session.errorCount > 0)) {
-      return { text: 'Error', class: 'statusError' };
-    }
-    if (session.status === 'completed') {
-      return { text: 'Completed', class: 'statusCompleted' };
-    }
-    return { text: session.status, class: 'statusOther' };
-  };
-
-  // 格式化货币
-  const formatCurrency = (amount: number, currency?: string) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: currency || 'USD',
-      minimumFractionDigits: 2
-    }).format(amount);
+  // 判断是否为错误行
+  const isErrorRow = (detail: CounterData): boolean => {
+    return detail.status === 'error' || (detail.errorCode !== undefined && detail.errorCode !== '' && detail.errorCode !== 'E0');
   };
 
   // 自动搜索：当搜索条件改变时自动执行搜索
@@ -393,6 +405,13 @@ export const ImportDataViewer: React.FC<ImportDataViewerProps> = ({ className })
           >
             {isImporting ? t('importViewer.importing', 'Importing...') : t('importViewer.importDirectory', 'Import Directory')}
           </button>
+          <button 
+            className={`${styles.importBtn} ${styles.clearImport}`}
+            onClick={handleClearImportedData}
+            disabled={isImporting || importedData.length === 0}
+          >
+            🗑️ {t('importViewer.clearData', 'Clear Data')}
+          </button>
         </div>
       </div>
 
@@ -448,32 +467,12 @@ export const ImportDataViewer: React.FC<ImportDataViewerProps> = ({ className })
         <div className={styles.searchFilters}>
           <div className={styles.filterRow}>
             <div className={styles.filterGroup}>
-              <label>{t('importViewer.sessionID', 'Session ID')}</label>
-              <input
-                type="text"
-                value={searchFilters.sessionID || ''}
-                onChange={(e) => setSearchFilters(prev => ({...prev, sessionID: e.target.value}))}
-                placeholder={t('importViewer.sessionIDPlaceholder', 'Enter session ID')}
-              />
-            </div>
-
-            <div className={styles.filterGroup}>
               <label>{t('importViewer.currencyCode', 'Currency Code')}</label>
               <input
                 type="text"
                 value={searchFilters.currencyCode || ''}
                 onChange={(e) => setSearchFilters(prev => ({...prev, currencyCode: e.target.value}))}
                 placeholder={t('importViewer.currencyPlaceholder', 'e.g. CNY, USD')}
-              />
-            </div>
-
-            <div className={styles.filterGroup}>
-              <label>{t('importViewer.serialNumber', 'Serial Number (冠字号)')}</label>
-              <input
-                type="text"
-                value={searchFilters.serialNumber || ''}
-                onChange={(e) => setSearchFilters(prev => ({...prev, serialNumber: e.target.value}))}
-                placeholder={t('importViewer.serialPlaceholder', 'Enter serial number')}
               />
             </div>
 
@@ -486,9 +485,29 @@ export const ImportDataViewer: React.FC<ImportDataViewerProps> = ({ className })
                 placeholder={t('importViewer.denominationPlaceholder', 'e.g. 100')}
               />
             </div>
+
+            <div className={styles.filterGroup}>
+              <label>{t('importViewer.serialNumber', 'Serial Number (冠字号)')}</label>
+              <input
+                type="text"
+                value={searchFilters.serialNumber || ''}
+                onChange={(e) => setSearchFilters(prev => ({...prev, serialNumber: e.target.value}))}
+                placeholder={t('importViewer.serialPlaceholder', 'Enter serial number')}
+              />
+            </div>
           </div>
 
           <div className={styles.filterRow}>
+            <div className={styles.filterGroup}>
+              <label>{t('importViewer.sessionID', 'Session ID')}</label>
+              <input
+                type="text"
+                value={searchFilters.sessionID || ''}
+                onChange={(e) => setSearchFilters(prev => ({...prev, sessionID: e.target.value}))}
+                placeholder={t('importViewer.sessionIDPlaceholder', 'Enter session ID')}
+              />
+            </div>
+
             <div className={styles.filterGroup}>
               <label>{t('importViewer.startDate', 'Start Date')}</label>
               <input
@@ -505,35 +524,6 @@ export const ImportDataViewer: React.FC<ImportDataViewerProps> = ({ className })
                 value={searchFilters.endDate || ''}
                 onChange={(e) => setSearchFilters(prev => ({...prev, endDate: e.target.value}))}
               />
-            </div>
-
-            <div className={styles.filterGroup}>
-              <label>{t('importViewer.status', 'Status')}</label>
-              <select
-                value={searchFilters.status || ''}
-                onChange={(e) => setSearchFilters(prev => ({...prev, status: e.target.value}))}
-              >
-                <option value="">{t('importViewer.allStatuses', 'All Statuses')}</option>
-                <option value="completed">{t('importViewer.completed', 'Completed')}</option>
-                <option value="error">{t('importViewer.error', 'Error')}</option>
-                <option value="counting">{t('importViewer.counting', 'Counting')}</option>
-                <option value="paused">{t('importViewer.paused', 'Paused')}</option>
-              </select>
-            </div>
-
-            <div className={styles.filterGroup}>
-              <label>{t('importViewer.errorFilter', 'Error Filter')}</label>
-              <select
-                value={searchFilters.hasError === undefined ? '' : String(searchFilters.hasError)}
-                onChange={(e) => setSearchFilters(prev => ({
-                  ...prev, 
-                  hasError: e.target.value === '' ? undefined : e.target.value === 'true'
-                }))}
-              >
-                <option value="">{t('importViewer.allRecords', 'All Records')}</option>
-                <option value="true">{t('importViewer.withErrors', 'With Errors')}</option>
-                <option value="false">{t('importViewer.withoutErrors', 'Without Errors')}</option>
-              </select>
             </div>
           </div>
         </div>
@@ -580,7 +570,6 @@ export const ImportDataViewer: React.FC<ImportDataViewerProps> = ({ className })
               </div>
             ) : (
               sortedData.map((session) => {
-                const statusInfo = getSessionDisplayStatus(session);
                 const isSelected = selectedSession?.id === session.id;
                 
                 return (
@@ -593,17 +582,14 @@ export const ImportDataViewer: React.FC<ImportDataViewerProps> = ({ className })
                       <div className={styles.sessionNo}>
                         #{session.no}
                       </div>
-                      <div className={`${styles.sessionStatus} ${styles[statusInfo.class]}`}>
-                        {statusInfo.text}
+                      <div className={`${styles.sessionCurrency} ${getCurrencyDisplay(session) === 'MULTI' ? styles.multiCurrency : ''}`}>
+                        {getCurrencyDisplay(session)}
                       </div>
                     </div>
                     
                     <div className={styles.sessionInfo}>
                       <div className={styles.sessionTime}>
-                        📅 {session.startTime}
-                      </div>
-                      <div className={styles.sessionCurrency}>
-                        💱 {session.currencyCode || 'N/A'}
+                        📅 {formatDateTime(session.startTime)}
                       </div>
                     </div>
                     
@@ -615,7 +601,7 @@ export const ImportDataViewer: React.FC<ImportDataViewerProps> = ({ className })
                       <div className={styles.statItem}>
                         <span className={styles.statLabel}>{t('importViewer.amount', 'Amount')}:</span>
                         <span className={styles.statValue}>
-                          {formatCurrency(session.totalAmount || 0, session.currencyCode)}
+                          {formatCurrency(session.totalAmount || 0, { currency: session.currencyCode })}
                         </span>
                       </div>
                       {(session.errorCount || 0) > 0 && (
@@ -671,29 +657,32 @@ export const ImportDataViewer: React.FC<ImportDataViewerProps> = ({ className })
                         <div className={styles.colCurrency}>{t('importViewer.tableCurrency', 'Currency')}</div>
                         <div className={styles.colDenomination}>{t('importViewer.tableDenomination', 'Denomination')}</div>
                         <div className={styles.colSerial}>{t('importViewer.tableSerialNumber', 'Serial Number')}</div>
-                        <div className={styles.colStatus}>{t('importViewer.tableStatus', 'Status')}</div>
                         <div className={styles.colError}>{t('importViewer.tableErrorCode', 'Error Code')}</div>
                       </div>
                       
                       <div className={styles.tableContent}>
-                        {detailsToShow.map((detail, index) => (
-                          <div key={detail.id + index} className={styles.tableRow}>
-                            <div className={styles.colNo}>{detail.no}</div>
-                            <div className={styles.colCurrency}>{detail.currencyCode}</div>
-                            <div className={styles.colDenomination}>
-                              {formatCurrency(detail.denomination, detail.currencyCode)}
+                        {detailsToShow.map((detail, index) => {
+                          const hasError = isErrorRow(detail);
+                          const rowClassName = hasError 
+                            ? `${styles.tableRow} ${styles.tableRowError}` 
+                            : styles.tableRow;
+                          
+                          return (
+                            <div key={detail.id + index} className={rowClassName}>
+                              <div className={styles.colNo}>{detail.no}</div>
+                              <div className={styles.colCurrency}>{detail.currencyCode}</div>
+                              <div className={styles.colDenomination}>
+                                {formatCurrency(detail.denomination, { currency: detail.currencyCode })}
+                              </div>
+                              <div className={styles.colSerial} title={detail.serialNumber}>
+                                {detail.serialNumber || '-'}
+                              </div>
+                              <div className={styles.colError}>
+                                {detail.errorCode && detail.errorCode !== 'E0' ? detail.errorCode : '-'}
+                              </div>
                             </div>
-                            <div className={styles.colSerial} title={detail.serialNumber}>
-                              {detail.serialNumber || '-'}
-                            </div>
-                            <div className={`${styles.colStatus} ${styles['status' + detail.status.charAt(0).toUpperCase() + detail.status.slice(1).toLowerCase()]}`}>
-                              {detail.status}
-                            </div>
-                            <div className={styles.colError}>
-                              {detail.errorCode && detail.errorCode !== 'E0' ? detail.errorCode : '-'}
-                            </div>
-                          </div>
-                        ))}
+                          );
+                        })}
                       </div>
                     </div>
                   ) : (

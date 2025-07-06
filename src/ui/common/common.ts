@@ -1,3 +1,4 @@
+import i18n from '../i18n';
 
 /**
  * 货币格式化配置选项
@@ -113,4 +114,48 @@ export const formatNumber = (amount: number, fractionDigits: number = 2): string
     minimumFractionDigits: fractionDigits,
     maximumFractionDigits: fractionDigits
   });
+};
+
+/**
+ * 格式化日期时间，提高可读性，支持i18n
+ * @param timestamp 时间戳字符串
+ * @returns 格式化后的日期时间字符串，如 "今天 14:30"、"昨天 13:20"、"周一 09:00"
+ */
+export const formatDateTime = (timestamp: string): string => {
+  const date = new Date(timestamp);
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const yesterday = new Date(today.getTime() - 24 * 60 * 60 * 1000);
+  const recordDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  
+  const timeStr = date.toLocaleTimeString('zh-CN', { 
+    hour: '2-digit', 
+    minute: '2-digit',
+    hour12: false 
+  });
+  
+  if (recordDate.getTime() === today.getTime()) {
+    return `${i18n.t('datetime.today')} ${timeStr}`;
+  } else if (recordDate.getTime() === yesterday.getTime()) {
+    return `${i18n.t('datetime.yesterday')} ${timeStr}`;
+  } else {
+    const diffTime = now.getTime() - recordDate.getTime();
+    const diffDays = Math.floor(diffTime / (24 * 60 * 60 * 1000));
+    
+    if (diffDays <= 6) {
+      const weekdayKeys = [
+        'datetime.weekdays.sunday',
+        'datetime.weekdays.monday', 
+        'datetime.weekdays.tuesday',
+        'datetime.weekdays.wednesday',
+        'datetime.weekdays.thursday',
+        'datetime.weekdays.friday',
+        'datetime.weekdays.saturday'
+      ];
+      return `${i18n.t(weekdayKeys[date.getDay()])} ${timeStr}`;
+    } else {
+      const monthDay = `${date.getMonth() + 1}-${date.getDate()}`;
+      return `${monthDay} ${timeStr}`;
+    }
+  }
 };

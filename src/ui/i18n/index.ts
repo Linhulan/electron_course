@@ -294,6 +294,7 @@ const zhCN = {
       importing: "导入中...",
       importFile: "导入Excel文件",
       importDirectory: "导入目录",
+      clearData: "清除数据",
       searchFilters: "搜索和筛选",
       resultsFound: "个结果",
       sessionNo: "会话编号",
@@ -340,6 +341,21 @@ const zhCN = {
       count: "数量",
       amount: "金额",
       errors: "错误",
+    },
+
+    // 日期时间格式化
+    datetime: {
+      today: "今天",
+      yesterday: "昨天",
+      weekdays: {
+        sunday: "周日",
+        monday: "周一", 
+        tuesday: "周二",
+        wednesday: "周三",
+        thursday: "周四",
+        friday: "周五",
+        saturday: "周六",
+      },
     },
   },
 };
@@ -636,6 +652,7 @@ const enUS = {
       importing: "Importing...",
       importFile: "Import Excel File",
       importDirectory: "Import Directory",
+      clearData: "Clear Data",
       searchFilters: "Search & Filters",
       resultsFound: "results found",
       sessionNo: "Session No",
@@ -682,6 +699,21 @@ const enUS = {
       count: "Count",
       amount: "Amount",
       errors: "Errors",
+    },
+
+    // Date time formatting
+    datetime: {
+      today: "Today",
+      yesterday: "Yesterday",
+      weekdays: {
+        sunday: "Sun",
+        monday: "Mon",
+        tuesday: "Tue", 
+        wednesday: "Wed",
+        thursday: "Thu",
+        friday: "Fri",
+        saturday: "Sat",
+      },
     },
   },
 };
