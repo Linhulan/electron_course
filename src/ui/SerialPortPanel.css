@@ -1,11 +1,107 @@
+/* ============================================
+   CSS 变量定义 - SerialPortPanel 主题
+   ============================================ */
+
+:root {
+  /* 暗色主题变量 (默认) */
+  --sp-bg-primary: #1e1e1e;
+  --sp-bg-secondary: #252525;
+  --sp-bg-tertiary: #1a1a1a;
+  --sp-bg-input: #333;
+  --sp-bg-status: #2a2a2a;
+  --sp-text-primary: #ffffff;
+  --sp-text-secondary: #bbbbbb;
+  --sp-text-label: #ffffff;
+  --sp-text-placeholder: #888;
+  --sp-text-disabled: #888;
+  --sp-border-primary: #333;
+  --sp-border-secondary: #404040;
+  --sp-border-tertiary: #555;
+  --sp-border-separator: #444;
+  --sp-shadow-light: rgba(0, 0, 0, 0.1);
+  --sp-shadow-medium: rgba(0, 0, 0, 0.2);
+  --sp-scrollbar-track: #2a2a2a;
+  --sp-scrollbar-thumb: #555;
+  --sp-scrollbar-thumb-hover: #666;
+  
+  /* 状态颜色 */
+  --sp-color-success: #4caf50;
+  --sp-color-success-hover: #45a049;
+  --sp-color-error: #f44336;
+  --sp-color-error-hover: #da190b;
+  --sp-color-warning: #ff9800;
+  --sp-color-warning-hover: #f57c00;
+  --sp-color-info: #2196f3;
+  --sp-color-primary: #007acc;
+  --sp-color-primary-hover: #005a9e;
+  --sp-color-connected: #4caf50;
+  --sp-color-disconnected: #f44336;
+  --sp-color-focus: #007acc;
+  --sp-color-clear: #666;
+  --sp-color-clear-hover: #555;
+  
+  /* 错误消息 */
+  --sp-error-bg: #8b1538;
+  --sp-error-text: #ffffff;
+  --sp-error-border: #d73052;
+}
+
+[data-theme="light"] {
+  /* 亮色主题变量 */
+  --sp-bg-primary: #f8fafc;
+  --sp-bg-secondary: #ffffff;
+  --sp-bg-tertiary: #f8fafc;
+  --sp-bg-input: #ffffff;
+  --sp-bg-status: #f1f5f9;
+  --sp-text-primary: #1e293b;
+  --sp-text-secondary: #1e293b;
+  --sp-text-label: #374151;
+  --sp-text-placeholder: #9ca3af;
+  --sp-text-disabled: #9ca3af;
+  --sp-border-primary: #e2e8f0;
+  --sp-border-secondary: #e2e8f0;
+  --sp-border-tertiary: #d1d5db;
+  --sp-border-separator: #e2e8f0;
+  --sp-shadow-light: rgba(0, 0, 0, 0.05);
+  --sp-shadow-medium: rgba(0, 0, 0, 0.1);
+  --sp-scrollbar-track: #f1f5f9;
+  --sp-scrollbar-thumb: #cbd5e1;
+  --sp-scrollbar-thumb-hover: #94a3b8;
+  
+  /* 状态颜色 */
+  --sp-color-success: #10b981;
+  --sp-color-success-hover: #059669;
+  --sp-color-error: #ef4444;
+  --sp-color-error-hover: #dc2626;
+  --sp-color-warning: #f59e0b;
+  --sp-color-warning-hover: #d97706;
+  --sp-color-info: #3b82f6;
+  --sp-color-primary: #3b82f6;
+  --sp-color-primary-hover: #2563eb;
+  --sp-color-connected: #059669;
+  --sp-color-disconnected: #dc2626;
+  --sp-color-focus: #3b82f6;
+  --sp-color-clear: #6b7280;
+  --sp-color-clear-hover: #4b5563;
+  
+  /* 错误消息 */
+  --sp-error-bg: #fee2e2;
+  --sp-error-text: #dc2626;
+  --sp-error-border: #fecaca;
+}
+
+/* ============================================
+   主要布局样式
+   ============================================ */
+
 /* 新的左右分栏布局 */
 .serial-port-panel-layout {
   display: flex;
   height: calc(100vh - 60px); /* 减去header高度 */
   gap: 1rem;
   padding: 1rem;
-  background-color: #1e1e1e;
-  color: #ffffff;
+  background-color: var(--sp-bg-primary);
+  color: var(--sp-text-primary);
   box-sizing: border-box; /* 确保padding不会超出容器 */
 }
 
@@ -42,41 +138,44 @@
   flex-direction: column;
   gap: 1rem;
   padding: 1rem;
-  background-color: #1e1e1e;
-  color: #ffffff;
+  background-color: var(--sp-bg-secondary);
+  color: var(--sp-text-primary);
   border-radius: 8px;
-  border: 1px solid #333;
+  border: 1px solid var(--sp-border-primary);
+  box-shadow: 0 2px 8px var(--sp-shadow-light);
 }
 
 .serial-port-connection {
-  background-color: #252525;
+  background-color: var(--sp-bg-secondary);
   padding: 1rem;
   border-radius: 6px;
-  border: 1px solid #404040;
+  border: 1px solid var(--sp-border-secondary);
+  box-shadow: 0 2px 8px var(--sp-shadow-light);
 }
 
 .serial-port-communication {
-  background-color: #252525;
+  background-color: var(--sp-bg-secondary);
   padding: 1rem;
   border-radius: 6px;
-  border: 1px solid #404040;
+  border: 1px solid var(--sp-border-secondary);
   flex: 1;
+  box-shadow: 0 2px 8px var(--sp-shadow-light);
 }
 
 .serial-port-panel h3 {
   margin: 0 0 1rem 0;
-  color: #ffffff;
+  color: var(--sp-text-primary);
   font-size: 1.1rem;
   font-weight: 600;
 }
 
 .error-message {
-  background-color: #8b1538;
-  color: #ffffff;
+  background-color: var(--sp-error-bg);
+  color: var(--sp-error-text);
   padding: 0.75rem;
   border-radius: 4px;
   margin-bottom: 1rem;
-  border: 1px solid #d73052;
+  border: 1px solid var(--sp-error-border);
   white-space: pre-line;
   line-height: 1.4;
   font-size: 0.9rem;
@@ -92,6 +191,7 @@
   display: block;
   margin-bottom: 0.5rem;
   font-weight: 500;
+  color: var(--sp-text-label);
 }
 
 .port-select-row {
@@ -106,22 +206,23 @@
   min-width: 200px; /* 设置最小宽度 */
   padding: 0.5rem;
   cursor: pointer;
-  background-color: #333;
-  color: #ffffff;
-  border: 1px solid #555;
+  background-color: var(--sp-bg-input);
+  color: var(--sp-text-primary);
+  border: 1px solid var(--sp-border-tertiary);
   border-radius: 4px;
   font-size: 0.9rem;
   white-space: nowrap; /* 防止文本换行 */
   overflow: hidden; /* 隐藏溢出内容 */
   text-overflow: ellipsis; /* 显示省略号 */
+  box-shadow: 0 1px 3px var(--sp-shadow-medium);
 }
 
 /* 下拉选项样式 */
 .port-select-row select option {
   padding: 0.5rem;
   cursor: pointer;
-  background-color: #333;
-  color: #ffffff;
+  background-color: var(--sp-bg-input);
+  color: var(--sp-text-primary);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -130,17 +231,21 @@
 
 .port-select-row select:focus {
   outline: none;
-  border-color: #007acc;
+  border-color: var(--sp-color-focus);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
 .port-select-row select:disabled {
   opacity: 0.6;
   cursor: not-allowed;
+  background-color: var(--sp-bg-status);
+  color: var(--sp-text-disabled);
+  border-color: var(--sp-border-primary);
 }
 
 .refresh-btn {
   padding: 0.1rem;
-  background-color: #007acc;
+  background-color: var(--sp-color-primary);
   color: white;
   border: none;
   border-radius: 4px;
@@ -152,17 +257,20 @@
   align-items: center;
   justify-content: center;
   transition: all 0.2s ease; /* 添加过渡效果 */
+  box-shadow: 0 2px 4px var(--sp-shadow-medium);
 }
 
 .refresh-btn:hover:not(:disabled) {
-  background-color: #005a9e;
+  background-color: var(--sp-color-primary-hover);
   transform: scale(1.05); /* 轻微放大效果 */
+  box-shadow: 0 4px 8px var(--sp-shadow-medium);
 }
 
 .refresh-btn:disabled {
   opacity: 0.6;
   cursor: not-allowed;
   transform: none; /* 禁用状态下取消变换 */
+  box-shadow: none;
 }
 
 /* 加载状态下的旋转动画 */
@@ -191,53 +299,57 @@
 .config-row label {
   font-weight: 500;
   font-size: 0.9rem;
+  color: var(--sp-text-label);
 }
 
 .config-row select {
   padding: 0.4rem;
-  background-color: #333;
-  color: #ffffff;
-  border: 1px solid #555;
+  background-color: var(--sp-bg-input);
+  color: var(--sp-text-primary);
+  border: 1px solid var(--sp-border-tertiary);
   border-radius: 4px;
   font-size: 0.9rem;
+  box-shadow: 0 1px 3px var(--sp-shadow-medium);
 }
 
 .config-row select:focus {
   outline: none;
-  border-color: #007acc;
+  border-color: var(--sp-color-focus);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
 .config-row select:disabled {
   opacity: 0.6;
   cursor: not-allowed;
+  background-color: var(--sp-bg-status);
+  color: var(--sp-text-disabled);
+  border-color: var(--sp-border-primary);
 }
 
 .connection-controls {
-  border-top: 1px solid #404040;
+  border-top: 1px solid var(--sp-border-secondary);
   padding-top: 1rem;
 }
 
 .connection-status {
   margin: 1rem 0;
+  margin-bottom: 0.75rem;
   padding: 0.75rem;
-  background-color: #2a2a2a;
+  background-color: var(--sp-bg-status);
   border-radius: 4px;
-  border: 1px solid #404040;
+  border: 1px solid var(--sp-border-secondary);
+  color: var(--sp-text-primary);
+  font-size: 0.9rem;
 }
 
 .connection-status .connected {
-  color: #4caf50;
+  color: var(--sp-color-connected);
   font-weight: 500;
 }
 
 .connection-status .disconnected {
-  color: #f44336;
+  color: var(--sp-color-disconnected);
   font-weight: 500;
-}
-
-.connection-status {
-  margin-bottom: 0.75rem;
-  font-size: 0.9rem;
 }
 
 .connection-buttons {
@@ -247,40 +359,46 @@
 
 .connect-btn {
   padding: 0.5rem 1rem;
-  background-color: #4caf50;
+  background-color: var(--sp-color-success);
   color: white;
   border: none;
   border-radius: 4px;
   cursor: pointer;
   font-weight: 500;
+  box-shadow: 0 2px 4px var(--sp-shadow-medium);
 }
 
 .connect-btn:hover:not(:disabled) {
-  background-color: #45a049;
+  background-color: var(--sp-color-success-hover);
+  box-shadow: 0 4px 8px var(--sp-shadow-medium);
 }
 
 .connect-btn:disabled {
   opacity: 0.6;
   cursor: not-allowed;
+  box-shadow: none;
 }
 
 .disconnect-btn {
   padding: 0.5rem 1rem;
-  background-color: #f44336;
+  background-color: var(--sp-color-error);
   color: white;
   border: none;
   border-radius: 4px;
   cursor: pointer;
   font-weight: 500;
+  box-shadow: 0 2px 4px var(--sp-shadow-medium);
 }
 
 .disconnect-btn:hover:not(:disabled) {
-  background-color: #da190b;
+  background-color: var(--sp-color-error-hover);
+  box-shadow: 0 4px 8px var(--sp-shadow-medium);
 }
 
 .disconnect-btn:disabled {
   opacity: 0.6;
   cursor: not-allowed;
+  box-shadow: none;
 }
 
 .data-display-container {
@@ -300,6 +418,7 @@
 
 .data-display-header span {
   font-weight: 500;
+  color: var(--sp-text-primary);
 }
 
 .display-controls {
@@ -315,13 +434,7 @@
   font-size: 0.9rem;
   cursor: pointer;
   user-select: none;
-}
-
-.mode-hint {
-  font-size: 0.75rem;
-  color: #888;
-  margin-left: 1.5rem;
-  font-style: italic;
+  color: var(--sp-text-primary);
 }
 
 .timestamp-toggle {
@@ -331,68 +444,14 @@
   font-size: 0.9rem;
   cursor: pointer;
   user-select: none;
+  color: var(--sp-text-primary);
 }
 
-.hex-mode-toggle input[type="checkbox"],
-.timestamp-toggle input[type="checkbox"] {
-  margin: 0;
-}
-
-.clear-btn {
-  padding: 0.25rem 0.5rem;
-  background-color: #666;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 0.8rem;
-}
-
-.clear-btn:hover {
-  background-color: #555;
-}
-
-.data-display {
-  flex: 1; /* 占用容器剩余空间 */
-  min-height: 200px; /* 最小高度 */
-  max-height: 100%; /* 不超过父容器 */
-  overflow-y: auto; /* 内容超出时显示滚动条 */
-  overflow-x: hidden;
-  padding: 0.75rem;
-  background-color: #1a1a1a;
-  border: 1px solid #333;
-  border-radius: 4px;
-  font-family: 'Courier New', monospace;
-  font-size: 0.85rem;
-  line-height: 1.4;
-  white-space: pre-wrap; /* 保留换行符和空格 */
-  word-wrap: break-word; /* 长单词自动换行 */
-  scrollbar-width: thin; /* Firefox滚动条样式 */
-  scrollbar-color: #666 #2a2a2a; /* Firefox滚动条颜色 */
-}
-
-.data-display::-webkit-scrollbar {
-  width: 8px;
-}
-
-.data-display::-webkit-scrollbar-track {
-  background: #2a2a2a;
-}
-
-.data-display::-webkit-scrollbar-thumb {
-  background: #555;
-  border-radius: 4px;
-}
-
-.data-display::-webkit-scrollbar-thumb:hover {
-  background: #666;
-}
-
-.no-data {
-  color: #888;
+.mode-hint {
+  font-size: 0.75rem;
+  color: var(--sp-text-placeholder);
+  margin-left: 1.5rem;
   font-style: italic;
-  text-align: center;
-  padding: 2rem 0;
 }
 
 .data-line {
@@ -400,76 +459,8 @@
   padding: 0.25rem 0;
 }
 
-.data-line.system {
-  color: #bbbbbb;
-}
-
-.data-line.sent {
-  color: #4caf50;
-}
-
-.data-line.received {
-  color: #2196f3;
-}
-
-.data-line.error {
-  color: #f44336;
-  font-weight: 500;
-}
-
-.data-line.warning {
-  color: #ff9800;
-  font-weight: 500;
-}
-
-.data-line.success {
-  color: #4caf50;
-  font-weight: 500;
-}
-
-.data-line.info {
-  color: #2196f3;
-  font-weight: 400;
-}
-
-.data-line.normal {
-  color: #ffffff;
-}
-
-.send-data-container {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-  margin-top: 1rem; /* 在日志区域中添加顶部边距 */
-  padding-top: 1rem; /* 添加内边距 */
-  border-top: 1px solid #444; /* 添加分隔线 */
-  flex-shrink: 0; /* 防止收缩 */
-}
-
-.send-data-container h4 {
-  margin: 0 0 0.5rem 0;
-  color: #ffffff;
-  font-size: 1rem;
-  font-weight: 600;
-}
-
 .send-mode-controls {
   margin-bottom: 0.75rem;
-}
-
-.send-mode-toggle {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  color: #ffffff;
-  font-size: 0.9rem;
-  cursor: pointer;
-  user-select: none;
-}
-
-.send-mode-toggle input[type="checkbox"] {
-  margin: 0;
-  cursor: pointer;
 }
 
 .test-data-buttons {
@@ -483,63 +474,212 @@
   gap: 0.5rem;
 }
 
+.hex-mode-toggle input[type="checkbox"],
+.timestamp-toggle input[type="checkbox"] {
+  margin: 0;
+  accent-color: var(--sp-color-focus);
+}
+
+.clear-btn {
+  padding: 0.25rem 0.5rem;
+  background-color: var(--sp-color-clear);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.8rem;
+}
+
+.clear-btn:hover {
+  background-color: var(--sp-color-clear-hover);
+}
+
+.data-display {
+  flex: 1; /* 占用容器剩余空间 */
+  min-height: 200px; /* 最小高度 */
+  max-height: 100%; /* 不超过父容器 */
+  overflow-y: auto; /* 内容超出时显示滚动条 */
+  overflow-x: hidden;
+  padding: 0.75rem;
+  background-color: var(--sp-bg-tertiary);
+  border: 1px solid var(--sp-border-primary);
+  border-radius: 4px;
+  font-family: 'Courier New', monospace;
+  font-size: 0.85rem;
+  line-height: 1.4;
+  white-space: pre-wrap; /* 保留换行符和空格 */
+  word-wrap: break-word; /* 长单词自动换行 */
+  scrollbar-width: thin; /* Firefox滚动条样式 */
+  scrollbar-color: var(--sp-scrollbar-thumb) var(--sp-scrollbar-track); /* Firefox滚动条颜色 */
+  color: var(--sp-text-secondary);
+}
+
+.data-display::-webkit-scrollbar {
+  width: 8px;
+}
+
+.data-display::-webkit-scrollbar-track {
+  background: var(--sp-scrollbar-track);
+  border-radius: 4px;
+}
+
+.data-display::-webkit-scrollbar-thumb {
+  background: var(--sp-scrollbar-thumb);
+  border-radius: 4px;
+}
+
+.data-display::-webkit-scrollbar-thumb:hover {
+  background: var(--sp-scrollbar-thumb-hover);
+}
+
+.no-data {
+  color: var(--sp-text-placeholder);
+  font-style: italic;
+  text-align: center;
+  padding: 2rem 0;
+}
+
+.data-line.system {
+  color: var(--sp-text-secondary);
+}
+
+.data-line.sent {
+  color: var(--sp-color-success);
+}
+
+.data-line.received {
+  color: var(--sp-color-info);
+}
+
+.data-line.error {
+  color: var(--sp-color-error);
+  font-weight: 500;
+}
+
+.data-line.warning {
+  color: var(--sp-color-warning);
+  font-weight: 500;
+}
+
+.data-line.success {
+  color: var(--sp-color-success);
+  font-weight: 500;
+}
+
+.data-line.info {
+  color: var(--sp-color-info);
+  font-weight: 400;
+}
+
+.data-line.normal {
+  color: var(--sp-text-primary);
+}
+
+.send-data-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-top: 1rem; /* 在日志区域中添加顶部边距 */
+  padding-top: 1rem; /* 添加内边距 */
+  border-top: 1px solid var(--sp-border-separator); /* 添加分隔线 */
+  flex-shrink: 0; /* 防止收缩 */
+}
+
+.send-data-container h4 {
+  margin: 0 0 0.5rem 0;
+  color: var(--sp-text-primary);
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.send-mode-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--sp-text-primary);
+  font-size: 0.9rem;
+  cursor: pointer;
+  user-select: none;
+}
+
+.send-mode-toggle input[type="checkbox"] {
+  margin: 0;
+  cursor: pointer;
+  accent-color: var(--sp-color-focus);
+}
+
 .send-input {
   flex: 1;
   padding: 0.5rem;
-  background-color: #333;
-  color: #ffffff;
-  border: 1px solid #555;
+  background-color: var(--sp-bg-input);
+  color: var(--sp-text-primary);
+  border: 1px solid var(--sp-border-tertiary);
   border-radius: 4px;
   font-size: 0.9rem;
+  box-shadow: 0 1px 3px var(--sp-shadow-medium);
 }
 
 .send-input:focus {
   outline: none;
-  border-color: #007acc;
+  border-color: var(--sp-color-focus);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
 .send-input:disabled {
   opacity: 0.6;
   cursor: not-allowed;
+  background-color: var(--sp-bg-status);
+  color: var(--sp-text-disabled);
+  border-color: var(--sp-border-primary);
+}
+
+.send-input::placeholder {
+  color: var(--sp-text-placeholder);
 }
 
 .send-btn {
   padding: 0.5rem 1rem;
-  background-color: #007acc;
+  background-color: var(--sp-color-primary);
   color: white;
   border: none;
   border-radius: 4px;
   cursor: pointer;
   font-weight: 500;
+  box-shadow: 0 2px 4px var(--sp-shadow-medium);
 }
 
 .send-btn:hover:not(:disabled) {
-  background-color: #005a9e;
+  background-color: var(--sp-color-primary-hover);
+  box-shadow: 0 4px 8px var(--sp-shadow-medium);
 }
 
 .send-btn:disabled {
   opacity: 0.6;
   cursor: not-allowed;
+  box-shadow: none;
 }
 
 .test-btn {
   padding: 0.5rem 1rem;
-  background-color: #ff9800;
+  background-color: var(--sp-color-warning);
   color: white;
   border: none;
   border-radius: 4px;
   cursor: pointer;
   font-weight: 500;
   align-self: flex-start;
+  box-shadow: 0 2px 4px var(--sp-shadow-medium);
 }
 
 .test-btn:hover:not(:disabled) {
-  background-color: #f57c00;
+  background-color: var(--sp-color-warning-hover);
+  box-shadow: 0 4px 8px var(--sp-shadow-medium);
 }
 
 .test-btn:disabled {
   opacity: 0.6;
   cursor: not-allowed;
+  box-shadow: none;
 }
 
 /* Responsive design for smaller screens */
@@ -576,241 +716,4 @@
   .data-display {
     min-height: 150px; /* 移动端减少最小高度 */
   }
-}
-
-/* ============================================
-   亮色主题样式 - SerialPortPanel
-   ============================================ */
-
-/* 主布局背景 */
-[data-theme="light"] .serial-port-panel-layout {
-  background-color: #f8fafc;
-  color: #1e293b;
-}
-
-/* 配置和日志区域 */
-[data-theme="light"] .serial-port-connection,
-[data-theme="light"] .serial-port-communication {
-  background-color: #ffffff;
-  border: 1px solid #e2e8f0;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-}
-
-[data-theme="light"] .serial-port-panel {
-  background-color: #ffffff;
-  color: #1e293b;
-  border: 1px solid #e2e8f0;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-}
-
-/* 标题 */
-[data-theme="light"] .serial-port-panel h3 {
-  color: #1e293b;
-}
-
-/* 错误消息 */
-[data-theme="light"] .error-message {
-  background-color: #fee2e2;
-  color: #dc2626;
-  border: 1px solid #fecaca;
-}
-
-/* 表单标签 */
-[data-theme="light"] .port-selection label,
-[data-theme="light"] .config-row label {
-  color: #374151;
-}
-
-/* 下拉选择框 */
-[data-theme="light"] .port-select-row select,
-[data-theme="light"] .config-row select {
-  background-color: #ffffff;
-  color: #1e293b;
-  border: 1px solid #d1d5db;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-}
-
-[data-theme="light"] .port-select-row select:focus,
-[data-theme="light"] .config-row select:focus {
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-}
-
-[data-theme="light"] .port-select-row select option,
-[data-theme="light"] .config-row select option {
-  background-color: #ffffff;
-  color: #1e293b;
-}
-
-/* 刷新按钮 */
-[data-theme="light"] .refresh-btn {
-  background-color: #3b82f6;
-  color: white;
-  box-shadow: 0 2px 4px rgba(59, 130, 246, 0.2);
-}
-
-[data-theme="light"] .refresh-btn:hover:not(:disabled) {
-  background-color: #2563eb;
-  box-shadow: 0 4px 8px rgba(59, 130, 246, 0.3);
-}
-
-/* 连接按钮 */
-[data-theme="light"] .connect-btn {
-  background-color: #10b981;
-  box-shadow: 0 2px 4px rgba(16, 185, 129, 0.2);
-}
-
-[data-theme="light"] .connect-btn:hover:not(:disabled) {
-  background-color: #059669;
-  box-shadow: 0 4px 8px rgba(16, 185, 129, 0.3);
-}
-
-[data-theme="light"] .disconnect-btn {
-  background-color: #ef4444;
-  box-shadow: 0 2px 4px rgba(239, 68, 68, 0.2);
-}
-
-[data-theme="light"] .disconnect-btn:hover:not(:disabled) {
-  background-color: #dc2626;
-  box-shadow: 0 4px 8px rgba(239, 68, 68, 0.3);
-}
-
-/* 状态指示器 */
-[data-theme="light"] .connection-status {
-  color: #374151;
-}
-
-[data-theme="light"] .connection-status.connected {
-  color: #059669;
-}
-
-[data-theme="light"] .connection-status.disconnected {
-  color: #dc2626;
-}
-
-[data-theme="light"] .connection-status.connecting {
-  color: #f59e0b;
-}
-
-/* 数据显示区域 */
-[data-theme="light"] .data-display {
-  background-color: #f8fafc;
-  border: 1px solid #e2e8f0;
-  color: #1e293b;
-}
-
-/* 滚动条 - 亮色主题 */
-[data-theme="light"] .data-display::-webkit-scrollbar {
-  width: 8px;
-}
-
-[data-theme="light"] .data-display::-webkit-scrollbar-track {
-  background: #f1f5f9;
-  border-radius: 4px;
-}
-
-[data-theme="light"] .data-display::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
-  border-radius: 4px;
-}
-
-[data-theme="light"] .data-display::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
-}
-
-/* 输入框 */
-[data-theme="light"] .send-input {
-  background-color: #ffffff;
-  color: #1e293b;
-  border: 1px solid #d1d5db;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-}
-
-[data-theme="light"] .send-input:focus {
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-}
-
-[data-theme="light"] .send-input::placeholder {
-  color: #9ca3af;
-}
-
-/* 发送按钮 */
-[data-theme="light"] .send-btn {
-  background-color: #3b82f6;
-  box-shadow: 0 2px 4px rgba(59, 130, 246, 0.2);
-}
-
-[data-theme="light"] .send-btn:hover:not(:disabled) {
-  background-color: #2563eb;
-  box-shadow: 0 4px 8px rgba(59, 130, 246, 0.3);
-}
-
-/* 测试按钮 */
-[data-theme="light"] .test-btn {
-  background-color: #f59e0b;
-  box-shadow: 0 2px 4px rgba(245, 158, 11, 0.2);
-}
-
-[data-theme="light"] .test-btn:hover:not(:disabled) {
-  background-color: #d97706;
-  box-shadow: 0 4px 8px rgba(245, 158, 11, 0.3);
-}
-
-/* 发送数据容器 */
-[data-theme="light"] .send-data-container {
-  border-top: 1px solid #e2e8f0;
-}
-
-/* 复选框和标签 */
-[data-theme="light"] .checkbox-row label {
-  color: #374151;
-}
-
-[data-theme="light"] .checkbox-row input[type="checkbox"] {
-  accent-color: #3b82f6;
-}
-
-/* 数据类型标签 */
-[data-theme="light"] .data-type {
-  color: #6b7280;
-}
-
-/* 通信历史记录 */
-[data-theme="light"] .data-item {
-  border-bottom: 1px solid #e2e8f0;
-}
-
-[data-theme="light"] .data-item.sent {
-  background-color: rgba(59, 130, 246, 0.05);
-}
-
-[data-theme="light"] .data-item.received {
-  background-color: rgba(16, 185, 129, 0.05);
-}
-
-[data-theme="light"] .data-item .timestamp {
-  color: #6b7280;
-}
-
-[data-theme="light"] .data-item .data-content {
-  color: #1e293b;
-}
-
-/* 禁用状态 */
-[data-theme="light"] .refresh-btn:disabled,
-[data-theme="light"] .connect-btn:disabled,
-[data-theme="light"] .disconnect-btn:disabled,
-[data-theme="light"] .send-btn:disabled,
-[data-theme="light"] .test-btn:disabled {
-  opacity: 0.5;
-  box-shadow: none;
-}
-
-[data-theme="light"] .port-select-row select:disabled,
-[data-theme="light"] .config-row select:disabled,
-[data-theme="light"] .send-input:disabled {
-  background-color: #f3f4f6;
-  color: #9ca3af;
-  border-color: #e5e7eb;
 }
