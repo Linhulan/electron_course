@@ -54,17 +54,23 @@ export const ImportDataViewer: React.FC<ImportDataViewerProps> = ({ className })
   // 导入数据处理
   const handleImportExcel = async () => {
     setIsImporting(true);
+    const toaseID = toast.loading(t('importViewer.importing', 'Importing...'), { position: 'top-center' });
     try {
       const result = await window.electron.importFromExcel();
       if (result.success && result.sessionData) {
         setImportedData(result.sessionData);
         // 自动选择第一个Session
         if (result.sessionData.length > 0) {
+          toast.success(`${result.importedCount} ${t('importViewer.importSuccess', 'Sessions imported successfully!')}`, { position: 'top-center', id: toaseID });
           setSelectedSession(result.sessionData[0]);
+        }
+        else {
+          toast.error(t('importViewer.noDataImported', 'Imported data is empty!'), { position: 'top-center', id: toaseID });
         }
       }
     } catch (error) {
       console.error('Import failed:', error);
+      toast.error(t('importViewer.importFailed', 'Import failed!'), { position: 'top-center', id: toaseID });
     } finally {
       setIsImporting(false);
     }
@@ -80,6 +86,9 @@ export const ImportDataViewer: React.FC<ImportDataViewerProps> = ({ className })
         if (result.sessionData.length > 0) {
           setSelectedSession(result.sessionData[0]);
           toast.success( `${result.importedCount} Sessions ${t('importViewer.importSuccess', 'Import successful!')}`, { id: toastId });
+        }
+        else {
+          toast.success(t('importViewer.noDataImported', 'Imported data is empty!'), { id: toastId });
         }
       }
     } catch (error) {
