@@ -6,6 +6,7 @@ import toast from 'react-hot-toast';
 import { VirtualSessionList } from './components/VirtualSessionList';
 import { VirtualDetailTable } from './components/VirtualDetailTable';
 import { debugLog } from './protocols';
+import { usePageDataStore } from './contexts/store';
 
 interface ImportDataViewerProps {
   className?: string;
@@ -37,7 +38,9 @@ export const ImportDataViewer: React.FC<ImportDataViewerProps> = ({ className })
   const detailsContentRef = useRef<HTMLDivElement>(null);
   
   // 状态管理
-  const [importedData, setImportedData] = useState<SessionData[]>([]);
+  // const [importedData, setImportedData] = useState<SessionData[]>([]);
+  const importedData = usePageDataStore(state => state.importedData);
+  const setImportedData = usePageDataStore(state => state.setImportedData);
   const [selectedSession, setSelectedSession] = useState<SessionData | null>(null);
   const [searchFilters, setSearchFilters] = useState<SearchFilters>({});
   const [isImporting, setIsImporting] = useState(false);

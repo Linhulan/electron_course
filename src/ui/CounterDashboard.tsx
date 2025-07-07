@@ -34,11 +34,11 @@ import {
   BaseProtocolData,
   ZMCommandCode,
 } from "./common/types";
-import { useAppConfigStore } from "./contexts/store";
+import { useAppConfigStore, usePageDataStore } from "./contexts/store";
 import { getSerialPortManager } from "./utils/SerialPortManager";
 import toast from "react-hot-toast";
 
-interface CounterStats {
+export interface CounterStats {
   totalRecords: Map<string, CurrencyCountRecord>; // 改为必需字段，包含所有货币的统计信息
   totalSessions: number;
   totalNotes?: number;
@@ -58,7 +58,7 @@ interface CounterDashboardProps {
 // Session管理函数 - 处理点钞会话
 const handleSessionUpdate = (
   protocolData: CountingProtocolData,
-  currentSession: SessionData | null,
+  currentSession: SessionData | null | undefined,
   autoSave: boolean = true,
   setCurrentSession: (session: SessionData | null) => void,
   setSessionData: (updater: (prev: SessionData[]) => SessionData[]) => void
@@ -105,7 +105,7 @@ const handleSessionUpdate = (
     const tempSession: SessionData = {
       id: generateSnowflakeId(),
       no: 999,
-      timestamp: now.toLocaleTimeString(),
+      timestamp: now.toLocaleString(),
       startTime: now.toLocaleString(),
       totalCount: isSessionUpdate(protocolData.status)
         ? protocolData.totalCount
@@ -134,7 +134,6 @@ const handleSessionUpdate = (
   const updatedSession: SessionData = {
     ...currentSession,
     status: status,
-    timestamp: now.toLocaleTimeString(),
     errorCode:
       protocolData.errorCode !== 0
         ? `E${protocolData.errorCode
@@ -213,7 +212,7 @@ const handleSessionUpdate = (
     updatedSession.details?.push({
       id: generateSnowflakeId(),
       no: (currentSession.details?.length || 0) + 1,
-      timestamp: now.toLocaleTimeString(),
+      timestamp: now.toLocaleString(),
       currencyCode: currencyCode,
       denomination: denomination,
       status: status,
@@ -280,18 +279,15 @@ export const CounterDashboard: React.FC<CounterDashboardProps> = ({
   useEffect(() => {
     initializeProtocols();
   }, []);
-  const [sessionData, setSessionData] = useState<SessionData[]>([]); // 改为Session数据
-  const [currentSession, setCurrentSession] = useState<SessionData | null>(
-    null
+  const sessionData = usePageDataStore((state) => state.sessions);
+  const setSessionData = usePageDataStore((state) => state.setSessions);
+  const currentSession = usePageDataStore((state) => state.currentSession);
+  const setCurrentSession = usePageDataStore(
+    (state) => state.setCurrentSession
   );
-  const [stats, setStats] = useState<CounterStats>({
-    totalRecords: new Map<string, CurrencyCountRecord>(),
-    totalSessions: 0,
-    totalAmount: 0,
-    totalNotes: 0,
-    averageSpeed: 0,
-    errorPcs: 0,
-  });
+  const stats = usePageDataStore((state) => state.stats);
+  const setStats = usePageDataStore((state) => state.setStats);
+
   const autoSave = useAppConfigStore((state) => state.autoSave);
   const serialConnected = useAppConfigStore((state) => state.serialConnected);
 
@@ -579,17 +575,21 @@ export const CounterDashboard: React.FC<CounterDashboardProps> = ({
     };
 
     const cutoffTime = now.getTime() - timeRanges[selectedTimeRange];
-
-    return sessionData.filter((item) => {
+    const filteredSessionData = sessionData.filter((item) => {
       const itemTime = new Date(
-        `${new Date().toDateString()} ${item.timestamp}`
+        `${item.timestamp}`
       ).getTime();
       return itemTime >= cutoffTime;
     });
+    console.log(`sessionData length: ${sessionData.length}`);
+    console.log(`Filtered session data length: ${filteredSessionData.length}`);
+
+    return filteredSessionData;
   }, [sessionData, selectedTimeRange]);
   // 计算统计数据
   useEffect(() => {
     const filteredData = getFilteredData();
+    console.log("Filtered session data:", filteredData);
 
     // 构建totalRecords - 汇总所有Session的货币统计信息
     const totalRecords = new Map<string, CurrencyCountRecord>();
@@ -610,6 +610,7 @@ export const CounterDashboard: React.FC<CounterDashboardProps> = ({
             existing.totalCount += record.totalCount;
             existing.totalAmount += record.totalAmount;
             existing.errorCount += record.errorCount;
+
 
             // 合并面额分布
             record.denominationBreakdown.forEach((detail, denomination) => {
@@ -696,10 +697,10 @@ export const CounterDashboard: React.FC<CounterDashboardProps> = ({
       errorPcs,
     };
     setStats(newStats);
-  }, [getFilteredData]);
+  }, [getFilteredData, setStats]);
 
   const clearData = () => {
-    setSessionData([]);
+    setSessionData(() => []);
     setCurrentSession(null);
     setSelectedSessionId(null); // 清除选中的session引用
     setSimulationSession(null); // 清除仿真session引用
@@ -717,7 +718,7 @@ export const CounterDashboard: React.FC<CounterDashboardProps> = ({
   // 清空当前Session，但保留历史记录
   const clearCurrentSession = useCallback(() => {
     setCurrentSession(null);
-  }, []);
+  }, [setCurrentSession]);
 
   // 处理Session详情抽屉
   const handleSessionClick = useCallback((sessionId: string) => {
