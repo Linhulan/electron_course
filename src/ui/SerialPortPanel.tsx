@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import "./SerialPortPanel.css";
 import { useAppConfigStore } from "./contexts/store";
 import toast from "react-hot-toast";
+import { getSerialPortManager, SerialPortManager } from "./utils/SerialPortManager";
 
 interface SerialPortPanelProps {
   className?: string;
@@ -12,27 +13,30 @@ export const SerialPortPanel: React.FC<SerialPortPanelProps> = ({
   className,
 }) => {
   const { t } = useTranslation();
-  const [availablePorts, setAvailablePorts] = useState<SerialPortInfo[]>([]);
-  const [selectedPort, setSelectedPort] = useState<string>("");
-  const [connectionStatus, setConnectionStatus] =
-    useState<SerialConnectionStatus>({ isConnected: false });
+  const serialManager = getSerialPortManager();
+  
+  // 简化的状态管理 - 大部分状态由 SerialPortManager 管理
   const [serialData, setSerialData] = useState<string[]>([]);
   const [sendMessage, setSendMessage] = useState<string>("");
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string>("");
   const [isHexMode, setIsHexMode] = useState<boolean>(true);
   const [showTimestamp, setShowTimestamp] = useState<boolean>(true);
-  const [isHexSendMode, setIsHexSendMode] = useState<boolean>(true); // 发送模式：false=文本，true=十六进制
+  const [isHexSendMode, setIsHexSendMode] = useState<boolean>(true);
+  
+  // 从 SerialPortManager 获取状态
+  const [availablePorts, setAvailablePorts] = useState<SerialPortInfo[]>([]);
+  const [selectedPort, setSelectedPort] = useState<string>("");
+  const [connectionStatus, setConnectionStatus] = useState<SerialConnectionStatus>({ isConnected: false });
   const [config, setConfig] = useState<SerialPortConfig>({
     baudRate: 115200,
     dataBits: 8,
     stopBits: 1,
     parity: "none",
   });
+  
   const serialConnected = useAppConfigStore((state) => state.serialConnected);
-  const setSerialConnected = useAppConfigStore(
-    (state) => state.setSerialConnected
-  );
+  const setSerialConnected = useAppConfigStore((state) => state.setSerialConnected);
 
   const dataDisplayRef = useRef<HTMLDivElement>(null);
   const addToDataDisplay = useCallback(
@@ -80,157 +84,148 @@ export const SerialPortPanel: React.FC<SerialPortPanelProps> = ({
   useEffect(() => {
     const updateReceiveMode = async () => {
       try {
-        await window.electron.setSerialReceiveMode(isHexMode);
+        await serialManager.setReceiveMode(isHexMode);
         console.log(
           `Serial receive mode set to: ${
             isHexMode ? "Raw (Hex)" : "Line (Text)"
           }`
         );
-      } catch (error) {
-        console.error("Failed to set serial receive mode:", error);
+      } catch {
+        console.error("Failed to set serial receive mode");
       }
     };
 
     updateReceiveMode();
-  }, [isHexMode]);
+  }, [isHexMode, serialManager]);
 
+  // 自动连接方法 - 使用 SerialPortManager
   const autoConnect = useCallback(async () => {
-    if (availablePorts.length === 0) {
-      console.warn("No available ports to auto-connect");
-      return;
-    }
     const toastId = toast.loading(
       t("counter.autoConnectInfo", "Connecting to serial port..."),
       { position: "top-right" }
     );
 
-    for (const port of availablePorts) {
-      console.log(`Attempting to connect to port: ${port.path}`);
+    try {
+      const success = await serialManager.autoConnect();
       
-
-      const connected = await window.electron.connectSerialPort(
-        port.path,
-        config
-      );
-
-      if (!connected) {
-        continue;
-      }
-
-      setSelectedPort(port.path);
-      addToDataDisplay(`Auto-connected to ${port.path}`, "system");
-      await window.electron.sendSerialHexData("AA55030001000001A55A");
-      addToDataDisplay(`Handshake sent to ${port.path}`, "system");
-
-      await new Promise((resolve) => setTimeout(resolve, 300));
-
-      if (useAppConfigStore.getState().serialConnected) {
+      if (success) {
         toast.success(
           t("counter.autoConnectSuccess", "Successfully connected to serial port."),
           { id: toastId }
         );
-        return;
+      } else {
+        toast.error(
+          t("counter.autoConnectFailed", "Failed to auto-connect to any serial port."),
+          { id: toastId }
+        );
       }
-      //断开错误的连接
-      await window.electron.disconnectSerialPort();
+    } catch {
+      toast.error(
+        t("counter.autoConnectFailed", "Failed to auto-connect to any serial port."),
+        { id: toastId }
+      );
     }
+  }, [serialManager, t]);
 
-    toast.error(
-      t("counter.autoConnectFailed", "Failed to auto-connect to any serial port."),
-      { id: toastId }
-    );
-  }, [availablePorts, serialConnected, config, addToDataDisplay]);
-
+  // 刷新端口 - 使用 SerialPortManager
   const refreshPorts = useCallback(async () => {
     try {
       setIsLoading(true);
-      const ports = await window.electron.listSerialPorts();
-      setAvailablePorts(ports);
-
-      // If currently selected port is no longer available, clear selection
-      if (selectedPort && !ports.some((port) => port.path === selectedPort)) {
-        setSelectedPort("");
-      }
-    } catch (err) {
-      setError(`Failed to list ports: ${err}`);
+      await serialManager.refreshPorts();
+    } catch (error) {
+      setError(`Failed to list ports: ${error}`);
     } finally {
       setIsLoading(false);
     }
-  }, [selectedPort]);
+  }, [serialManager]);
 
-  const checkConnectionStatus = useCallback(async () => {
-    try {
-      const status = await window.electron.getSerialConnectionStatus();
-      setConnectionStatus(status);
-    } catch (err) {
-      setError(`Failed to check connection status: ${err}`);
-    }
-  }, []);
-
-  // Load available ports on component mount
+  // 初始化 SerialPortManager 和设置事件监听
   useEffect(() => {
-    refreshPorts();
-    checkConnectionStatus();
+    const initializeSerialManager = async () => {
+      try {
+        // 更新配置
+        serialManager.updateConfig(config);
+        
+        // 初始化管理器
+        await serialManager.initialize();
+        
+        // 设置状态同步
+        setAvailablePorts(serialManager.getAvailablePorts());
+        setSelectedPort(serialManager.getSelectedPort());
+        setConnectionStatus(serialManager.getConnectionStatus());
+        
+        // 设置事件监听器
+        serialManager.addEventListener({
+          onConnected: (data) => {
+            setConnectionStatus({ isConnected: true, portPath: data.portPath });
+            setSelectedPort(data.portPath);
+            addToDataDisplay(
+              `Connected to ${data.portPath} with baud rate ${data.config.baudRate}`,
+              "system"
+            );
+            setError("");
+          },
+          onDisconnected: () => {
+            setConnectionStatus({ isConnected: false });
+            addToDataDisplay("Disconnected from serial port", "system");
+          },
+          onDataReceived: (data) => {
+            // 根据时间戳开关决定显示格式
+            const displayText = showTimestamp
+              ? isHexMode
+                ? `${data.timestamp}:${data.hexData}`
+                : `${data.timestamp}:${data.textData}`
+              : isHexMode
+              ? data.hexData
+              : data.textData;
 
-    // Subscribe to serial port events
-    const unsubscribeConnected = window.electron.onSerialConnected((data) => {
-      setConnectionStatus({ isConnected: true, portPath: data.portPath });
-      addToDataDisplay(
-        `Connected to ${data.portPath} with baud rate ${data.config.baudRate}`,
-        "system"
-      );
-      setError("");
-    });
-
-    const unsubscribeDisconnected = window.electron.onSerialDisconnected(() => {
-      setConnectionStatus({ isConnected: false });
-      addToDataDisplay("Disconnected from serial port", "system");
-    });
-    const unsubscribeDataReceived = window.electron.onSerialDataReceived(
-      (data) => {
-        // 根据时间戳开关决定显示格式
-        const displayText = showTimestamp
-          ? isHexMode
-            ? `${data.timestamp}:${data.hexData}`
-            : `${data.timestamp}:${data.textData}`
-          : isHexMode
-          ? data.hexData
-          : data.textData;
-
-        // 使用从后端传来的messageType
-        addToDataDisplay(
-          displayText,
-          data.messageType as
-            | "system"
-            | "sent"
-            | "received"
-            | "error"
-            | "warning"
-            | "success"
-            | "info"
-            | "normal",
-          true
-        );
+            // 使用从后端传来的messageType
+            addToDataDisplay(
+              displayText,
+              data.messageType as
+                | "system"
+                | "sent"
+                | "received"
+                | "error"
+                | "warning"
+                | "success"
+                | "info"
+                | "normal",
+              true
+            );
+          },
+          onError: (error) => {
+            setError(error.error);
+            addToDataDisplay(`Error: ${error.error}`, "error");
+          },
+          onPortsUpdated: (ports) => {
+            setAvailablePorts(ports);
+            // 如果当前选中的端口不再可用，清除选择
+            if (selectedPort && !ports.some((port) => port.path === selectedPort)) {
+              setSelectedPort("");
+            }
+          }
+        });
+        
+      } catch (error) {
+        console.error('Failed to initialize SerialPortManager:', error);
+        setError(`Failed to initialize serial port manager: ${error}`);
       }
-    );
+    };
 
-    const unsubscribeError = window.electron.onSerialError((error) => {
-      setError(error.error);
-      addToDataDisplay(`Error: ${error.error}`, "error");
-    });
+    initializeSerialManager();
 
+    // 清理函数
     return () => {
-      unsubscribeConnected();
-      unsubscribeDisconnected();
-      unsubscribeDataReceived();
-      unsubscribeError();
+      serialManager.removeEventListener();
     };
   }, [
-    refreshPorts,
-    checkConnectionStatus,
+    serialManager,
+    config,
     addToDataDisplay,
     isHexMode,
     showTimestamp,
+    selectedPort,
   ]);
 
   // 监听来自 CounterDashboard 的手动自动连接事件
@@ -252,6 +247,7 @@ export const SerialPortPanel: React.FC<SerialPortPanelProps> = ({
     };
   }, [autoConnect, addToDataDisplay]);
 
+  // 连接方法 - 使用 SerialPortManager
   const handleConnect = async () => {
     if (!selectedPort) {
       setError("Please select a port first");
@@ -261,46 +257,55 @@ export const SerialPortPanel: React.FC<SerialPortPanelProps> = ({
     try {
       setIsLoading(true);
       setError("");
-      await window.electron.connectSerialPort(selectedPort, config);
-      setSerialConnected(true);
-    } catch (err) {
+      
+      // 更新管理器配置
+      serialManager.updateConfig(config);
+      
+      const success = await serialManager.connect(selectedPort);
+      if (success) {
+        setSerialConnected(true);
+      } else {
+        setError(`Failed to connect to ${selectedPort}`);
+      }
+    } catch {
       setError(`Failed to connect: ${selectedPort}`);
     } finally {
       setIsLoading(false);
     }
   };
 
+  // 断开连接方法 - 使用 SerialPortManager
   const handleDisconnect = async () => {
     try {
       setIsLoading(true);
       setError("");
-      await window.electron.disconnectSerialPort();
+      await serialManager.disconnect();
       setSerialConnected(false);
-    } catch (err) {
-      setError(`Failed to disconnect: ${err}`);
+    } catch (error) {
+      setError(`Failed to disconnect: ${error}`);
     } finally {
       setIsLoading(false);
     }
   };
 
+  // 发送数据方法 - 使用 SerialPortManager
   const handleSendData = async () => {
     if (!sendMessage.trim()) return;
     try {
       setError("");
+      
+      await serialManager.sendData(sendMessage, isHexSendMode);
+      
       if (isHexSendMode) {
-        // 发送十六进制数据
-        await window.electron.sendSerialHexData(sendMessage);
-        const formattedHex = formatHexString(sendMessage);
+        const formattedHex = SerialPortManager.formatHexString(sendMessage);
         addToDataDisplay(`${formattedHex} (HEX)`, "sent");
       } else {
-        // 发送文本数据
-        await window.electron.sendSerialData(sendMessage);
         addToDataDisplay(`${sendMessage}`, "sent");
       }
 
       setSendMessage("");
-    } catch (err) {
-      setError(`Failed to send data: ${err}`);
+    } catch (error) {
+      setError(`Failed to send data: ${error}`);
     }
   };
 
@@ -308,19 +313,15 @@ export const SerialPortPanel: React.FC<SerialPortPanelProps> = ({
     setSerialData([]);
   };
 
-  // 格式化十六进制字符串，每两个字符之间添加空格
-  const formatHexString = (hexString: string): string => {
-    // 移除空格和其他分隔符，只保留十六进制字符
-    const cleanHex = hexString.replace(/[^0-9A-Fa-f]/g, "");
-    // 每两个字符之间添加空格
-    return cleanHex.replace(/(.{2})/g, "$1 ").trim();
-  };
+  // 处理配置变化 - 同步到 SerialPortManager
+  useEffect(() => {
+    serialManager.updateConfig(config);
+  }, [config, serialManager]);
 
-  const getPortDisplayName = (port: SerialPortInfo): string => {
-    return (
-      port.displayName ||
-      `${port.path} ${port.friendlyName ? `(${port.friendlyName})` : ""}`
-    );
+  // 处理端口选择变化
+  const handlePortSelect = (portPath: string) => {
+    setSelectedPort(portPath);
+    serialManager.setSelectedPort(portPath);
   };
 
   return (
@@ -340,7 +341,7 @@ export const SerialPortPanel: React.FC<SerialPortPanelProps> = ({
               <select
                 id="port-select"
                 value={selectedPort}
-                onChange={(e) => setSelectedPort(e.target.value)}
+                onChange={(e) => handlePortSelect(e.target.value)}
                 disabled={connectionStatus.isConnected || isLoading}
                 title={
                   selectedPort
@@ -354,9 +355,9 @@ export const SerialPortPanel: React.FC<SerialPortPanelProps> = ({
                   <option
                     key={port.path}
                     value={port.path}
-                    title={getPortDisplayName(port)}
+                    title={SerialPortManager.getPortDisplayName(port)}
                   >
-                    {getPortDisplayName(port)}
+                    {SerialPortManager.getPortDisplayName(port)}
                   </option>
                 ))}
               </select>{" "}
