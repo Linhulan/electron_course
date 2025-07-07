@@ -206,13 +206,14 @@ export class SerialPortManager {
   }
 
   // 断开连接
-  public async disconnect(): Promise<void> {
+  public async disconnect(): Promise<boolean> {
     try {
       await window.electron.disconnectSerialPort();
+      return true;
     } catch (error) {
       const errorObj = { error: `Failed to disconnect: ${error}`, code: "DISCONNECT_FAILED" };
       this.eventListeners.onError?.(errorObj);
-      throw error;
+      return false;
     }
   }
 
@@ -260,35 +261,62 @@ export class SerialPortManager {
   // 执行握手验证
   private async performHandshake(): Promise<boolean> {
     return new Promise((resolve) => {
+      let sendTaskID: number | null = null;
+      let sendCount = 0;
+      const maxSendCount = 3;
+
+      if (this.handshakeTimeout) {
+        clearTimeout(this.handshakeTimeout);
+      }
+
+      // 清理资源的通用函数
+      const cleanup = () => {
+        if (this.handshakeTimeout) {
+          clearTimeout(this.handshakeTimeout);
+          this.handshakeTimeout = null;
+        }
+        if (sendTaskID) {
+          clearInterval(sendTaskID);
+          sendTaskID = null;
+        }
+      };
+
       // 设置握手超时
       this.handshakeTimeout = window.setTimeout(() => {
         console.warn("Handshake timeout");
+        cleanup();
         resolve(false);
-      }, 1000); // 1秒超时
+      }, 500);
 
       // 临时监听数据以检测握手响应
       const tempUnsubscribe = window.electron.onSerialDataReceived((data: SerialDataReceived) => {
         if (data.hexData && this.isHandshakeResponse(data.hexData)) {
           console.log("Handshake response received:", data.hexData);
-          if (this.handshakeTimeout) {
-            clearTimeout(this.handshakeTimeout);
-            this.handshakeTimeout = null;
-          }
-          // 清除临时监听器
+          cleanup();
           tempUnsubscribe();
           resolve(true);
         }
       });
 
-      // 发送握手信号
-      this.sendData("AA55030001000001A55A", true).catch(() => {
-        if (this.handshakeTimeout) {
-          clearTimeout(this.handshakeTimeout);
-          this.handshakeTimeout = null;
+      // 发送3次握手信号, 每次间隔100ms
+      sendTaskID = window.setInterval(() => {
+        sendCount++;
+        
+        this.sendData("AA55030001000001A55A", true).catch((error) => {
+          console.error("Failed to send handshake data:", error);
+          cleanup();
+          tempUnsubscribe();
+          resolve(false);
+        });
+
+        // 发送完3次后停止发送
+        if (sendCount >= maxSendCount) {
+          if (sendTaskID) {
+            clearInterval(sendTaskID);
+            sendTaskID = null;
+          }
         }
-        tempUnsubscribe();
-        resolve(false);
-      });
+      }, 100);
     });
   }
 
@@ -297,8 +325,32 @@ export class SerialPortManager {
     // 移除空格并转换为大写
     const cleanHex = hexData.replace(/\s+/g, '').toUpperCase();
     
-    // 检查是否包含握手响应特征, 回报为AA55030001000001A55A
-    return cleanHex.includes('AA55030001000001A55A');
+    // 预期的握手响应特征码 - 修正后的格式
+    const expectedResponsePattern = 'AA55030001000001A55A';
+    
+    // 检查是否包含完整的握手响应特征
+    if (cleanHex.includes(expectedResponsePattern)) {
+      console.log(`Valid handshake response detected: ${cleanHex}`);
+      return true;
+    }
+    
+    // 也可以检查其他可能的响应格式（如果设备有不同的响应格式）
+    // 例如可能的变体格式
+    const alternativePatterns = [
+      'AA55030001000001A55A',  // 标准格式
+      // 可以根据实际协议添加其他可能的响应格式
+    ];
+    
+    for (const pattern of alternativePatterns) {
+      if (cleanHex.includes(pattern)) {
+        console.log(`Alternative handshake response detected: ${cleanHex}`);
+        return true;
+      }
+    }
+    
+    // 记录未识别的数据用于调试
+    console.log(`Unrecognized data during handshake: ${cleanHex}`);
+    return false;
   }
 
   // 发送数据
@@ -341,21 +393,24 @@ export class SerialPortManager {
   }
 
   // 获取连接状态
-  public getConnectionStatus(): SerialConnectionStatus {
-    return { ...this.connectionStatus };
+  public getConnectionStatus(): SerialConnectionStatus & { isConnecting: boolean } {
+    return {
+      ...this.connectionStatus,
+      isConnecting: this.isConnecting
+    };
   }
 
-  // 获取可用端口
+  // 获取可用端口列表
   public getAvailablePorts(): SerialPortInfo[] {
     return [...this.availablePorts];
   }
 
-  // 获取选中端口
+  // 获取选中的端口
   public getSelectedPort(): string {
     return this.selectedPort;
   }
 
-  // 设置选中端口
+  // 设置选中的端口
   public setSelectedPort(portPath: string): void {
     this.selectedPort = portPath;
   }
@@ -365,19 +420,75 @@ export class SerialPortManager {
     return this.connectionStatus.isConnected;
   }
 
-  // 检查是否正在连接
-  public isConnectingStatus(): boolean {
-    return this.isConnecting;
-  }
-
   // 添加事件监听器
-  public addEventListener(events: Partial<SerialPortManagerEvents>): void {
-    this.eventListeners = { ...this.eventListeners, ...events };
+  public addEventListener(listeners: SerialPortManagerEvents): void {
+    this.eventListeners = { ...this.eventListeners, ...listeners };
   }
 
   // 移除事件监听器
   public removeEventListener(): void {
     this.eventListeners = {};
+  }
+
+  // 重置连接状态
+  public resetConnectionState(): void {
+    this.isConnecting = false;
+    this.connectionStatus = { isConnected: false };
+    this.selectedPort = "";
+    
+    // 清理握手超时
+    if (this.handshakeTimeout) {
+      clearTimeout(this.handshakeTimeout);
+      this.handshakeTimeout = null;
+    }
+    
+    // 更新全局状态
+    useAppConfigStore.getState().setSerialConnected(false);
+    
+    // 触发状态变化事件
+    this.eventListeners.onConnectionStateChanged?.(false);
+  }
+
+  // 安全断开连接（包含重试机制）
+  public async safeDisconnect(maxRetries: number = 3): Promise<void> {
+    let retryCount = 0;
+    
+    while (retryCount < maxRetries) {
+      try {
+        await this.disconnect();
+        console.log('Successfully disconnected');
+        return;
+      } catch (error) {
+        retryCount++;
+        console.warn(`Disconnect attempt ${retryCount} failed:`, error);
+        
+        if (retryCount >= maxRetries) {
+          console.error('Failed to disconnect after multiple attempts');
+          // 强制重置状态
+          this.resetConnectionState();
+          throw new Error(`Failed to disconnect after ${maxRetries} attempts`);
+        }
+        
+        // 等待后重试
+        await new Promise(resolve => setTimeout(resolve, 500));
+      }
+    }
+  }
+
+  // 检查设备是否还在响应
+  public async isDeviceResponding(): Promise<boolean> {
+    if (!this.connectionStatus.isConnected) {
+      return false;
+    }
+
+    try {
+      // 发送一个测试命令并等待响应
+      const responseReceived = await this.performHandshake();
+      return responseReceived;
+    } catch (error) {
+      console.warn('Device responsiveness check failed:', error);
+      return false;
+    }
   }
 
   // 清理资源

@@ -294,11 +294,9 @@ export const CounterDashboard: React.FC<CounterDashboardProps> = ({
   });
   const autoSave = useAppConfigStore((state) => state.autoSave);
   const serialConnected = useAppConfigStore((state) => state.serialConnected);
-  const setSerialConnected = useAppConfigStore(
-    (state) => state.setSerialConnected
-  );
 
   const [isConnected, setIsConnected] = useState(false);
+  const [autoConnecting, setAutoConnecting] = useState(false);
   const [isSimulationMode, setIsSimulationMode] = useState(false);
   const [simulationInterval, setSimulationInterval] = useState<number | null>(
     null
@@ -1158,15 +1156,29 @@ export const CounterDashboard: React.FC<CounterDashboardProps> = ({
   }, []);
 
   const handleAutoConnect = useCallback(async () => {
+    if ( autoConnecting ) {
+      return; // 如果正在连接中，直接返回
+    }
     // 直接使用 SerialPortManager 执行自动连接
-    if (!serialConnected) {
+    if ( serialConnected ) 
+    {
+      const isSuccess =  await serialManager.disconnect();
+      if ( isSuccess ) {
+        toast.success(t("counter.autoDisconnectSuccess", "Successfully disconnected from serial port."), { position: "top-right" });
+      } else {
+        toast.error(t("counter.autoDisconnectFailed", "Failed to disconnect from serial port."), { position: "top-right" });
+      }
+    } 
+    else {
       const toastId = toast.loading(
         t("counter.autoConnectInfo", "Connecting to serial port..."),
         { position: "top-right" }
       );
 
       try {
+        setAutoConnecting(true);
         const success = await serialManager.autoConnect();
+        setAutoConnecting(false);
         
         if (success) {
           toast.success(
@@ -1186,7 +1198,7 @@ export const CounterDashboard: React.FC<CounterDashboardProps> = ({
         );
       }
     }
-  },[serialConnected, serialManager, t]);
+  },[serialConnected, serialManager, t, autoConnecting]);
 
 
 
@@ -1202,9 +1214,7 @@ export const CounterDashboard: React.FC<CounterDashboardProps> = ({
             className="connection-status"
             onClick={handleAutoConnect}
             title={
-              serialConnected
-                ? t("counter.connected")
-                : t("counter.disconnected")
+              serialConnected ? t("counter.connected") : t("counter.disconnected")
             }
           >
             <span
@@ -1213,9 +1223,13 @@ export const CounterDashboard: React.FC<CounterDashboardProps> = ({
               }`}
             ></span>
             <span>
-              {serialConnected
-                ? t("counter.connected")
-                : t("counter.disconnected")}
+              {
+              autoConnecting ? (
+                t("counter.autoConnecting", "Connecting...")
+              ) : (
+                serialConnected ? t("counter.connected") : t("counter.disconnected")
+              )
+              }
             </span>
           </button>
         </div>{" "}
