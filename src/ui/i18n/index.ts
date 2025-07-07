@@ -685,6 +685,7 @@ const enUS = {
       sortByCount: "Sort by Count",
       sortByAmount: "Sort by Amount",
       noSessionsLoaded: "No sessions loaded",
+      noDataImported:"Imported data is empty",
       importHint: "Click Import to load data",
       sessionDetails: "Session Details",
       records: "records",
