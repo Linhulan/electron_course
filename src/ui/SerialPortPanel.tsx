@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import "./SerialPortPanel.css";
 import { useAppConfigStore } from "./contexts/store";
-import toast from "react-hot-toast";
 import { getSerialPortManager, SerialPortManager } from "./utils/SerialPortManager";
 
 interface SerialPortPanelProps {
@@ -97,35 +96,6 @@ export const SerialPortPanel: React.FC<SerialPortPanelProps> = ({
 
     updateReceiveMode();
   }, [isHexMode, serialManager]);
-
-  // 自动连接方法 - 使用 SerialPortManager
-  const autoConnect = useCallback(async () => {
-    const toastId = toast.loading(
-      t("counter.autoConnectInfo", "Connecting to serial port..."),
-      { position: "top-right" }
-    );
-
-    try {
-      const success = await serialManager.autoConnect();
-      
-      if (success) {
-        toast.success(
-          t("counter.autoConnectSuccess", "Successfully connected to serial port."),
-          { id: toastId }
-        );
-      } else {
-        toast.error(
-          t("counter.autoConnectFailed", "Failed to auto-connect to any serial port."),
-          { id: toastId }
-        );
-      }
-    } catch {
-      toast.error(
-        t("counter.autoConnectFailed", "Failed to auto-connect to any serial port."),
-        { id: toastId }
-      );
-    }
-  }, [serialManager, t]);
 
   // 刷新端口 - 使用 SerialPortManager
   const refreshPorts = useCallback(async () => {
@@ -227,25 +197,6 @@ export const SerialPortPanel: React.FC<SerialPortPanelProps> = ({
     showTimestamp,
     selectedPort,
   ]);
-
-  // 监听来自 CounterDashboard 的手动自动连接事件
-  useEffect(() => {
-    const handleManualAutoConnect = () => {
-      console.log("Manual auto-connect triggered from dashboard");
-      addToDataDisplay(
-        "Manual auto-connect triggered from dashboard",
-        "system"
-      );
-      autoConnect();
-    };
-
-    // 监听自定义事件
-    window.addEventListener("triggerAutoConnect", handleManualAutoConnect);
-
-    return () => {
-      window.removeEventListener("triggerAutoConnect", handleManualAutoConnect);
-    };
-  }, [autoConnect, addToDataDisplay]);
 
   // 连接方法 - 使用 SerialPortManager
   const handleConnect = async () => {

@@ -35,6 +35,7 @@ import {
   ZMCommandCode,
 } from "./common/types";
 import { useAppConfigStore } from "./contexts/store";
+import { getSerialPortManager } from "./utils/SerialPortManager";
 import toast from "react-hot-toast";
 
 interface CounterStats {
@@ -273,6 +274,7 @@ export const CounterDashboard: React.FC<CounterDashboardProps> = ({
   className,
 }) => {
   const { t } = useTranslation();
+  const serialManager = getSerialPortManager();
 
   // 初始化协议解析器
   useEffect(() => {
@@ -482,42 +484,47 @@ export const CounterDashboard: React.FC<CounterDashboardProps> = ({
     }
   }, []);
 
-  // 监听真实的串口连接状态
+  // 监听真实的串口连接状态 - 使用 SerialPortManager
   useEffect(() => {
-    // 检查初始连接状态
-    const checkInitialStatus = async () => {
+    // 初始化连接状态
+    const initializeConnectionStatus = async () => {
       try {
-        const status = await window.electron.getSerialConnectionStatus();
-        setIsConnected(status.isConnected);
-      } catch (err) {
-        console.error("Failed to check initial connection status:", err);
+        await serialManager.initialize();
+        setIsConnected(serialManager.isConnected());
+      } catch (error) {
+        console.error("Failed to initialize SerialPortManager:", error);
       }
     };
 
-    checkInitialStatus();
+    initializeConnectionStatus();
 
-    const unsubscribeConnected = window.electron.onSerialConnected(() => {
-      setIsConnected(true);
+    // 设置事件监听器
+    serialManager.addEventListener({
+      onConnected: () => {
+        setIsConnected(true);
+      },
+      onDisconnected: () => {
+        setIsConnected(false);
+      },
+      onConnectionStateChanged: (connected) => {
+        setIsConnected(connected);
+      }
     });
 
-    const unsubscribeDisconnected = window.electron.onSerialDisconnected(() => {
-      setIsConnected(false);
-    });
     return () => {
-      unsubscribeConnected();
-      unsubscribeDisconnected();
+      serialManager.removeEventListener();
     };
-  }, []); // 监听串口数据并解析协议 - 使用新的协议管理器
+  }, [serialManager]); // 监听串口数据并解析协议 - 使用新的协议管理器
 
   // 使用策略模式对不同协议的不同模式码进行处理
-  const handleProtocolData = (protocolDataArr: BaseProtocolData[]) => {
+  const handleProtocolData = useCallback((protocolDataArr: BaseProtocolData[]) => {
     console.log("Received protocol data:", protocolDataArr);
     protocolDataArr.forEach((data) => {
       switch (data.protocolType) {
         case "ZMProtocol":
           if (data.cmdGroup == ZMCommandCode.HANDSHAKE) {
             console.log("----------Received ZM handshake data:", data);
-            setSerialConnected(true);
+            // setSerialConnected(true);
           } else if (data.cmdGroup === ZMCommandCode.COUNT_RESULT) {
             console.log("Received ZM count result data:", data);
             // 处理ZM点钞结果数据
@@ -538,9 +545,10 @@ export const CounterDashboard: React.FC<CounterDashboardProps> = ({
           console.warn("Unknown protocol type:", data.protocolType);
       }
     });
-  };
+  }, [currentSession, autoSave, setCurrentSession, setSessionData]);
 
   useEffect(() => {
+    console.log("Dashboard Setting up serial data listener...");
     const unsubscribeDataReceived = window.electron.onSerialDataReceived(
       (data) => {
         // 只处理十六进制数据
@@ -561,7 +569,7 @@ export const CounterDashboard: React.FC<CounterDashboardProps> = ({
     return () => {
       unsubscribeDataReceived();
     };
-  }, [isConnected, currentSession, autoSave]);
+  }, [isConnected, handleProtocolData]);
 
   const getFilteredData = useCallback(() => {
     const now = new Date();
@@ -1149,6 +1157,39 @@ export const CounterDashboard: React.FC<CounterDashboardProps> = ({
     }
   }, []);
 
+  const handleAutoConnect = useCallback(async () => {
+    // 直接使用 SerialPortManager 执行自动连接
+    if (!serialConnected) {
+      const toastId = toast.loading(
+        t("counter.autoConnectInfo", "Connecting to serial port..."),
+        { position: "top-right" }
+      );
+
+      try {
+        const success = await serialManager.autoConnect();
+        
+        if (success) {
+          toast.success(
+            t("counter.autoConnectSuccess", "Successfully connected to serial port."),
+            { id: toastId }
+          );
+        } else {
+          toast.error(
+            t("counter.autoConnectFailed", "Failed to auto-connect to any serial port."),
+            { id: toastId }
+          );
+        }
+      } catch {
+        toast.error(
+          t("counter.autoConnectFailed", "Failed to auto-connect to any serial port."),
+          { id: toastId }
+        );
+      }
+    }
+  },[serialConnected, serialManager, t]);
+
+
+
   return (
     <div className={`counter-dashboard ${className || ""}`}>
       {" "}
@@ -1159,12 +1200,7 @@ export const CounterDashboard: React.FC<CounterDashboardProps> = ({
 
           <button
             className="connection-status"
-            onClick={() => {
-              // 触发自定义事件通知 SerialPortPanel 执行自动连接
-              if ( !serialConnected ) {
-                window.dispatchEvent(new CustomEvent("triggerAutoConnect"));
-              }
-            }}
+            onClick={handleAutoConnect}
             title={
               serialConnected
                 ? t("counter.connected")

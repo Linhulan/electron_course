@@ -38,6 +38,7 @@ export class SerialPortManager {
   private isConnecting: boolean = false;
   private eventListeners: SerialPortManagerEvents = {};
   private unsubscribeFunctions: (() => void)[] = [];
+  private handshakeTimeout: number | null = null;
 
   private constructor() {
     this.config = {
@@ -233,19 +234,17 @@ export class SerialPortManager {
         continue;
       }
 
-      // 发送握手信号
+      // 发送握手信号并等待响应
       try {
-        await this.sendData("AA55030001000001A55A", true);
+        const handshakeSuccess = await this.performHandshake();
         
-        // 等待响应
-        await new Promise(resolve => setTimeout(resolve, 300));
-        
-        // 检查连接是否成功建立
-        if (this.isConnected()) {
+        if (handshakeSuccess) {
+          console.log(`Successfully connected and handshake with port: ${port.path}`);
           return true;
         }
         
         // 如果握手失败，断开连接
+        console.warn(`Handshake failed for port: ${port.path}`);
         await this.disconnect();
       } catch (error) {
         console.warn(`Handshake failed for port ${port.path}:`, error);
@@ -254,6 +253,50 @@ export class SerialPortManager {
     }
 
     return false;
+  }
+
+  // 执行握手验证
+  private async performHandshake(): Promise<boolean> {
+    return new Promise((resolve) => {
+      // 设置握手超时
+      this.handshakeTimeout = window.setTimeout(() => {
+        console.warn("Handshake timeout");
+        resolve(false);
+      }, 1000); // 1秒超时
+
+      // 临时监听数据以检测握手响应
+      const tempUnsubscribe = window.electron.onSerialDataReceived((data: SerialDataReceived) => {
+        if (data.hexData && this.isHandshakeResponse(data.hexData)) {
+          console.log("Handshake response received:", data.hexData);
+          if (this.handshakeTimeout) {
+            clearTimeout(this.handshakeTimeout);
+            this.handshakeTimeout = null;
+          }
+          // 清除临时监听器
+          tempUnsubscribe();
+          resolve(true);
+        }
+      });
+
+      // 发送握手信号
+      this.sendData("AA55030001000001A55A", true).catch(() => {
+        if (this.handshakeTimeout) {
+          clearTimeout(this.handshakeTimeout);
+          this.handshakeTimeout = null;
+        }
+        tempUnsubscribe();
+        resolve(false);
+      });
+    });
+  }
+
+  // 检查是否为握手响应
+  private isHandshakeResponse(hexData: string): boolean {
+    // 移除空格并转换为大写
+    const cleanHex = hexData.replace(/\s+/g, '').toUpperCase();
+    
+    // 检查是否包含握手响应特征, 回报为AA55030001000001A55A
+    return cleanHex.includes('AA55030001000001A55A');
   }
 
   // 发送数据
@@ -349,6 +392,10 @@ export class SerialPortManager {
     this.selectedPort = "";
     this.connectionStatus = { isConnected: false };
     this.isConnecting = false;
+    if (this.handshakeTimeout) {
+      clearTimeout(this.handshakeTimeout);
+      this.handshakeTimeout = null;
+    }
     
     console.log('SerialPortManager destroyed');
   }
