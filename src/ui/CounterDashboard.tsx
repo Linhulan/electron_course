@@ -877,7 +877,7 @@ export const CounterDashboard: React.FC<CounterDashboardProps> = ({
     ];
 
     // 生成50个测试会话，确保有多货币数据
-    for (let i = 0; i < 50; i++) {
+    for (let i = 0; i < 5; i++) {
       const sessionTime = new Date(now.getTime() - i * 60 * 60 * 1000); // 每小时一个会话
       const denominationBreakdown = new Map<number, DenominationDetail>();
       const currencyCountRecords = new Map<string, CurrencyCountRecord>();
@@ -987,7 +987,7 @@ export const CounterDashboard: React.FC<CounterDashboardProps> = ({
       const testSession: SessionData = {
         id,
         no: generateSessionNoFromId(id),
-        timestamp: sessionTime.toLocaleTimeString(),
+        timestamp: sessionTime.toLocaleString(),
         startTime: sessionTime.toLocaleString(),
         endTime: new Date(
           sessionTime.getTime() + 5 * 60 * 1000
