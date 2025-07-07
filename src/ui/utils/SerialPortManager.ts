@@ -218,6 +218,8 @@ export class SerialPortManager {
 
   // 自动连接
   public async autoConnect(): Promise<boolean> {
+    this.refreshPorts(); // 确保端口列表是最新的
+
     if (this.availablePorts.length === 0) {
       console.warn("No available ports to auto-connect");
       const error = { error: "No available ports for auto-connect", code: "NO_PORTS" };
