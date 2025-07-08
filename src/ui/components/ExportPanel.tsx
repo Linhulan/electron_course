@@ -33,12 +33,12 @@ const ExportPanel: React.FC<ExportPanelProps> = ({
   isOpen,
   sessionData, 
   onExportComplete,
-  onImportComplete,
+  // onImportComplete,
   onClose 
 }) => {
   const { t } = useTranslation();
   const [isExporting, setIsExporting] = useState(false);
-  const [isImporting, setIsImporting] = useState(false); // 添加导入状态
+  // const [isImporting, setIsImporting] = useState(false); // 添加导入状态
   const [exportStatus, setExportStatus] = useState<string>('');
   const [filename, setFilename] = useState(() => {
     // 生成适合文件名的时间戳（去除冒号等非法字符）
@@ -47,7 +47,7 @@ const ExportPanel: React.FC<ExportPanelProps> = ({
   });
   const setAutoSave = useAppConfigStore((state) => state.setAutoSave);
   const autoSave = useAppConfigStore((state) => state.autoSave);
-  const [activeTab, setActiveTab] = useState<'export' | 'import'>('export'); // 添加Tab状态
+  // const [activeTab, setActiveTab] = useState<'export' | 'import'>('export'); // 添加Tab状态
 
   // 当面板打开或sessionData变化时，更新文件名
   useEffect(() => {
@@ -200,53 +200,53 @@ const ExportPanel: React.FC<ExportPanelProps> = ({
   /**
    * 处理Excel文件导入
    */
-  const handleImportExcel = async () => {
-    setIsImporting(true);
-    setExportStatus(`Selecting file...`);
+  // const handleImportExcel = async () => {
+  //   setIsImporting(true);
+  //   setExportStatus(`Selecting file...`);
 
-    try {
-      const result = await window.electron.importFromExcel();
+  //   try {
+  //     const result = await window.electron.importFromExcel();
       
-      if (result.success && result.sessionData) {
-        setExportStatus(`SUCCESS: ${t('exportPanel.importSuccess', 'Import successful!')} (${result.importedCount} sessions)`);
-        onImportComplete?.(result);
-      } else {
-        const errorMsg = result.errors?.join(', ') || t('exportPanel.importFailed', 'Import failed');
-        setExportStatus(`ERROR: ${errorMsg}`);
-      }
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      setExportStatus(`ERROR: ${t('exportPanel.importError', 'Import error:')} ${errorMessage}`);
-    } finally {
-      setIsImporting(false);
-    }
-  };
+  //     if (result.success && result.sessionData) {
+  //       setExportStatus(`SUCCESS: ${t('exportPanel.importSuccess', 'Import successful!')} (${result.importedCount} sessions)`);
+  //       onImportComplete?.(result);
+  //     } else {
+  //       const errorMsg = result.errors?.join(', ') || t('exportPanel.importFailed', 'Import failed');
+  //       setExportStatus(`ERROR: ${errorMsg}`);
+  //     }
+  //   } catch (error) {
+  //     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+  //     setExportStatus(`ERROR: ${t('exportPanel.importError', 'Import error:')} ${errorMessage}`);
+  //   } finally {
+  //     setIsImporting(false);
+  //   }
+  // };
 
-  /**
-   * 处理目录批量导入
-   */
-  const handleImportDirectory = async () => {
-    setIsImporting(true);
-    setExportStatus(`Scanning directory...`);
+  // /**
+  //  * 处理目录批量导入
+  //  */
+  // const handleImportDirectory = async () => {
+  //   setIsImporting(true);
+  //   setExportStatus(`Scanning directory...`);
 
-    try {
-      const result = await window.electron.importFromDirectory();
+  //   try {
+  //     const result = await window.electron.importFromDirectory();
       
-      if (result.success && result.sessionData) {
-        const message = `SUCCESS: ${t('exportPanel.batchImportSuccess', 'Batch import successful!')} (${result.importedCount} sessions imported, ${result.skippedCount || 0} skipped)`;
-        setExportStatus(message);
-        onImportComplete?.(result);
-      } else {
-        const errorMsg = result.errors?.join(', ') || t('exportPanel.batchImportFailed', 'Batch import failed');
-        setExportStatus(`ERROR: ${errorMsg}`);
-      }
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      setExportStatus(`ERROR: ${t('exportPanel.batchImportError', 'Batch import error:')} ${errorMessage}`);
-    } finally {
-      setIsImporting(false);
-    }
-  };
+  //     if (result.success && result.sessionData) {
+  //       const message = `SUCCESS: ${t('exportPanel.batchImportSuccess', 'Batch import successful!')} (${result.importedCount} sessions imported, ${result.skippedCount || 0} skipped)`;
+  //       setExportStatus(message);
+  //       onImportComplete?.(result);
+  //     } else {
+  //       const errorMsg = result.errors?.join(', ') || t('exportPanel.batchImportFailed', 'Batch import failed');
+  //       setExportStatus(`ERROR: ${errorMsg}`);
+  //     }
+  //   } catch (error) {
+  //     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+  //     setExportStatus(`ERROR: ${t('exportPanel.batchImportError', 'Batch import error:')} ${errorMessage}`);
+  //   } finally {
+  //     setIsImporting(false);
+  //   }
+  // };
 
   /**
    * 清除状态消息
