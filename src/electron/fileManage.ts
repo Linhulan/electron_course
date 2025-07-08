@@ -756,7 +756,7 @@ export class FileManager {
             detail.no,
             detail.timestamp,
             formatDenomination(detail.denomination, { currency: detail.currencyCode }),
-            detail.currencyCode || 'CNY',
+            detail.currencyCode || '-',
             detail.serialNumber || '-',
             detail.errorCode && detail.errorCode !== 'E0' ? detail.errorCode : '-',
             (detail.status === 'error' || (detail.errorCode && detail.errorCode !== 'E0')) ? 'Abnormal' : 'OK'
@@ -1386,7 +1386,7 @@ export class FileManager {
             noteNo: detail.no,
             timestamp: detail.timestamp,
             denomination: formatDenomination(detail.denomination, { currency: detail.currencyCode }),
-            currencyCode: detail.currencyCode || 'CNY',
+            currencyCode: detail.currencyCode || '-',
             serialNumber: detail.serialNumber || '-',
             errorCode: detail.errorCode && detail.errorCode !== 'E0' ? detail.errorCode : '-',
             status: (detail.status === 'error' || (detail.errorCode && detail.errorCode !== 'E0')) ? 'Error' : 'OK',
@@ -1930,7 +1930,7 @@ export class FileManager {
         id: sessionId + noteNo, // 生成临时唯一ID，避免精度丢失
         no: parseInt(noteNo.toString()) || 0,
         timestamp: timestamp.toString(),
-        currencyCode: currencyCode?.toString() || 'CNY',
+        currencyCode: currencyCode?.toString() || '-',
         denomination: parsedDenomination,
         status: this.parseStatus(status?.toString()),
         errorCode: errorCode && errorCode !== '-' ? errorCode.toString() : undefined,
@@ -2143,7 +2143,7 @@ export class FileManager {
         });
       } else {
         // 兼容旧数据结构
-        const currencyCode = session.currencyCode || 'CNY';
+        const currencyCode = session.currencyCode || '-';
         const existing = currencyStatsMap.get(currencyCode);
         if (existing) {
           existing.totalAmount += session.totalAmount || 0;
