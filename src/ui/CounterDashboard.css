@@ -7,27 +7,27 @@
   box-sizing: border-box;
 }
 
-/* Dashboard主滚动条样式 */
-.counter-dashboard::-webkit-scrollbar {
+/* 全局滚动条样式 - 暗色主题 */
+::-webkit-scrollbar {
   width: 8px;
 }
 
-.counter-dashboard::-webkit-scrollbar-track {
+::-webkit-scrollbar-track {
   background: #2a2a2a;
   border-radius: 4px;
 }
 
-.counter-dashboard::-webkit-scrollbar-thumb {
+::-webkit-scrollbar-thumb {
   background: #555;
   border-radius: 4px;
   transition: background 0.2s ease;
 }
 
-.counter-dashboard::-webkit-scrollbar-thumb:hover {
+::-webkit-scrollbar-thumb:hover {
   background: #777;
 }
 
-.counter-dashboard::-webkit-scrollbar-thumb:active {
+::-webkit-scrollbar-thumb:active {
   background: #888;
 }
 
@@ -985,46 +985,6 @@
   overflow-y: auto;
 }
 
-/* 优化Card内容区域滚动条 */
-.card-content::-webkit-scrollbar {
-  width: 6px;
-}
-
-.card-content::-webkit-scrollbar-track {
-  background: #404040;
-  border-radius: 3px;
-}
-
-.card-content::-webkit-scrollbar-thumb {
-  background: #666;
-  border-radius: 3px;
-  transition: background 0.2s ease;
-}
-
-.card-content::-webkit-scrollbar-thumb:hover {
-  background: #888;
-}
-
-/* 详细记录内容区域滚动条 */
-.details-content::-webkit-scrollbar {
-  width: 6px;
-}
-
-.details-content::-webkit-scrollbar-track {
-  background: #404040;
-  border-radius: 3px;
-}
-
-.details-content::-webkit-scrollbar-thumb {
-  background: #666;
-  border-radius: 3px;
-  transition: background 0.2s ease;
-}
-
-.details-content::-webkit-scrollbar-thumb:hover {
-  background: #888;
-}
-
 /* 区段图标样式 */
 .section-icon {
   font-size: 1.2rem;
@@ -1677,6 +1637,11 @@
   .data-list {
     max-height: min(300px, 35vh);
   }
+  
+  /* 为counting-records-card调整固定高度 */
+  .counting-records-card .data-list {
+    height: 280px; /* 5行 × 56px/行 = 280px，中等屏幕时调整高度 */
+  }
 }
 
 @media (max-width: 480px) {
@@ -1691,6 +1656,11 @@
   
   .data-list {
     max-height: min(250px, 30vh);
+  }
+  
+  /* 为counting-records-card调整固定高度 */
+  .counting-records-card .data-list {
+    height: 224px; /* 4行 × 56px/行 = 224px，小屏幕时进一步降低高度 */
   }
   
   .table-header,
@@ -1753,6 +1723,11 @@
   .detailed-records {
     max-height: 400px;
   }
+  
+  /* 调整counting-records-card的固定高度 */
+  .counting-records-card .data-list {
+    height: 336px; /* 6行 × 56px/行 = 336px，小屏幕时降低高度 */
+  }
 }
 
 @media (max-width: 768px) {
@@ -1779,20 +1754,20 @@
   color: #1e293b;
 }
 
-/* Dashboard主滚动条样式 - 亮色主题 */
-[data-theme="light"] .counter-dashboard::-webkit-scrollbar-track {
+/* 全局滚动条样式 - 亮色主题 */
+[data-theme="light"] ::-webkit-scrollbar-track {
   background: #e2e8f0;
 }
 
-[data-theme="light"] .counter-dashboard::-webkit-scrollbar-thumb {
+[data-theme="light"] ::-webkit-scrollbar-thumb {
   background: #94a3b8;
 }
 
-[data-theme="light"] .counter-dashboard::-webkit-scrollbar-thumb:hover {
+[data-theme="light"] ::-webkit-scrollbar-thumb:hover {
   background: #64748b;
 }
 
-[data-theme="light"] .counter-dashboard::-webkit-scrollbar-thumb:active {
+[data-theme="light"] ::-webkit-scrollbar-thumb:active {
   background: #475569;
 }
 
@@ -2133,31 +2108,6 @@
   color: #475569;
 }
 
-/* 卡片内容滚动条 - 亮色主题 */
-[data-theme="light"] .card-content::-webkit-scrollbar-track {
-  background: #f1f5f9;
-}
-
-[data-theme="light"] .card-content::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
-}
-
-[data-theme="light"] .card-content::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
-}
-
-[data-theme="light"] .details-content::-webkit-scrollbar-track {
-  background: #f1f5f9;
-}
-
-[data-theme="light"] .details-content::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
-}
-
-[data-theme="light"] .details-content::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
-}
-
 /* 无数据状态 - 亮色主题 */
 [data-theme="light"] .no-data.enhanced {
   background: linear-gradient(135deg, rgba(59, 130, 246, 0.02) 0%, rgba(29, 78, 216, 0.02) 100%);
@@ -2296,7 +2246,7 @@
 }
 
 [data-theme="light"] .count-value {
-  color: #059669;
+   color: #059669;
 }
 
 [data-theme="light"] .count-label {
@@ -2408,4 +2358,43 @@
   [data-theme="light"] .session-summary-item {
     background: rgba(59, 130, 246, 0.05);
   }
+}
+
+/* 虚拟滚动计数记录组件样式 */
+.virtual-counting-records {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden; /* 禁用外层滚动 */
+}
+
+.virtual-counting-records .table-header {
+  flex-shrink: 0; /* 表头固定，不被压缩 */
+  z-index: 1; /* 确保表头在上层 */
+}
+
+/* Counting Records区域固定高度设置 */
+.counting-records-card {
+  display: flex;
+  flex-direction: column;
+  height: auto; /* 让卡片根据内容自适应 */
+}
+
+.counting-records-card .card-header {
+  flex-shrink: 0; /* 头部固定，不被压缩 */
+}
+
+/* 为包含虚拟滚动的卡片内容区域特殊处理 */
+.counting-records-card .card-content {
+  overflow: hidden; /* 禁用卡片级别的滚动 */
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0; /* 防止被压缩 */
+}
+
+.counting-records-card .data-list {
+  height: 392px; /* 7行 × 56px/行 = 392px，确保完整显示行数 */
+  overflow: hidden; /* 禁用 data-list 的滚动 */
+  display: flex;
+  flex-direction: column;
 }

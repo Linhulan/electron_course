@@ -1,7 +1,6 @@
 import React, {
   useState,
   useEffect,
-  useRef,
   useCallback,
   useMemo,
 } from "react";
@@ -20,6 +19,7 @@ import {
 } from "./protocols";
 import { initializeProtocols } from "./protocols/init";
 import { SessionDetailDrawer } from "./components/SessionDetailDrawer";
+import { VirtualCountingRecords } from "./components/VirtualCountingRecords";
 import ExportPanel from "./components/ExportPanel";
 import {
   formatAmount,
@@ -316,6 +316,9 @@ export const CounterDashboard: React.FC<CounterDashboardProps> = ({
     return typeof window !== "undefined" ? window.innerWidth : 1200;
   });
 
+  // 数据列表容器高度状态（用于虚拟滚动）- 使用固定高度
+  const [dataListHeight] = useState(392); // 7行 × 56px/行 = 392px，确保完整显示行数
+
   // 默认显示的货币数量
   const DEFAULT_CURRENCY_DISPLAY_COUNT = 3;
   // 两列布局下的显示数量
@@ -334,8 +337,6 @@ export const CounterDashboard: React.FC<CounterDashboardProps> = ({
   const hasHiddenCurrencies = () => {
     return hasHiddenCurrenciesFlag;
   };
-
-  const dataDisplayRef = useRef<HTMLDivElement>(null);
 
   // ===== 性能优化：缓存复杂计算结果 =====
 
@@ -474,6 +475,8 @@ export const CounterDashboard: React.FC<CounterDashboardProps> = ({
 
     if (typeof window !== "undefined") {
       window.addEventListener("resize", handleResize);
+      // 初始计算一次
+      handleResize();
       return () => window.removeEventListener("resize", handleResize);
     }
   }, []);
@@ -1695,110 +1698,12 @@ export const CounterDashboard: React.FC<CounterDashboardProps> = ({
               </h3>
             </div>
             <div className="card-content">
-              <div className="data-list" ref={dataDisplayRef}>
-                {" "}
-                {renderSessionData.length === 0 ? (
-                  <div className="no-data enhanced">
-                    <div className="no-data-illustration">
-                      <div className="illustration-circle">
-                        <span className="no-data-icon">📝</span>
-                      </div>
-                      <div className="illustration-dots">
-                        <span></span>
-                        <span></span>
-                        <span></span>
-                      </div>
-                    </div>
-                    <div className="no-data-content">
-                      <div className="no-data-text">
-                        {t("counter.noData.title")}
-                      </div>
-                      <div className="no-data-hint">
-                        {t("counter.noData.subtitle")}
-                      </div>
-                      <div className="no-data-suggestion">
-                        💡{" "}
-                        {t(
-                          "counter.noData.suggestion",
-                          "Connect to serial port and start counting to see records here"
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="data-table">
-                    {" "}
-                    <div className="table-header">
-                      <div className="col-time">
-                        <span className="header-icon">🕒</span>
-                        {t("counter.table.time")}
-                      </div>
-                      <div className="col-count">
-                        {t("counter.table.count")}
-                      </div>
-                      <div className="col-amount">
-                        {t("counter.table.amount")}
-                      </div>
-                      <div className="col-currency">
-                        {t("counter.table.currency", "Currency")}
-                      </div>
-                      <div className="col-error">
-                        {t("counter.table.errorPcs")}
-                      </div>
-                    </div>{" "}
-                    {renderSessionData.map((item) => (
-                      <div
-                        key={item.id}
-                        className="table-row clickable"
-                        onClick={() => handleSessionClick(item.id)}
-                        title={t(
-                          "counter.clickToViewDetails",
-                          "Click to view details"
-                        )}
-                      >
-                        <div className="col-time">
-                          <div className="time-primary">{new Date(item.timestamp).toLocaleTimeString()}</div>
-                          {item.endTime && (
-                            <div className="time-secondary">
-                              {t("counter.session.date")}:{" "}
-                              {item.formattedEndDate}
-                            </div>
-                          )}
-                        </div>
-                        <div className="col-count">
-                          <div className="count-value">
-                            {item.formattedCount}
-                          </div>
-                          <div className="count-unit">
-                            {t("counter.detailTable.pcs")}
-                          </div>
-                        </div>{" "}
-                        <div className="col-amount">
-                          <div className="amount-value">
-                            {item.displayAmount}
-                          </div>
-                        </div>{" "}
-                        <div className="col-currency">
-                          <div
-                            className="currency-value"
-                            data-currency={item.displayCurrency}
-                          >
-                            {item.displayCurrency}
-                          </div>
-                        </div>
-                        <div className="col-error">
-                          <div
-                            className={`error-value ${
-                              item.hasError ? "has-error" : "no-error"
-                            }`}
-                          >
-                            {item.errorCount || 0}
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}{" "}
+              <div className="data-list">
+                <VirtualCountingRecords
+                  sessions={renderSessionData}
+                  height={dataListHeight}
+                  onSessionClick={handleSessionClick}
+                />
               </div>
             </div>
           </div>
