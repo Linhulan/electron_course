@@ -43,8 +43,8 @@ app.on("ready", async () => {
     frame: isDev(),
     show: false, // 初始隐藏，等待弹出放大动画
      // 设置为深色，与启动画面一致，避免切换时的颜色跳跃
-      width: Math.floor(screen.getPrimaryDisplay().workAreaSize.width * 0.6), // 屏幕宽度的80%
-      height: Math.floor(screen.getPrimaryDisplay().workAreaSize.height * 0.8), // 屏幕高度的80%
+      width: Math.floor(screen.getPrimaryDisplay().workAreaSize.width * 0.6), // 屏幕宽度的60%
+      height: Math.floor(screen.getPrimaryDisplay().workAreaSize.height * 0.7), // 屏幕高度的70%
     // 初始位置将由弹出动画设置
   }); // 等待页面准备好后再显示窗口
   mainWindow.once("ready-to-show", async () => {
