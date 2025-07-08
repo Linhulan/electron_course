@@ -1018,7 +1018,6 @@
   text-align: center;
   background: linear-gradient(135deg, rgba(102, 126, 234, 0.02) 0%, rgba(118, 75, 162, 0.02) 100%);
   border-radius: 12px;
-  border: 2px dashed rgba(102, 126, 234, 0.2);
   position: relative;
   overflow: hidden;
 }
@@ -2111,7 +2110,6 @@
 /* 无数据状态 - 亮色主题 */
 [data-theme="light"] .no-data.enhanced {
   background: linear-gradient(135deg, rgba(59, 130, 246, 0.02) 0%, rgba(29, 78, 216, 0.02) 100%);
-  border: 2px dashed rgba(59, 130, 246, 0.2);
 }
 
 [data-theme="light"] .illustration-dots span {
