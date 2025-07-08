@@ -43,6 +43,14 @@ export const formatCurrency = (
     isDenomination = false
   } = options;
 
+  let isCurrencyValid = true;
+  // 处理货币代码为空的情况
+  if ( currency === '' || currency === '-' ) 
+  {
+    console.warn('Invalid currency code provided, defaulting to no currency symbol.');
+    isCurrencyValid = false; // 如果货币代码为空，则不显示货币符号
+  }
+
   // 面额格式：整数显示，无小数点
   const hasDecimalCurrency = ["KWD", "BHD", "OMR", "BSD"];
 
@@ -59,8 +67,8 @@ export const formatCurrency = (
     }
 
     const formatted = new Intl.NumberFormat(locale, {
-      style: showCurrencySymbol ? 'currency' : 'decimal',
-      currency: showCurrencySymbol ? currency : undefined,
+      style: (showCurrencySymbol && isCurrencyValid) ? 'currency' : 'decimal',
+      currency: (showCurrencySymbol && isCurrencyValid) ? currency : undefined,
       minimumFractionDigits: 0,
       maximumFractionDigits: 0,
     }).format(amount);
@@ -70,8 +78,8 @@ export const formatCurrency = (
 
   // 普通金额格式
   const formatted = new Intl.NumberFormat(locale, {
-    style: showCurrencySymbol ? 'currency' : 'decimal',
-    currency: showCurrencySymbol ? currency : undefined,
+    style: (showCurrencySymbol && isCurrencyValid) ? 'currency' : 'decimal',
+    currency: (showCurrencySymbol && isCurrencyValid) ? currency : undefined,
     minimumFractionDigits,
     maximumFractionDigits,
   }).format(amount);
