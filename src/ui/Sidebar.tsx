@@ -51,12 +51,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
           description: t("sidebar.counterDashboardDesc"),
         },
         {
-          id: "file-manager" as PageType,
-          label: t("sidebar.fileManager"),
-          icon: "📁",
-          description: t("sidebar.fileManagerDesc"),
-        },
-        {
           id: "import-viewer" as PageType,
           label: t("sidebar.importViewer"),
           icon: "📊",

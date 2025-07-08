@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { HashRouter as Router, Routes, Route } from "react-router-dom";
 import { LanguageSwitcher } from "./components/LanguageSwitcher";
 import { useAppConfigStore } from "./contexts/store";
 import { usePageNavigation } from "./hooks/usePageNavigation";
@@ -62,18 +62,22 @@ function AppContent({ onAppReady }: AppProps) {
                     <CounterDashboard className="page-content" />
               }
             />
-            <Route
-              path="/serial-port"
-              element={
-                    <SerialPortPanel className="page-content" />
-              }
-            />
-            <Route
-              path="/file-manager"
-              element={
-                  <FileManagerPage className="page-content" />
-              }
-            />
+            {import.meta.env.DEV && (
+              <Route
+                path="/serial-port"
+                element={
+                      <SerialPortPanel className="page-content" />
+                }
+              />
+            )}
+            {import.meta.env.DEV && (
+              <Route
+                path="/file-manager"
+                element={
+                    <FileManagerPage className="page-content" />
+                }
+              />
+            )}
             <Route
               path="/import-viewer"
               element={
