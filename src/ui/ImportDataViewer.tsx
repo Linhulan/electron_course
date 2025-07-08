@@ -57,23 +57,57 @@ export const ImportDataViewer: React.FC<ImportDataViewerProps> = ({ className })
   // 导入数据处理
   const handleImportExcel = async () => {
     setIsImporting(true);
-    const toaseID = toast.loading(t('importViewer.importing', 'Importing...'), { position: 'top-center' });
+    const toastId = toast.loading(t('importViewer.importing', 'Importing...'), { position: 'top-center' });
     try {
       const result = await window.electron.importFromExcel();
+      
+      // 检查用户是否取消了文件选择
+      if (!result || result.cancelled) {
+        toast.dismiss(toastId);
+        return;
+      }
+      
       if (result.success && result.sessionData) {
-        setImportedData(result.sessionData);
-        // 自动选择第一个Session
-        if (result.sessionData.length > 0) {
-          toast.success(`${result.importedCount} ${t('importViewer.importSuccess', 'Sessions imported successfully!')}`, { position: 'top-center', id: toaseID });
-          setSelectedSession(result.sessionData[0]);
+        // 增量导入：合并新数据和现有数据
+        const existingIds = new Set(importedData.map(session => session.id));
+        const newSessions = result.sessionData.filter(session => !existingIds.has(session.id));
+        const mergedData = [...importedData, ...newSessions];
+        
+        setImportedData(mergedData);
+        
+        if (newSessions.length > 0) {
+          toast.success(`${newSessions.length} ${t('importViewer.importSuccess', 'new sessions imported successfully!')}`, { position: 'top-center', id: toastId });
+          // 自动选择第一个新导入的Session
+          setSelectedSession(newSessions[0]);
+        } else if (result.sessionData.length > 0) {
+          toast.success(t('importViewer.duplicateData', 'All sessions already exist, no new data imported'), { position: 'top-center', id: toastId });
+        } else {
+          toast.error(t('importViewer.noDataImported', 'Imported data is empty!'), { position: 'top-center', id: toastId });
         }
-        else {
-          toast.error(t('importViewer.noDataImported', 'Imported data is empty!'), { position: 'top-center', id: toaseID });
+      } else {
+        // 检查具体的错误类型并给出相应提示
+        if (result.errors && result.errors.length > 0) {
+          const errorMessage = result.errors[0];
+          if (errorMessage.includes('not found') || errorMessage.includes('File not found')) {
+            toast.error(t('importViewer.fileNotFound', 'Selected file not found'), { position: 'top-center', id: toastId });
+          } else if (errorMessage.includes('format') || errorMessage.includes('invalid')) {
+            toast.error(t('importViewer.invalidFileFormat', 'Invalid file format or corrupted file'), { position: 'top-center', id: toastId });
+          } else {
+            toast.error(t('importViewer.importFailed', 'Import failed!'), { position: 'top-center', id: toastId });
+          }
+        } else {
+          // 如果没有成功导入或没有数据，关闭loading提示
+          toast.dismiss(toastId);
         }
       }
     } catch (error) {
       console.error('Import failed:', error);
-      toast.error(t('importViewer.importFailed', 'Import failed!'), { position: 'top-center', id: toaseID });
+      // 检查是否是用户取消操作的错误
+      if (error instanceof Error && (error.message.includes('cancelled') || error.message.includes('canceled'))) {
+        toast.dismiss(toastId);
+      } else {
+        toast.error(t('importViewer.importFailed', 'Import failed!'), { position: 'top-center', id: toastId });
+      }
     } finally {
       setIsImporting(false);
     }
@@ -84,19 +118,46 @@ export const ImportDataViewer: React.FC<ImportDataViewerProps> = ({ className })
     const toastId = toast.loading(t('importViewer.importing', 'Importing...'), { position: 'top-center' });
     try {
       const result = await window.electron.importFromDirectory();
+      
+      // 检查用户是否取消了文件选择
+      if (!result || result.cancelled) {
+        toast.dismiss(toastId);
+        return;
+      }
+      
       if (result.success && result.sessionData) {
-        setImportedData(result.sessionData);
-        if (result.sessionData.length > 0) {
-          setSelectedSession(result.sessionData[0]);
-          toast.success( `${result.importedCount} Sessions ${t('importViewer.importSuccess', 'Import successful!')}`, { id: toastId });
-        }
-        else {
+        // 增量导入：合并新数据和现有数据
+        const existingIds = new Set(importedData.map(session => session.id));
+        const newSessions = result.sessionData.filter(session => !existingIds.has(session.id));
+        const mergedData = [...importedData, ...newSessions];
+        
+        setImportedData(mergedData);
+        
+        if (newSessions.length > 0) {
+          setSelectedSession(newSessions[0]);
+          toast.success(`${newSessions.length} new Sessions ${t('importViewer.importSuccess', 'Import successful!')}`, { id: toastId });
+        } else if (result.sessionData.length > 0) {
+          toast.success(t('importViewer.duplicateData', 'All sessions already exist, no new data imported'), { id: toastId });
+        } else {
           toast.success(t('importViewer.noDataImported', 'Imported data is empty!'), { id: toastId });
+        }
+      } else {
+        // 检查是否是没有找到文件的错误
+        if (result.errors && result.errors.some(error => error.includes('No Excel files found'))) {
+          toast.error(t('importViewer.noExcelFilesFound', 'No Excel files found in the selected directory'), { id: toastId });
+        } else {
+          // 如果没有成功导入或没有数据，关闭loading提示
+          toast.dismiss(toastId);
         }
       }
     } catch (error) {
       console.error('Batch import failed:', error);
-      toast.error(t('importViewer.importFailed', 'Import failed!'), { id: toastId });
+      // 检查是否是用户取消操作的错误
+      if (error instanceof Error && (error.message.includes('cancelled') || error.message.includes('canceled'))) {
+        toast.dismiss(toastId);
+      } else {
+        toast.error(t('importViewer.importFailed', 'Import failed!'), { id: toastId });
+      }
     } finally {
       setIsImporting(false);
     }
@@ -129,7 +190,7 @@ export const ImportDataViewer: React.FC<ImportDataViewerProps> = ({ className })
       //   return newHistory.slice(0, 5); // 只保留最近5次搜索
       // });
     }
-  }, [searchFilters, hasValidSearchFilters]);
+  }, [hasValidSearchFilters]);
 
   // 从历史记录中应用搜索条件
   // const applySearchFromHistory = useCallback((filters: SearchFilters) => {
@@ -154,7 +215,7 @@ export const ImportDataViewer: React.FC<ImportDataViewerProps> = ({ className })
     importedData.forEach(session => {
       // 检查Session级别的所有条件（AND逻辑）
       const sessionConditions = [];
-      let sessionMatchFields: string[] = [];
+      const sessionMatchFields: string[] = [];
 
       // Session ID 条件
       if (searchFilters.sessionID) {
@@ -205,7 +266,7 @@ export const ImportDataViewer: React.FC<ImportDataViewerProps> = ({ className })
       if (sessionMatches && session.details) {
         session.details.forEach(detail => {
           const detailConditions = [];
-          let detailMatchFields: string[] = [];
+          const detailMatchFields: string[] = [];
 
           // 冠字号条件
           if (searchFilters.serialNumber) {
@@ -321,7 +382,7 @@ export const ImportDataViewer: React.FC<ImportDataViewerProps> = ({ className })
       : importedData;
 
     return [...dataToSort].sort((a, b) => {
-      let aValue: any, bValue: any;
+      let aValue: string | number | Date, bValue: string | number | Date;
       
       switch (sortBy) {
         case 'sessionID':
@@ -423,7 +484,7 @@ export const ImportDataViewer: React.FC<ImportDataViewerProps> = ({ className })
       debugLog('Search cleared, selecting first from imported data:', importedData[0]?.id);
       setSelectedSession(importedData[0]);
     }
-  }, [showSearchResults, sortedData]);
+  }, [showSearchResults, sortedData, importedData]);
 
   return (
     <div className={`${styles.importDataViewer} ${className || ''}`}>
@@ -588,7 +649,7 @@ export const ImportDataViewer: React.FC<ImportDataViewerProps> = ({ className })
             <div className={styles.sortControls}>
               <select
                 value={sortBy}
-                onChange={(e) => setSortBy(e.target.value as any)}
+                onChange={(e) => setSortBy(e.target.value as 'timestamp' | 'sessionID' | 'totalCount' | 'totalAmount')}
                 className={styles.sortSelect}
               >
                 <option value="timestamp">{t('importViewer.sortByTime', 'Sort by Time')}</option>

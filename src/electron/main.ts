@@ -1,4 +1,4 @@
-import { app, BrowserWindow, screen } from "electron";
+import { app, BrowserWindow, screen, dialog } from "electron";
 import { ipcMainHandle, ipcMainOn, isDev } from "./utils.js";
 import { getStaticData, pollResources } from "./resourceManager.js";
 import { getPreloadPath, getUIPath } from "./pathResolver.js";
@@ -236,7 +236,25 @@ app.on("ready", async () => {
 
   ipcMainHandle("import-from-directory", async (...args: unknown[]) => {
     const [directory, options] = args as [string | undefined, any];
-    return await fileManager.importFromDirectory(directory, options);
+    
+    let targetDirectory = directory;
+    
+    // 如果没有提供目录路径，打开目录选择对话框
+    if (!targetDirectory) {
+      const result = await dialog.showOpenDialog({
+        title: 'Select Directory to Import',
+        defaultPath: fileManager.getDefaultExportDir(),
+        properties: ['openDirectory']
+      });
+
+      if (result.canceled || !result.filePaths.length) {
+        return { success: false, cancelled: true, errors: ['User cancelled import'] };
+      }
+
+      targetDirectory = result.filePaths[0];
+    }
+    
+    return await fileManager.importFromDirectory(targetDirectory, options);
   });
 
   // ==========================================

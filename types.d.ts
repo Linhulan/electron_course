@@ -9,6 +9,7 @@ type ImportOptions = {
 
 type ImportResult = {
   success: boolean;
+  cancelled?: boolean; // 表示用户是否取消了操作
   sessionData?: SessionData[]; // 导入的会话数据数组
   importedCount?: number;
   skippedCount?: number;

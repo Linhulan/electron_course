@@ -1606,7 +1606,7 @@ export class FileManager {
         });
 
         if (result.canceled || !result.filePaths.length) {
-          return { success: false, errors: ['User cancelled import'] };
+          return { success: false, cancelled: true, errors: ['User cancelled import'] };
         }
 
         filePath = result.filePaths[0];
@@ -2300,6 +2300,7 @@ export interface ImportOptions {
 
 export interface ImportResult {
   success: boolean;
+  cancelled?: boolean; // 表示用户是否取消了操作
   sessionData?: SessionData[];
   importedCount?: number;
   skippedCount?: number;
