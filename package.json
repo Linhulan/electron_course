@@ -1,7 +1,7 @@
 {
-  "name": "electron-course",
+  "name": "union-dashboard",
   "private": true,
-  "version": "0.0.0",
+  "version": "0.8.0",
   "type": "module",
   "main": "dist-electron/main.js",
   "scripts": {
