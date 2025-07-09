@@ -519,10 +519,13 @@
 }
 
 /* 多货币布局响应式设计 */
-@media (min-width: 1200px) {
+@media (min-width: 1000px) {
   /* 在大屏幕上优化两列布局的间距 */
   .currency-stats-container {
-    gap: 0.75rem;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem;
+    align-items: start;
   }
   
   .currency-stats-row {
@@ -534,7 +537,7 @@
   }
 }
 
-@media (max-width: 1199px) {
+@media (max-width: 999px) {
   /* 在中等屏幕上保持单列布局 */
   .currency-stats-container {
     display: flex !important;
@@ -542,7 +545,7 @@
   }
 }
 
-@media (max-width: 1024px) {
+@media (max-width: 800px) {
   .session-summary-row {
     flex-direction: column;
     gap: 0.75rem;
@@ -2352,7 +2355,7 @@
 }
 
 /* 响应式调整 - 亮色主题会继承暗色主题的响应式规则 */
-@media (max-width: 1024px) {
+@media (max-width: 800px) {
   [data-theme="light"] .session-summary-item {
     background: rgba(59, 130, 246, 0.05);
   }
