@@ -235,7 +235,7 @@ export const SessionDetailDrawer: React.FC<SessionDetailDrawerProps> = ({
                           </div>
                           <div className="currency-stat">
                             <span className="stat-label">{t("counter.session.amount")}</span>
-                            <span className="stat-value">{formatCurrency(record.totalAmount)}</span>
+                            <span className="stat-value">{formatCurrency(record.totalAmount, { currency: currencyCode })}</span>
                           </div>
                         </div>
                       </div>
@@ -256,7 +256,7 @@ export const SessionDetailDrawer: React.FC<SessionDetailDrawerProps> = ({
                           </span>
                           <span className="stat-item">
                             <span className="stat-label">{t("counter.session.amount")}:</span>
-                            <span className="stat-value">{formatCurrency(record.totalAmount)}</span>
+                            <span className="stat-value">{formatCurrency(record.totalAmount, { currency: currencyCode })}</span>
                           </span>
                         </div>
                       </div>
@@ -273,7 +273,8 @@ export const SessionDetailDrawer: React.FC<SessionDetailDrawerProps> = ({
                   {t("counter.session.amount")}:
                 </span>
                 <span className="info-value highlight">
-                  {formatCurrency(sessionData.totalAmount || 0)}
+                  {formatCurrency(sessionData.totalAmount || 0, { currency: sessionData.currencyCountRecords?.get(sessionData.id)?.currencyCode })}
+
                 </span>
               </div>
             )}
@@ -324,14 +325,15 @@ export const SessionDetailDrawer: React.FC<SessionDetailDrawerProps> = ({
                       {" "}
                       {/* 紧凑的主要信息行 */}
                       <div className="denomination-main-info">
-                        <div className="denomination-basic">                          <span className="denomination-value">
-                            {formatDenomination(detail.denomination)}
+                        <div className="denomination-basic">                          
+                          <span className="denomination-value">
+                            {formatDenomination(detail.denomination, { showCurrencySymbol: false })}
                           </span>
                           <span className="denomination-count">
                             {detail.count} {t("counter.detailTable.pcs")}
                           </span>
                           <span className="denomination-amount">
-                            {formatCurrency(detail.amount)}
+                            {formatCurrency(detail.amount, { currency: selectedCurrencyTab })}
                           </span>
                         </div>
                       </div>
@@ -413,7 +415,7 @@ export const SessionDetailDrawer: React.FC<SessionDetailDrawerProps> = ({
                           {totalCount} {t("counter.detailTable.pcs")}
                         </span>
                         <span className="denomination-amount">
-                          {formatCurrency(totalAmount)}
+                          {formatCurrency(totalAmount, { currency: selectedCurrencyTab })}
                         </span>
                       </div>
                     </div>

@@ -1651,7 +1651,7 @@ export const CounterDashboard: React.FC<CounterDashboardProps> = ({
                             </span>
                           </div>
                           <div className="col-amount">
-                            {formatCurrency(detail.amount, { showCurrencySymbol: false })}
+                            {formatCurrency(detail.amount, { currency: selectedCurrencyTab })}
                           </div>
                         </div>
                       ))}
