@@ -84,6 +84,7 @@ export const VirtualSessionList: React.FC<VirtualSessionListProps> = ({
   getCurrencyDisplay
 }) => {
   // 每个Session项目的高度 (根据CSS调整: padding 16px*2 + 内容约60px + margin 8px)
+  const { t } = useTranslation();
   const ITEM_HEIGHT = 130;
 
   const itemData = {
@@ -98,10 +99,10 @@ export const VirtualSessionList: React.FC<VirtualSessionListProps> = ({
       <div className={styles.noData}>
         <div className={styles.noDataIcon}>📭</div>
         <div className={styles.noDataText}>
-          No sessions loaded
+          {t('importViewer.noSessionsLoaded', 'No sessions loaded')}
         </div>
         <div className={styles.noDataHint}>
-          Click Import to load data
+          {t('importViewer.importHint', 'Click Import to load data')}
         </div>
       </div>
     );

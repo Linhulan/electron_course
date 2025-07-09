@@ -1521,7 +1521,7 @@ export const CounterDashboard: React.FC<CounterDashboardProps> = ({
                     {t("counter.session.amount")}:
                   </span>
                   <span className="session-value">
-                    {formatCurrency(currentSession.totalAmount || 0)}
+                    {formatCurrency(currentSession.totalAmount || 0, { showCurrencySymbol: false })}
                   </span>
                 </div>
                 <div className="session-item">

@@ -39,7 +39,7 @@ const zhCN = {
     app: {
       title: "串口监控系统",
       subtitle: "点钞机数据监控平台",
-    },    // 侧边栏
+    }, // 侧边栏
     sidebar: {
       controlPanel: "控制面板",
       serialPort: "串口监控",
@@ -132,6 +132,11 @@ const zhCN = {
       connected: "已连接",
       disconnected: "未连接",
 
+      autoDisconnectSuccess: "断开连接成功",
+      autoDisconnectFailed: "断开连接失败",
+      autoConnectSuccess: "连接串口成功",
+      autoConnectFailed: "连接串口失败",
+
       // 控制按钮
       startSimulation: "开始模拟",
       stopSimulation: "停止模拟",
@@ -198,13 +203,14 @@ const zhCN = {
         totalRow: "总计",
         pcs: "张",
         bills: "张纸币",
-      },      // 无数据提示
+      }, // 无数据提示
       noData: {
         title: "暂无点钞数据",
-        subtitle: "请开始点钞来查看数据",        noDetailedRecords: "暂无面额统计",
+        subtitle: "请开始点钞来查看数据",
+        noDetailedRecords: "暂无面额统计",
         startCountingHint: "开始点钞查看面额分布",
-        suggestion: "连接串口并开始点钞即可在此查看记录"
-      },      // Session详情抽屉
+        suggestion: "连接串口并开始点钞即可在此查看记录",
+      }, // Session详情抽屉
       sessionDetail: {
         title: "点钞会话详情",
         basicInfo: "基本信息",
@@ -212,8 +218,10 @@ const zhCN = {
         transactionDetails: "交易明细",
         exportSession: "导出会话",
         noDenominationData: "暂无面额数据",
-        noTransactionData: "暂无交易明细",        serialNumber: "序列号",
-        startTime: "开始时间",        endTime: "结束时间",
+        noTransactionData: "暂无交易明细",
+        serialNumber: "序列号",
+        startTime: "开始时间",
+        endTime: "结束时间",
         currency: "货币",
         error: "错误",
         countRatio: "张数占比",
@@ -224,7 +232,7 @@ const zhCN = {
 
       // 点击提示
       clickToViewDetails: "点击查看详情",
-    },    // 文件管理
+    }, // 文件管理
     fileManager: {
       title: "文件管理",
       exportHistory: "导出历史",
@@ -284,7 +292,8 @@ const zhCN = {
       excelDescription: "包含概览统计、详细数据、面额统计和纸币详情四个工作表",
       pdfDescription: "生成格式化的专业报告，包含统计表格和会话详情",
       batchDescription: "同时生成Excel和PDF两种格式",
-      fileLocationDescription: "自动保存到项目的Data目录，可在文件管理器中查看历史记录",
+      fileLocationDescription:
+        "自动保存到项目的Data目录，可在文件管理器中查看历史记录",
     },
 
     // 数据导入查看器
@@ -350,7 +359,7 @@ const zhCN = {
       yesterday: "昨天",
       weekdays: {
         sunday: "周日",
-        monday: "周一", 
+        monday: "周一",
         tuesday: "周二",
         wednesday: "周三",
         thursday: "周四",
@@ -398,7 +407,7 @@ const enUS = {
     app: {
       title: "Serial Port Monitor",
       subtitle: "Money Counter Data Monitoring Platform",
-    },    // Sidebar
+    }, // Sidebar
     sidebar: {
       controlPanel: "Control Panel",
       serialPort: "Serial Port",
@@ -491,6 +500,11 @@ const enUS = {
       connected: "Connected",
       disconnected: "Disconnected",
 
+      autoDisconnectSuccess: "Successfully disconnected from serial port.",
+      autoDisconnectFailed: "Failed to disconnect from serial port.",
+      autoConnectSuccess: "Successfully connected to serial port.",
+      autoConnectFailed: "Failed to auto-connect to any serial port.",
+
       // Control buttons
       startSimulation: "Start Simulation",
       stopSimulation: "Stop Simulation",
@@ -557,13 +571,15 @@ const enUS = {
         totalRow: "TOTAL",
         pcs: "pcs",
         bills: "bills",
-      },      // No data prompt
+      }, // No data prompt
       noData: {
         title: "No counting data available",
         subtitle: "Start Counting to see the data",
-        noDetailedRecords: "No detailed records",        startCountingHint: "Start counting to see denomination breakdown",
-        suggestion: "Connect serial port and start counting to view records here"
-      },      // Session detail drawer
+        noDetailedRecords: "No detailed records",
+        startCountingHint: "Start counting to see denomination breakdown",
+        suggestion:
+          "Connect serial port and start counting to view records here",
+      }, // Session detail drawer
       sessionDetail: {
         title: "Session Details",
         basicInfo: "Basic Information",
@@ -571,8 +587,10 @@ const enUS = {
         transactionDetails: "Transaction Details",
         exportSession: "Export Session",
         noDenominationData: "No denomination data",
-        noTransactionData: "No transaction details",        serialNumber: "Serial Number",
-        startTime: "Start Time",        endTime: "End Time",
+        noTransactionData: "No transaction details",
+        serialNumber: "Serial Number",
+        startTime: "Start Time",
+        endTime: "End Time",
         currency: "Currency",
         error: "Error",
         countRatio: "Count Ratio",
@@ -583,7 +601,7 @@ const enUS = {
 
       // Click hint
       clickToViewDetails: "Click to view details",
-    },    // File Manager
+    }, // File Manager
     fileManager: {
       title: "File Manager",
       exportHistory: "Export History",
@@ -640,10 +658,13 @@ const enUS = {
       exportErrorBatch: "Batch export error:",
       batchCompleted: "Batch export completed: Excel",
       exportInfo: "Export Information",
-      excelDescription: "Contains overview statistics, detailed data, denomination statistics, and note details in four worksheets",
-      pdfDescription: "Generates formatted professional reports with statistical tables and session details",
+      excelDescription:
+        "Contains overview statistics, detailed data, denomination statistics, and note details in four worksheets",
+      pdfDescription:
+        "Generates formatted professional reports with statistical tables and session details",
       batchDescription: "Generates both Excel and PDF formats simultaneously",
-      fileLocationDescription: "Automatically saved to the project's Data directory, viewable in file manager history",
+      fileLocationDescription:
+        "Automatically saved to the project's Data directory, viewable in file manager history",
     },
 
     // Data Import Viewer
@@ -685,7 +706,7 @@ const enUS = {
       sortByCount: "Sort by Count",
       sortByAmount: "Sort by Amount",
       noSessionsLoaded: "No sessions loaded",
-      noDataImported:"Imported data is empty",
+      noDataImported: "Imported data is empty",
       importHint: "Click Import to load data",
       sessionDetails: "Session Details",
       records: "records",
@@ -711,7 +732,7 @@ const enUS = {
       weekdays: {
         sunday: "Sun",
         monday: "Mon",
-        tuesday: "Tue", 
+        tuesday: "Tue",
         wednesday: "Wed",
         thursday: "Thu",
         friday: "Fri",
@@ -731,7 +752,8 @@ i18n
       "en-US": enUS,
       zh: zhCN, // 简化版本
       en: enUS, // 简化版本
-    },    fallbackLng: "en-US",
+    },
+    fallbackLng: "en-US",
     lng: "en-US", // 默认语言改为英文
 
     detection: {
@@ -750,12 +772,11 @@ i18n
 
     // 启动性能优化
     initImmediate: false, // 立即初始化，不等待检测器
-    load: 'languageOnly', // 只加载语言部分，不加载地区
-    preload: ['zh-CN', 'en-US'], // 预加载常用语言
-    
+    load: "languageOnly", // 只加载语言部分，不加载地区
+    preload: ["zh-CN", "en-US"], // 预加载常用语言
+
     // 缓存优化
     cleanCode: true,
-    
   });
 
 export default i18n;
