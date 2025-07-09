@@ -117,7 +117,7 @@ export const ImportDataViewer: React.FC<ImportDataViewerProps> = ({ className })
     setIsImporting(true);
     const toastId = toast.loading(t('importViewer.importing', 'Importing...'), { position: 'top-center' });
     try {
-      const result = await window.electron.importFromDirectory();
+      const result = await window.electron.importFromDirectory(undefined, { skipDuplicates: true });
       
       // 检查用户是否取消了文件选择
       if (!result || result.cancelled) {

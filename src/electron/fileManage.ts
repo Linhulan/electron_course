@@ -1600,7 +1600,7 @@ export class FileManager {
           defaultPath: this.config.defaultExportDir,
           filters: [
             { name: 'Excel Files', extensions: ['xlsx', 'xls'] },
-            { name: 'All Files', extensions: ['*'] }
+            { name: 'All Files', extensions: ['*', 'xlsx', 'xls'] }
           ],
           properties: ['openFile']
         });
@@ -2263,8 +2263,8 @@ export class FileManager {
   private removeDuplicateSessions(sessions: SessionData[]): SessionData[] {
     const seen = new Set<string>();
     return sessions.filter(session => {
-      // 使用session号码和开始时间作为唯一标识
-      const key = `${session.no}_${session.startTime}`;
+      // 使用session ID和开始时间作为唯一标识
+      const key = `${session.id}_${session.startTime}`;
       if (seen.has(key)) {
         return false;
       }
