@@ -96,7 +96,8 @@ export enum ProtocolStatus {
   START_COUNTING = 0x00,    // 开始刷新
   COUNTING = 0x01,          // 刷新中
   COMPLETED = 0x02,         // 刷新完成
-  COMPLETED_FULL = 0x03     // 刷新完成，接钞满
+  COMPLETED_FULL = 0x03,     // 刷新完成，接钞满
+  STANDBY = 0x04            // 待机状态
 }
 
 // 状态转换映射

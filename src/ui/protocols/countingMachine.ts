@@ -140,6 +140,8 @@ export function getCountingStatus(status: number): "counting" | "completed" | "e
       return "completed"; // 刷新完成
     case ProtocolStatus.COMPLETED_FULL:
       return "completed"; // 刷新完成，接钞满
+    case ProtocolStatus.STANDBY:
+      return "paused"; // 暂停状态
     default:
       return "error";
   }
