@@ -466,7 +466,7 @@ export const SessionDetailDrawer: React.FC<SessionDetailDrawerProps> = ({
                           {detail.serialNumber || "-"}
                         </div>                        
                         <div className="transaction-col-denomination">
-                          {formatDenomination(detail.denomination)}
+                          {formatDenomination(detail.denomination, { showCurrencySymbol: false })}
                         </div>
                         <div className="transaction-col-currency">
                           {detail.currencyCode}

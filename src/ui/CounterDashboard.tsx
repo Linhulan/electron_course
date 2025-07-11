@@ -1513,7 +1513,7 @@ export const CounterDashboard: React.FC<CounterDashboardProps> = ({
                     {t("counter.session.count")}:
                   </span>
                   <span className="session-value">
-                    {currentSession.totalCount}
+                    {currentSession.totalCount - (currentSession.errorCount || 0)}
                   </span>
                 </div>{" "}
                 <div className="session-item">

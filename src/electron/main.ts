@@ -40,7 +40,7 @@ app.on("ready", async () => {
       nodeIntegration: false,
       sandbox: false, // 需要禁用沙箱以访问串口
     },
-    frame: true,
+    frame: isDev(),
     show: false, // 初始隐藏，等待弹出放大动画
      // 设置为深色，与启动画面一致，避免切换时的颜色跳跃
       width: Math.floor(screen.getPrimaryDisplay().workAreaSize.width * 0.6), // 屏幕宽度的60%
