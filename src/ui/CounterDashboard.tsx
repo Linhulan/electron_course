@@ -1153,7 +1153,7 @@ export const CounterDashboard: React.FC<CounterDashboardProps> = ({
       case "error":
         return "#dc3545";
       case "paused":
-        return "#6c757d";
+        return "#ffa500";
       default:
         return "#6c757d";
     }
