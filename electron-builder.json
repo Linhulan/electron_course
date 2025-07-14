@@ -19,7 +19,11 @@
     "category": "Utility"
   },
   "win": {
-    "target": ["portable", "msi"],
+    "target": ["portable", "nsis"],
     "artifactName": "${productName}-${version}-${os}-${arch}.${ext}"
+  },
+  "nsis": {
+    "oneClick": false,
+    "allowToChangeInstallationDirectory": true
   }
 }
