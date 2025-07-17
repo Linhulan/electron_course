@@ -47,7 +47,7 @@ export const formatCurrency = (
   // 处理货币代码为空的情况
   if ( currency === '' || currency === '-' ) 
   {
-    console.warn('Invalid currency code provided, defaulting to no currency symbol.');
+    // console.warn('Invalid currency code provided, defaulting to no currency symbol.');
     isCurrencyValid = false; // 如果货币代码为空，则不显示货币符号
   }
 

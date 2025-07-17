@@ -421,16 +421,31 @@ export const ImportDataViewer: React.FC<ImportDataViewerProps> = ({ className })
   const getCurrencyDisplay = (session: SessionData) => {
     // 检查是否有多货币记录
     if (session.currencyCountRecords && session.currencyCountRecords.size > 1) {
-      return 'MULTI';
+      // 过滤出有效的货币代码（3个字母的标准格式）
+      const validCurrencies = Array.from(session.currencyCountRecords.keys())
+        .filter(code => code && /^[A-Z]{3}$/.test(code));
+      
+      if (validCurrencies.length > 1) {
+        return 'MULTI';
+      } else if (validCurrencies.length === 1) {
+        return validCurrencies[0];
+      }
     }
     
     // 检查是否有单一货币记录
     if (session.currencyCountRecords && session.currencyCountRecords.size === 1) {
-      return Array.from(session.currencyCountRecords.keys())[0];
+      const currency = Array.from(session.currencyCountRecords.keys())[0];
+      if (currency && /^[A-Z]{3}$/.test(currency)) {
+        return currency;
+      }
     }
     
-    // 回退到原始货币代码
-    return session.currencyCode || 'N/A';
+    // 回退到原始货币代码，也要验证格式
+    if (session.currencyCode && /^[A-Z]{3}$/.test(session.currencyCode)) {
+      return session.currencyCode;
+    }
+    
+    return 'N/A';
   };
 
   // 判断是否为错误行
