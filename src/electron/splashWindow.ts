@@ -257,7 +257,8 @@ export function createSplashWindow(): BrowserWindow {
       <div class="container">
         <div class="logo-container">
           <div class="logo">⚡</div>
-        </div>        <div class="title">Electron Serial</div>
+        </div>        
+        <div class="title">Counter Dashboard</div>
         <div class="subtitle">Starting Application</div>
         <div class="loading-container">
           <div class="loading"></div>
