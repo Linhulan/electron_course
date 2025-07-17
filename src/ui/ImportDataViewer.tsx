@@ -224,12 +224,7 @@ export const ImportDataViewer: React.FC<ImportDataViewerProps> = ({ className })
         if (matches) sessionMatchFields.push('sessionID');
       }
 
-      // 货币代码条件（Session级别）
-      if (searchFilters.currencyCode) {
-        const matches = session.currencyCode?.toLowerCase().includes(searchFilters.currencyCode.toLowerCase()) || false;
-        sessionConditions.push(matches);
-        if (matches) sessionMatchFields.push('currencyCode');
-      }
+      // 货币代码条件已移至Detail级别，此处不再处理
 
       // 日期范围条件
       if (searchFilters.startDate || searchFilters.endDate) {
@@ -268,6 +263,15 @@ export const ImportDataViewer: React.FC<ImportDataViewerProps> = ({ className })
           const detailConditions = [];
           const detailMatchFields: string[] = [];
 
+          // 货币代码条件（Detail级别）
+          if (searchFilters.currencyCode) {
+            const searchCurrency = searchFilters.currencyCode.toLowerCase();
+            const detailCurrency = detail.currencyCode?.toLowerCase() || '';
+            const matches = detailCurrency.includes(searchCurrency);
+            detailConditions.push(matches);
+            if (matches) detailMatchFields.push('currencyCode');
+          }
+
           // 冠字号条件
           if (searchFilters.serialNumber) {
             const searchSerial = searchFilters.serialNumber.toLowerCase();
@@ -285,15 +289,6 @@ export const ImportDataViewer: React.FC<ImportDataViewerProps> = ({ className })
             if (matches) detailMatchFields.push('denomination');
           }
 
-          // 货币代码条件（Detail级别，与Session级别的货币条件可以不同）
-          if (searchFilters.currencyCode) {
-            const searchCurrency = searchFilters.currencyCode.toLowerCase();
-            const detailCurrency = detail.currencyCode?.toLowerCase() || '';
-            const matches = detailCurrency.includes(searchCurrency);
-            detailConditions.push(matches);
-            if (matches) detailMatchFields.push('detailCurrency');
-          }
-
           // Status条件（Detail级别）
           if (searchFilters.status) {
             const matches = detail.status === searchFilters.status;
@@ -304,7 +299,7 @@ export const ImportDataViewer: React.FC<ImportDataViewerProps> = ({ className })
           // Detail级别匹配：如果有detail级别的搜索条件，所有指定的条件都必须满足
           const hasDetailSearchCriteria = searchFilters.serialNumber || 
                                         searchFilters.denomination || 
-                                        (searchFilters.currencyCode && session.details) ||
+                                        searchFilters.currencyCode ||
                                         (searchFilters.status && session.details);
           
           const detailMatches = !hasDetailSearchCriteria || 
@@ -325,6 +320,7 @@ export const ImportDataViewer: React.FC<ImportDataViewerProps> = ({ className })
       // 决定如何处理这个Session
       const hasDetailSearchCriteria = searchFilters.serialNumber || 
                                      searchFilters.denomination ||
+                                     searchFilters.currencyCode ||
                                      (searchFilters.status && session.details);
 
       if (sessionMatches) {
