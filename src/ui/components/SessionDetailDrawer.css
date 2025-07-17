@@ -1706,3 +1706,149 @@
 [data-theme="light"] .currency-stat .stat-value {
   color: #1e293b;
 }
+
+/* 冠字号搜索功能样式 */
+.serial-search-container {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin: 1rem 0;
+  padding: 0.75rem;
+  background: #2a2a2a;
+  border: 1px solid #404040;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.serial-search-container:focus-within {
+  border-color: #007acc;
+  box-shadow: 0 0 0 2px rgba(0, 122, 204, 0.2);
+}
+
+.serial-search-input {
+  flex: 1;
+  padding: 0.5rem 0.75rem;
+  background: #1a1a1a;
+  border: 1px solid #404040;
+  border-radius: 6px;
+  color: #ffffff;
+  font-size: 0.9rem;
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+.serial-search-input:focus {
+  border-color: #007acc;
+  background: #252525;
+  box-shadow: 0 0 0 2px rgba(0, 122, 204, 0.15);
+}
+
+.serial-search-input::placeholder {
+  color: #888;
+}
+
+.clear-search-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  background: #404040;
+  border: none;
+  border-radius: 4px;
+  color: #ccc;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 0.9rem;
+  line-height: 1;
+}
+
+.clear-search-btn:hover {
+  background: #505050;
+  color: #fff;
+}
+
+.clear-search-btn:active {
+  transform: scale(0.95);
+}
+
+.search-results-count {
+  display: flex;
+  align-items: center;
+  padding: 0.25rem 0.5rem;
+  background: #007acc;
+  color: #ffffff;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  white-space: nowrap;
+  min-width: fit-content;
+}
+
+/* 搜索结果高亮 */
+.transaction-col-serial mark {
+  background: #fff3cd;
+  color: #856404;
+  padding: 0.1rem 0.2rem;
+  border-radius: 3px;
+  font-weight: 500;
+}
+
+/* 详情计数显示 */
+.detail-count {
+  color: #888;
+  font-size: 0.85rem;
+  font-weight: 400;
+  margin-left: 0.5rem;
+}
+
+/* 亮色主题适配 */
+[data-theme="light"] .serial-search-container {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+}
+
+[data-theme="light"] .serial-search-container:focus-within {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+}
+
+[data-theme="light"] .serial-search-input {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  color: #1e293b;
+}
+
+[data-theme="light"] .serial-search-input:focus {
+  border-color: #3b82f6;
+  background: #ffffff;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.15);
+}
+
+[data-theme="light"] .serial-search-input::placeholder {
+  color: #6b7280;
+}
+
+[data-theme="light"] .clear-search-btn {
+  background: #e2e8f0;
+  color: #6b7280;
+}
+
+[data-theme="light"] .clear-search-btn:hover {
+  background: #cbd5e1;
+  color: #374151;
+}
+
+[data-theme="light"] .search-results-count {
+  background: #3b82f6;
+  color: #ffffff;
+}
+
+[data-theme="light"] .transaction-col-serial mark {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+[data-theme="light"] .detail-count {
+  color: #6b7280;
+}

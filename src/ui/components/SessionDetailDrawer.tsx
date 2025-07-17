@@ -4,7 +4,7 @@ import "./SessionDetailDrawer.css";
 import { debugLog } from "../protocols";
 import ExportPanel from "./ExportPanel";
 import { formatCurrency, formatDenomination } from "../common/common";
-import { SessionData } from "../common/types";
+import { SessionData, CounterData } from "../common/types";
 
 interface SessionDetailDrawerProps {
   isOpen: boolean;
@@ -21,6 +21,8 @@ export const SessionDetailDrawer: React.FC<SessionDetailDrawerProps> = ({
   const [showDetailedBreakdown, setShowDetailedBreakdown] = useState(false);
   const [showExportPanel, setShowExportPanel] = useState(false);
   const [selectedCurrencyTab, setSelectedCurrencyTab] = useState<string>('');
+  const [serialSearchTerm, setSerialSearchTerm] = useState<string>('');
+  const [filteredDetails, setFilteredDetails] = useState<CounterData[]>([]);
 
   const getStatusIcon = (status: string) => {
     switch (status) {
@@ -142,6 +144,25 @@ export const SessionDetailDrawer: React.FC<SessionDetailDrawerProps> = ({
       setSelectedCurrencyTab('');
     }
   }, [sessionData, selectedCurrencyTab, getAvailableCurrencies]);
+
+  // 冠字号搜索逻辑
+  useEffect(() => {
+    if (!sessionData?.details) {
+      setFilteredDetails([]);
+      return;
+    }
+
+    if (!serialSearchTerm.trim()) {
+      setFilteredDetails(sessionData.details);
+      return;
+    }
+
+    const searchTerm = serialSearchTerm.toLowerCase();
+    const filtered = sessionData.details.filter(detail =>
+      detail.serialNumber?.toLowerCase().includes(searchTerm)
+    );
+    setFilteredDetails(filtered);
+  }, [sessionData, serialSearchTerm]);
 
   if (!sessionData) {
     return null;
@@ -431,14 +452,44 @@ export const SessionDetailDrawer: React.FC<SessionDetailDrawerProps> = ({
               {t("counter.sessionDetail.transactionDetails")}
               {sessionData.details && sessionData.details.length > 0 && (
                 <span className="detail-count">
-                  ({sessionData.details.length})
+                  ({filteredDetails.length} / {sessionData.details.length})
                 </span>
               )}
             </h4>
+            
+            {/* 冠字号搜索框 */}
+            {sessionData.details && sessionData.details.length > 0 && (
+              <div className="serial-search-container">
+                <input
+                  type="text"
+                  className="serial-search-input"
+                  placeholder={t("counter.sessionDetail.searchSerialNumber", "搜索冠字号...")}
+                  value={serialSearchTerm}
+                  onChange={(e) => setSerialSearchTerm(e.target.value)}
+                />
+                {serialSearchTerm && (
+                  <button
+                    className="clear-search-btn"
+                    onClick={() => setSerialSearchTerm('')}
+                    title={t("common.clear", "清除")}
+                  >
+                    ✕
+                  </button>
+                )}
+                {serialSearchTerm && (
+                  <span className="search-results-count">
+                    {filteredDetails.length} {t("counter.sessionDetail.searchResults", "条结果")}
+                  </span>
+                )}
+              </div>
+            )}
             <div className="transaction-details">
-              {!sessionData.details || sessionData.details.length === 0 ? (
+              {filteredDetails.length === 0 ? (
                 <div className="no-data-message">
-                  {t("counter.sessionDetail.noTransactionData")}
+                  {serialSearchTerm ? 
+                    t("counter.sessionDetail.noSearchResults", "没有找到匹配的冠字号") :
+                    t("counter.sessionDetail.noTransactionData")
+                  }
                 </div>
               ) : (
                 <div className="transaction-table">
@@ -459,11 +510,26 @@ export const SessionDetailDrawer: React.FC<SessionDetailDrawerProps> = ({
                     </div>
                   </div>{" "}
                   <div className="transaction-body">
-                    {sessionData.details.map((detail) => (
+                    {filteredDetails.map((detail) => (
                       <div key={detail.id} className="transaction-row">
                         <div className="transaction-col-no">{detail.no}</div>
                         <div className="transaction-col-serial">
-                          {detail.serialNumber || "-"}
+                          {detail.serialNumber ? (
+                            serialSearchTerm ? (
+                              <span
+                                dangerouslySetInnerHTML={{
+                                  __html: detail.serialNumber.replace(
+                                    new RegExp(`(${serialSearchTerm})`, 'gi'),
+                                    '<mark>$1</mark>'
+                                  )
+                                }}
+                              />
+                            ) : (
+                              detail.serialNumber
+                            )
+                          ) : (
+                            "-"
+                          )}
                         </div>                        
                         <div className="transaction-col-denomination">
                           {formatDenomination(detail.denomination, { showCurrencySymbol: false })}

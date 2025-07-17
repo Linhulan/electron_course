@@ -214,6 +214,7 @@ const zhCN = {
       sessionDetail: {
         title: "点钞会话详情",
         basicInfo: "基本信息",
+        currencyBreakdown: "货币分布",
         denominationBreakdown: "面额分布",
         transactionDetails: "交易明细",
         exportSession: "导出会话",
@@ -228,6 +229,9 @@ const zhCN = {
         amountRatio: "金额占比",
         showDetails: "显示详情",
         hideDetails: "隐藏详情",
+        searchSerialNumber: "搜索冠字号...",
+        searchResults: "条结果",
+        noSearchResults: "未找到匹配记录",
       },
 
       // 点击提示
@@ -583,6 +587,7 @@ const enUS = {
       sessionDetail: {
         title: "Session Details",
         basicInfo: "Basic Information",
+        currencyBreakdown: "Currency Breakdown",
         denominationBreakdown: "Denomination Breakdown",
         transactionDetails: "Transaction Details",
         exportSession: "Export Session",
@@ -597,6 +602,9 @@ const enUS = {
         amountRatio: "Amount Ratio",
         showDetails: "Show Details",
         hideDetails: "Hide Details",
+        searchSerialNumber: "Search Serial Number...",
+        searchResults: "Results Found",
+        noSearchResults: "No matching records found",
       },
 
       // Click hint
