@@ -11,6 +11,13 @@
   "directories": {
     "output": "dist"
   },
+  "publish": [
+    {
+      "provider": "github",
+      "owner": "yedouuu",
+      "repo": "electron_course"
+    }
+  ],
   "mac": {
     "target": "dmg"
   },

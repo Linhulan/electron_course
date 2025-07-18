@@ -9,6 +9,24 @@ import { createSplashWindow } from "./splashWindow.js";
 import { StartupOptimizer } from "./startupOptimizer.js";
 import { startupConfig } from "./startupConfig.js";
 import { fileManager } from "./fileManage.js";
+import { AutoUpdaterManager } from "./autoUpdater.js";
+import { readFileSync } from "fs";
+import { join } from "path";
+
+// 获取应用版本
+function getAppVersion(): string {
+  try {
+    const packageJsonPath = join(process.cwd(), 'package.json');
+    const packageJson = JSON.parse(readFileSync(packageJsonPath, 'utf-8'));
+    return packageJson.version || '1.0.0';
+  } catch (error) {
+    console.error('Error reading package.json:', error);
+    return '1.0.0';
+  }
+}
+
+// 全局变量
+let autoUpdaterManager: AutoUpdaterManager | null = null;
 // app.commandLine.appendSwitch("enable-lcp");
 // app.commandLine.appendSwitch('disable-features', 'OutOfProcessPdf');
 // app.enableSandbox(); // 必须启用沙箱
@@ -127,6 +145,11 @@ app.on("ready", async () => {
     return getStaticData();
   });
 
+  // 获取应用版本
+  ipcMainHandle("getAppVersion", () => {
+    return getAppVersion();
+  });
+
   ipcMainOn("sendFrameAction", (payload) => {
     switch (payload) {
       case "MINIMIZE":
@@ -147,6 +170,9 @@ app.on("ready", async () => {
 
   // 初始化串口管理器
   const serialPortManager = new SerialPortManager(mainWindow);
+
+  // 初始化自动更新管理器
+  autoUpdaterManager = new AutoUpdaterManager(mainWindow);
 
   // 注册串口相关的IPC处理程序
   ipcMainHandle("list-serial-ports", async () => {
@@ -179,6 +205,39 @@ app.on("ready", async () => {
     const [useRawMode] = args as [boolean];
     serialPortManager.setReceiveMode(useRawMode);
     return true;
+  });
+
+  // ========== 自动更新 IPC 处理程序 ==========
+  // 手动检查更新
+  ipcMainHandle("check-for-updates", () => {
+    if (autoUpdaterManager) {
+      autoUpdaterManager.checkForUpdates();
+    }
+    return true;
+  });
+
+  // 开始下载更新
+  ipcMainHandle("download-update", () => {
+    if (autoUpdaterManager) {
+      autoUpdaterManager.downloadUpdate();
+    }
+    return true;
+  });
+
+  // 安装更新并重启
+  ipcMainHandle("install-update", () => {
+    if (autoUpdaterManager) {
+      autoUpdaterManager.installUpdate();
+    }
+    return true;
+  });
+
+  // 获取更新状态
+  ipcMainHandle("get-update-status", () => {
+    if (autoUpdaterManager) {
+      return autoUpdaterManager.getUpdateStatus();
+    }
+    return { isUpdateAvailable: false, isUpdateDownloaded: false };
   });
 
   // ========== 文件管理 IPC 处理程序 ==========  // 导出 Excel 文件
@@ -299,6 +358,10 @@ function handleCloseEvenets(mainWindow: BrowserWindow) {
 
   app.on("before-quit", () => {
     willClose = true;
+    // 清理自动更新管理器
+    if (autoUpdaterManager) {
+      autoUpdaterManager.destroy();
+    }
   });
 
   mainWindow.on("show", () => {

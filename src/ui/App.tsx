@@ -2,8 +2,10 @@ import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { HashRouter as Router, Routes, Route } from "react-router-dom";
 import { LanguageSwitcher } from "./components/LanguageSwitcher";
+import { UpdateNotification } from "./components/UpdateNotification";
 import { useAppConfigStore } from "./contexts/store";
 import { usePageNavigation } from "./hooks/usePageNavigation";
+import { useUpdateListener } from "./hooks/useUpdateListener";
 import "./App.css";
 import { SerialPortPanel } from "./SerialPortPanel";
 import { CounterDashboard } from "./CounterDashboard";
@@ -21,6 +23,9 @@ function AppContent({ onAppReady }: AppProps) {
   const { t, ready } = useTranslation();
   const { theme } = useAppConfigStore();
   const { currentPage, navigateToPage, getPageTitle } = usePageNavigation();
+  
+  // 初始化更新监听器
+  useUpdateListener();
 
   // 应用主题到根元素
   useEffect(() => {
@@ -150,6 +155,7 @@ function Header({ title }: { title: string }) {
         >
           {theme === "light" ? "◐" : "◑"}
         </button>
+        <UpdateNotification />
         <LanguageSwitcher compact className="header-language-switcher" />
         <button
           id="minimize"

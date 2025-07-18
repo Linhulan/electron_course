@@ -35,6 +35,24 @@ const zhCN = {
       language: "语言",
     },
 
+    // 自动更新
+    update: {
+      checking: "正在检查更新...",
+      available: "发现新版本",
+      downloading: "正在下载更新...",
+      downloaded: "更新已下载",
+      readyToInstall: "准备安装更新",
+      upToDate: "已是最新版本",
+      checkForUpdates: "检查更新",
+      download: "下载更新",
+      installAndRestart: "安装并重启",
+      version: "版本",
+      releaseDate: "发布日期",
+      error: "更新出错",
+      downloadFailed: "下载失败",
+      installFailed: "安装失败",
+    },
+
     // 应用标题
     app: {
       title: "串口监控系统",
@@ -405,6 +423,24 @@ const enUS = {
       about: "About",
       version: "Version",
       language: "Language",
+    },
+
+    // Auto Update
+    update: {
+      checking: "Checking for updates...",
+      available: "Update available",
+      downloading: "Downloading update...",
+      downloaded: "Update downloaded",
+      readyToInstall: "Ready to install",
+      upToDate: "Up to date",
+      checkForUpdates: "Check for Updates",
+      download: "Download Update",
+      installAndRestart: "Install & Restart",
+      version: "Version",
+      releaseDate: "Release Date",
+      error: "Update error",
+      downloadFailed: "Download failed",
+      installFailed: "Install failed",
     },
 
     // App titles

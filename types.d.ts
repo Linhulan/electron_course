@@ -79,9 +79,33 @@ type SerialPortConfig = {
   parity?: 'none' | 'even' | 'odd' | 'mark' | 'space';
 };
 
+// 自动更新相关类型
+type UpdateInfo = {
+  version: string;
+  releaseNotes?: string;
+  releaseDate?: string;
+};
+
+type UpdateProgress = {
+  percent: number;
+  bytesPerSecond: number;
+  total: number;
+  transferred: number;
+};
+
+type UpdateStatus = {
+  isUpdateAvailable: boolean;
+  isUpdateDownloaded: boolean;
+};
+
+type UpdateError = {
+  message: string;
+};
+
 type EventPayloadMapping = {
   statistics: Statistics;
   getStaticData: StaticData;
+  getAppVersion: string;
   changeView: View;
   sendFrameAction: FrameWindowAction;
   "serial-connected": SerialPortConnectionData;
@@ -107,6 +131,18 @@ type EventPayloadMapping = {
   // Excel导入相关事件
   "import-from-excel": ImportResult;
   "import-from-directory": ImportResult;
+  // 自动更新相关事件 - IPC 调用
+  "check-for-updates": boolean;
+  "download-update": boolean;
+  "install-update": boolean;
+  "get-update-status": UpdateStatus;
+  // 自动更新相关事件 - 从主进程发送的事件
+  "update-checking": void;
+  "update-available": UpdateInfo;
+  "update-not-available": void;
+  "update-download-progress": UpdateProgress;
+  "update-downloaded": UpdateInfo;
+  "update-error": UpdateError;
 };
 
 type UnsubscribeFunction = () => void;
@@ -122,6 +158,7 @@ interface Window {
     ) => UnsubscribeFunction;
 
     getStaticData: () => Promise<StaticData>;
+    getAppVersion: () => Promise<string>;
     sendFrameAction: (payload: FrameWindowAction) => void;
     
     // Serial Port functions
@@ -151,6 +188,25 @@ interface Window {
     // Excel导入函数
     importFromExcel: (filePath?: string, options?: ImportOptions) => Promise<ImportResult>;
     importFromDirectory: (directory?: string, options?: ImportOptions) => Promise<ImportResult>;
+    // 自动更新函数
+    checkForUpdates: () => Promise<boolean>;
+    downloadUpdate: () => Promise<boolean>;
+    installUpdate: () => Promise<boolean>;
+    getUpdateStatus: () => Promise<UpdateStatus>;
+    
+    // 自动更新事件订阅
+    onUpdateChecking: (callback: () => void) => UnsubscribeFunction;
+    onUpdateAvailable: (callback: (info: UpdateInfo) => void) => UnsubscribeFunction;
+    onUpdateNotAvailable: (callback: () => void) => UnsubscribeFunction;
+    onUpdateDownloadProgress: (callback: (progress: UpdateProgress) => void) => UnsubscribeFunction;
+    onUpdateDownloaded: (callback: (info: UpdateInfo) => void) => UnsubscribeFunction;
+    onUpdateError: (callback: (error: UpdateError) => void) => UnsubscribeFunction;
+
+    ipcRenderer: {
+      on: (channel: string, callback: (event: unknown, ...args: unknown[]) => void) => void;
+      removeAllListeners: (channel: string) => void;
+      send: (channel: string, ...args: unknown[]) => void;
+    };
   };
 }
 

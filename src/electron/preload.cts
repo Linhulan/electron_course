@@ -14,6 +14,7 @@ electron.contextBridge.exposeInMainWorld("electron", {
     });
   },
   getStaticData: () => ipcInvoke("getStaticData"),
+  getAppVersion: () => ipcInvoke("getAppVersion"),
   sendFrameAction: (payload) => ipcSend("sendFrameAction", payload),
   // Serial Port functions
   listSerialPorts: () => ipcInvoke("list-serial-ports"),
@@ -41,6 +42,56 @@ electron.contextBridge.exposeInMainWorld("electron", {
   // Excel导入函数
   importFromExcel: (filePath?: string, options?: any) => ipcInvoke("import-from-excel", filePath, options),
   importFromDirectory: (directory?: string, options?: any) => ipcInvoke("import-from-directory", directory, options),
+  
+  // 自动更新函数
+  checkForUpdates: () => ipcInvoke("check-for-updates"),
+  downloadUpdate: () => ipcInvoke("download-update"),
+  installUpdate: () => ipcInvoke("install-update"),
+  getUpdateStatus: () => ipcInvoke("get-update-status"),
+  
+  // 自动更新事件订阅
+  onUpdateChecking: (callback: () => void) => {
+    const cb = () => callback();
+    electron.ipcRenderer.on("update-checking", cb);
+    return () => electron.ipcRenderer.off("update-checking", cb);
+  },
+  onUpdateAvailable: (callback: (info: UpdateInfo) => void) => {
+    const cb = (_: Electron.IpcRendererEvent, info: UpdateInfo) => callback(info);
+    electron.ipcRenderer.on("update-available", cb);
+    return () => electron.ipcRenderer.off("update-available", cb);
+  },
+  onUpdateNotAvailable: (callback: () => void) => {
+    const cb = () => callback();
+    electron.ipcRenderer.on("update-not-available", cb);
+    return () => electron.ipcRenderer.off("update-not-available", cb);
+  },
+  onUpdateDownloadProgress: (callback: (progress: UpdateProgress) => void) => {
+    const cb = (_: Electron.IpcRendererEvent, progress: UpdateProgress) => callback(progress);
+    electron.ipcRenderer.on("update-download-progress", cb);
+    return () => electron.ipcRenderer.off("update-download-progress", cb);
+  },
+  onUpdateDownloaded: (callback: (info: UpdateInfo) => void) => {
+    const cb = (_: Electron.IpcRendererEvent, info: UpdateInfo) => callback(info);
+    electron.ipcRenderer.on("update-downloaded", cb);
+    return () => electron.ipcRenderer.off("update-downloaded", cb);
+  },
+  onUpdateError: (callback: (error: UpdateError) => void) => {
+    const cb = (_: Electron.IpcRendererEvent, error: UpdateError) => callback(error);
+    electron.ipcRenderer.on("update-error", cb);
+    return () => electron.ipcRenderer.off("update-error", cb);
+  },
+
+  ipcRenderer: {
+    on: (channel: string, callback: (event: unknown, ...args: unknown[]) => void) => {
+      electron.ipcRenderer.on(channel, callback);
+    },
+    removeAllListeners: (channel: string) => {
+      electron.ipcRenderer.removeAllListeners(channel);
+    },
+    send: (channel: string, ...args: unknown[]) => {
+      electron.ipcRenderer.send(channel, ...args);
+    }
+  }
 } satisfies Window["electron"]);
 
 function ipcInvoke<Key extends keyof EventPayloadMapping>(

@@ -1,7 +1,7 @@
 {
   "name": "union-dashboard-beta",
   "private": true,
-  "version": "0.8.4",
+  "version": "0.8.5",
   "type": "module",
   "main": "dist-electron/main.js",
   "scripts": {
@@ -26,6 +26,7 @@
     "@types/protobufjs": "^6.0.0",
     "@types/react-window": "^1.8.8",
     "currency-symbol-map": "^5.1.0",
+    "electron-updater": "^6.6.2",
     "exceljs": "^4.4.0",
     "i18next": "^25.2.1",
     "i18next-browser-languagedetector": "^8.2.0",

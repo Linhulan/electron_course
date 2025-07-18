@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { LanguageSwitcher } from "./components/LanguageSwitcher";
+import { useAppVersion } from "./hooks/useAppVersion";
 import "./Sidebar.css";
 
 export type PageType = "serial-port" | "counter-dashboard" | "file-manager" | "import-viewer";
@@ -15,6 +16,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onPageChange,
 }) => {
   const { t } = useTranslation();
+  const { version, loading } = useAppVersion();
   const [isCollapsed, setIsCollapsed] = useState(true);
   const menuItems = import.meta.env.DEV
     ? [
@@ -96,7 +98,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
         <div className="sidebar-footer">
           <LanguageSwitcher dropdownDirection="right" />
           <div className="sidebar-version">
-            <span>{t("common.version")} 1.0.0</span>
+            <span>
+              {t("common.version")} {loading ? "..." : version}
+            </span>
           </div>
         </div>
       )}
