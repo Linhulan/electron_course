@@ -139,7 +139,7 @@ export function getCountingStatus(status: number): "counting" | "completed" | "e
     case ProtocolStatus.COMPLETED:
       return "completed"; // 刷新完成
     case ProtocolStatus.COMPLETED_FULL:
-      return "completed"; // 刷新完成，接钞满
+      return "paused"; // 刷新完成，接钞满
     case ProtocolStatus.STANDBY:
       return "paused"; // 暂停状态
     default:
@@ -158,7 +158,7 @@ export function isSessionStart(status: number): boolean {
  * 检查是否为Session结束协议
  */
 export function isSessionEnd(status: number): boolean {
-  return status === ProtocolStatus.COMPLETED || status === ProtocolStatus.COMPLETED_FULL;
+  return status === ProtocolStatus.COMPLETED;
 }
 
 /**

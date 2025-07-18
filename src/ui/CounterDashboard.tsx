@@ -156,7 +156,10 @@ const handleSessionUpdate = (
       currencyCode = "";
       denomination = 0;
       updatedSession.errorCount = (currentSession.errorCount || 0) + 1;
-    } 
+    }
+    else if (protocolData.currencyCode === "" || protocolData.currencyCode.length < 3) {
+      currencyCode = "-";
+    }
     else 
     {
       // 没报错，则记录对应货币的计数记录
@@ -228,7 +231,7 @@ const handleSessionUpdate = (
 
   // 如果Session完成，添加到历史记录但保留在当前Session显示 (结束协议不携带金额数据)
   if (isSessionEnd(protocolData.status)) 
-    {
+  {
     updatedSession.endTime = now.toLocaleString();
 
     // 判断有无实际点钞数据
@@ -429,7 +432,7 @@ export const CounterDashboard: React.FC<CounterDashboardProps> = ({
       }
 
       // 兼容旧数据结构
-      return session.currencyCode || "CNY";
+      return session.currencyCode || "-";
     },
     []
   );
@@ -450,7 +453,7 @@ export const CounterDashboard: React.FC<CounterDashboardProps> = ({
     }
 
     const totalAmount = session.totalAmount || 0;
-    return formatCurrency(totalAmount);
+    return formatCurrency(totalAmount, { currency: session.currencyCode || "-" });
   }, []);
 
   // 8. 缓存渲染用的会话数据
