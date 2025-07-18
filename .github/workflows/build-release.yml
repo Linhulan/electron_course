@@ -28,14 +28,6 @@ jobs:
       - name: 修复 latest.yml 的 sha512
         run: npm run fix:sha512
 
-      - name: Upload to GitHub Release
-        uses: softprops/action-gh-release@v1
-        with:
-          files: |
-            dist/*.exe
-            dist/*.yml
-            dist/*.blockmap
-
   # build-mac:
   #   runs-on: macos-latest
   #   steps:
