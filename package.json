@@ -15,7 +15,7 @@
     "dist:mac": "npm run transpile:electron && npm run build && electron-builder --mac --arm64",
     "dist:win": "npm run transpile:electron && npm run build && electron-builder --win --x64",
     "dist:linux": "npm run transpile:electron && npm run build && electron-builder --linux --x64",
-    "fix:sha512": "node scripts/fix-latest-yml.js",
+    "fix:sha512": "node scripts/fix-latest-yml.cjs",
     "test:e2e": "playwright test",
     "test:unit": "vitest src",
     "test:unit:serial": "vitest src/electron/serialPort.test.ts",
